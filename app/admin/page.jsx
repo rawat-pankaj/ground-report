@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
+  const [saveState, setSaveState] = useState({}); // `${videoId}:${field}` -> "saving" | "saved" | "error"
 
   async function load() {
     const res = await fetch("/api/admin/videos");
@@ -26,11 +27,22 @@ export default function AdminDashboard() {
   }
 
   async function updateTags(video, field, value) {
-    await fetch(`/api/admin/videos/${video.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: value }),
-    });
+    const key = `${video.id}:${field}`;
+    setSaveState((prev) => ({ ...prev, [key]: "saving" }));
+    try {
+      const res = await fetch(`/api/admin/videos/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setSaveState((prev) => ({ ...prev, [key]: "saved" }));
+      setTimeout(() => {
+        setSaveState((prev) => ({ ...prev, [key]: undefined }));
+      }, 1500);
+    } catch {
+      setSaveState((prev) => ({ ...prev, [key]: "error" }));
+    }
   }
 
   async function remove(video) {
@@ -64,7 +76,7 @@ export default function AdminDashboard() {
             <div className="flex-1 min-w-0">
               <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
               <p className="story-meta mb-2">{video.channel.name}</p>
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex flex-wrap gap-2 mb-1 items-center">
                 <input
                   className="input text-[12px] w-24"
                   placeholder="language"
@@ -83,6 +95,34 @@ export default function AdminDashboard() {
                   defaultValue={video.beatTags || ""}
                   onBlur={(e) => updateTags(video, "beatTags", e.target.value)}
                 />
+              </div>
+              <div className="mb-2 h-[16px]">
+                {["language", "region", "beatTags"].map((field) => {
+                  const state = saveState[`${video.id}:${field}`];
+                  if (!state) return null;
+                  if (state === "saving") {
+                    return (
+                      <span key={field} className="story-meta">
+                        Saving…
+                      </span>
+                    );
+                  }
+                  if (state === "saved") {
+                    return (
+                      <span key={field} className="story-meta" style={{ color: "#2f8f4e" }}>
+                        Saved
+                      </span>
+                    );
+                  }
+                  if (state === "error") {
+                    return (
+                      <span key={field} className="story-meta" style={{ color: "var(--signal)" }}>
+                        Could not save — try again
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
               </div>
               <div className="flex gap-2">
                 <button className="btn btn-outline text-[12px] py-1" onClick={() => toggleStatus(video)}>
