@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Channel {
+  id                 String   @id @default(cuid())
+  youtubeChannelId   String   @unique
+  name               String
+  thumbnailUrl       String?
+  uploadsPlaylistId  String
+  lastBrowsedAt      DateTime @default(now())
+  videos             Video[]
+}
+
+model Video {
+  id             String    @id @default(cuid())
+  youtubeVideoId String    @unique
+  title          String
+  thumbnailUrl   String?
+  publishedAt    DateTime?
+  language       String?
+  region         String?
+  beatTags       String?
+  status         String    @default("published") // published | hidden
+  addedAt        DateTime  @default(now())
+  channelId      String
+  channel        Channel   @relation(fields: [channelId], references: [id])
+}
+
+model Nomination {
+  id               String    @id @default(cuid())
+  type             String    @default("channel") // "channel" | "video"
+  input            String
+  reasonText       String?
+  submitterContact String?
+  status           String    @default("pending") // pending | approved | rejected
+  submittedAt      DateTime  @default(now())
+  reviewedAt       DateTime?
+}
