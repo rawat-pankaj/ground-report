@@ -34,7 +34,7 @@ export default async function FeedPage({ searchParams }) {
   const videos = await prisma.video.findMany({
     where,
     include: { channel: true },
-    orderBy: { publishedAt: "desc" },
+    orderBy: { addedAt: "desc" },
     take: 100,
   });
 

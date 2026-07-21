@@ -15,7 +15,7 @@ export async function GET(request) {
   const videos = await prisma.video.findMany({
     where,
     include: { channel: true },
-    orderBy: { publishedAt: "desc" },
+    orderBy: { addedAt: "desc" },
     take: 100,
   });
 
