@@ -105,8 +105,8 @@ export default async function FeedPage({ searchParams }) {
               href={`https://www.youtube.com/watch?v=${video.youtubeVideoId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="story-card overflow-hidden flex sm:flex-row flex-col"
-            >
+              className="story-card overflow-hidden flex sm:flex-row flex-col items-start"
+	     >
               {video.thumbnailUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

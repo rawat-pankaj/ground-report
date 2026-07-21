@@ -77,7 +77,7 @@ function AddVideoInner() {
 
       {result && (
         <>
-          <div className="story-card overflow-hidden flex sm:flex-row flex-col mb-6">
+          <div className="story-card overflow-hidden flex sm:flex-row flex-col items-start mb-6">
             {result.video.thumbnailUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
