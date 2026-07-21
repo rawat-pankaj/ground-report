@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
-  const [saveState, setSaveState] = useState({}); // `${videoId}:${field}` -> "saving" | "saved" | "error"
+  const [saveState, setSaveState] = useState({});
 
   async function load() {
     const res = await fetch("/api/admin/videos");
@@ -22,6 +22,15 @@ export default function AdminDashboard() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: nextStatus }),
+    });
+    load();
+  }
+
+  async function setFeatured(video) {
+    await fetch(`/api/admin/videos/${video.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ featured: !video.featured }),
     });
     load();
   }
@@ -70,8 +79,18 @@ export default function AdminDashboard() {
         {videos.map((video) => (
           <div key={video.id} className="story-card p-3 flex gap-3 items-start">
             {video.thumbnailUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={video.thumbnailUrl} alt="" className="w-32 aspect-video object-cover shrink-0" />
+              <div style={{ position: "relative" }} className="shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={video.thumbnailUrl} alt="" className="w-32 aspect-video object-cover" />
+                {video.featured && (
+                  <span
+                    className="stamp"
+                    style={{ position: "absolute", top: 6, left: 6, background: "#fff" }}
+                  >
+                    Featured
+                  </span>
+                )}
+              </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
@@ -93,34 +112,21 @@ export default function AdminDashboard() {
               <div className="mb-2 h-[16px]">
                 {["language", "beatTags"].map((field) => {
                   const state = saveState[`${video.id}:${field}`];
-                  if (!state) return null;
-                  if (state === "saving") {
-                    return (
-                      <span key={field} className="story-meta">
-                        Saving…
-                      </span>
-                    );
-                  }
-                  if (state === "saved") {
-                    return (
-                      <span key={field} className="story-meta" style={{ color: "#2f8f4e" }}>
-                        Saved
-                      </span>
-                    );
-                  }
-                  if (state === "error") {
-                    return (
-                      <span key={field} className="story-meta" style={{ color: "var(--signal)" }}>
-                        Could not save — try again
-                      </span>
-                    );
-                  }
+                  if (state === "saving") return <span key={field} className="story-meta">Saving…</span>;
+                  if (state === "saved") return <span key={field} className="story-meta" style={{ color: "#2f8f4e" }}>Saved</span>;
+                  if (state === "error") return <span key={field} className="story-meta" style={{ color: "var(--signal)" }}>Could not save — try again</span>;
                   return null;
                 })}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button className="btn btn-outline text-[12px] py-1" onClick={() => toggleStatus(video)}>
                   {video.status === "published" ? "Hide" : "Publish"}
+                </button>
+                <button
+                  className={`btn text-[12px] py-1 ${video.featured ? "btn-primary" : "btn-outline"}`}
+                  onClick={() => setFeatured(video)}
+                >
+                  {video.featured ? "Featured" : "Set as featured"}
                 </button>
                 <button className="btn btn-danger-outline text-[12px] py-1" onClick={() => remove(video)}>
                   Remove

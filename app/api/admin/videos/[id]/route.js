@@ -27,6 +27,16 @@ export async function PATCH(request, { params }) {
   if (body.region !== undefined) data.region = body.region;
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
 
+  if (body.featured !== undefined) {
+    if (body.featured) {
+      await prisma.video.updateMany({
+        where: { featured: true },
+        data: { featured: false },
+      });
+    }
+    data.featured = body.featured;
+  }
+
   const video = await prisma.video.update({ where: { id }, data });
   return NextResponse.json({ video });
 }

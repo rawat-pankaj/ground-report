@@ -28,6 +28,7 @@ model Video {
   region         String?
   beatTags       String?
   status         String    @default("published") // published | hidden
+  featured       Boolean   @default(false)
   addedAt        DateTime  @default(now())
   channelId      String
   channel        Channel   @relation(fields: [channelId], references: [id])
