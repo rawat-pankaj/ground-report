@@ -3,15 +3,21 @@ import { prisma } from "../../../../lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// The public feed filters on short codes ("hi" / "en"). Admins naturally type
-// "Hindi" or "English" — normalize those to the codes so the filter chips work
-// without requiring the admin to remember the exact code.
 function normalizeLanguage(input) {
   if (!input) return null;
   const v = input.trim().toLowerCase();
   if (v === "hi" || v === "hindi" || v === "हिंदी") return "hi";
   if (v === "en" || v === "english") return "en";
   return input.trim();
+}
+
+function normalizeBeatTags(input) {
+  if (!input) return null;
+  const cleaned = input
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  return cleaned.length ? [...new Set(cleaned)].join(", ") : null;
 }
 
 export async function GET() {
@@ -22,8 +28,6 @@ export async function GET() {
   return NextResponse.json({ videos });
 }
 
-// Adds hand-picked videos from the channel/video picker. Creates the
-// channel row on first use, then attaches videos to it.
 export async function POST(request) {
   const body = await request.json();
   const { channel, videos, language, region, beatTags } = body;
@@ -55,7 +59,7 @@ export async function POST(request) {
         publishedAt: v.publishedAt ? new Date(v.publishedAt) : null,
         language: normalizeLanguage(language),
         region: region || null,
-        beatTags: beatTags || null,
+        beatTags: normalizeBeatTags(beatTags),
         channelId: channelRow.id,
       },
     });
