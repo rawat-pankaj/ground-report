@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: "Ground Report — independent journalism, curated",
@@ -21,7 +22,8 @@ export default function RootLayout({ children }) {
           </div>
         </header>
         <main className="max-w-3xl mx-auto px-4 py-8">{children}</main>
-      </body>
+	<Analytics />	
+	</body>      
     </html>
   );
 }
