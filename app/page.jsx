@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import BeatFilters from "./BeatFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -75,16 +76,7 @@ export default async function FeedPage({ searchParams }) {
         ))}
       </div>
       {beatOptions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-8">
-          <a href={hrefFor(language, "")} className={`tag ${beat === "" ? "tag-active" : ""}`}>
-            All beats
-          </a>
-          {beatOptions.map((b) => (
-            <a key={b} href={hrefFor(language, b)} className={`tag ${beat === b ? "tag-active" : ""}`}>
-              {b}
-            </a>
-          ))}
-        </div>
+       <BeatFilters beatOptions={beatOptions} activeBeat={beat} language={language} />
       )}
 
       {videos.length === 0 && (
