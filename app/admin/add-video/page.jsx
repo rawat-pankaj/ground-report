@@ -8,7 +8,6 @@ function AddVideoInner() {
   const [input, setInput] = useState(searchParams.get("video") || "");
   const [result, setResult] = useState(null);
   const [language, setLanguage] = useState("");
-  const [region, setRegion] = useState("");
   const [beatTags, setBeatTags] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -43,7 +42,6 @@ function AddVideoInner() {
         channel: result.channel,
         videos: [result.video],
         language,
-        region,
         beatTags,
       }),
     });
@@ -96,10 +94,6 @@ function AddVideoInner() {
             <div className="flex-1 min-w-[120px]">
               <label className="field-label">Language</label>
               <input className="input" placeholder="hi / en" value={language} onChange={(e) => setLanguage(e.target.value)} />
-            </div>
-            <div className="flex-1 min-w-[120px]">
-              <label className="field-label">Region</label>
-              <input className="input" value={region} onChange={(e) => setRegion(e.target.value)} />
             </div>
             <div className="flex-[2] min-w-[200px]">
               <label className="field-label">Beat tags</label>

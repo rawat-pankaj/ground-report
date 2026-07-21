@@ -11,7 +11,6 @@ function AddChannelInner() {
   const [nextPageToken, setNextPageToken] = useState(null);
   const [selected, setSelected] = useState({});
   const [language, setLanguage] = useState("");
-  const [region, setRegion] = useState("");
   const [beatTags, setBeatTags] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -66,7 +65,7 @@ function AddChannelInner() {
     const res = await fetch("/api/admin/videos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel, videos: picked, language, region, beatTags }),
+      body: JSON.stringify({ channel, videos: picked, language, beatTags }),
     });
     setStatus("idle");
     if (res.ok) {
@@ -114,12 +113,6 @@ function AddChannelInner() {
               placeholder="language (hi/en)"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-            />
-            <input
-              className="input text-[13px] w-32"
-              placeholder="region"
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
             />
             <input
               className="input text-[13px] flex-1 min-w-[160px]"

@@ -84,12 +84,6 @@ export default function AdminDashboard() {
                   onBlur={(e) => updateTags(video, "language", e.target.value)}
                 />
                 <input
-                  className="input text-[12px] w-28"
-                  placeholder="region"
-                  defaultValue={video.region || ""}
-                  onBlur={(e) => updateTags(video, "region", e.target.value)}
-                />
-                <input
                   className="input text-[12px] flex-1 min-w-[140px]"
                   placeholder="beat tags, comma separated"
                   defaultValue={video.beatTags || ""}
@@ -97,7 +91,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="mb-2 h-[16px]">
-                {["language", "region", "beatTags"].map((field) => {
+                {["language", "beatTags"].map((field) => {
                   const state = saveState[`${video.id}:${field}`];
                   if (!state) return null;
                   if (state === "saving") {
