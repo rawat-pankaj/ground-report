@@ -59,7 +59,7 @@ export default async function FeedPage({ searchParams }) {
     <div>
       <div className="mb-6">
         <p className="story-meta !text-[13px] !normal-case" style={{ color: "var(--ink-soft)" }}>
-          Real issues. Real people. Real ground. Stories about the people.
+          Real issues. Stories about the people.
         </p>
       </div>
 
