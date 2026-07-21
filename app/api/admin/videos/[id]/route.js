@@ -19,6 +19,7 @@ function normalizeBeatTags(input) {
 }
 
 export async function PATCH(request, { params }) {
+  const { id } = await params;
   const body = await request.json();
   const data = {};
   if (body.status) data.status = body.status;
@@ -26,11 +27,12 @@ export async function PATCH(request, { params }) {
   if (body.region !== undefined) data.region = body.region;
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
 
-  const video = await prisma.video.update({ where: { id: params.id }, data });
+  const video = await prisma.video.update({ where: { id }, data });
   return NextResponse.json({ video });
 }
 
 export async function DELETE(request, { params }) {
-  await prisma.video.delete({ where: { id: params.id } });
+  const { id } = await params;
+  await prisma.video.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

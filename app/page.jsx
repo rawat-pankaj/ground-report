@@ -23,8 +23,9 @@ function timeAgo(date) {
 }
 
 export default async function FeedPage({ searchParams }) {
-  const language = searchParams?.language || "";
-  const beat = searchParams?.beat || "";
+  const params = await searchParams;
+  const language = params?.language || "";
+  const beat = params?.beat || "";
 
   const where = { status: "published" };
   if (language) where.language = language;

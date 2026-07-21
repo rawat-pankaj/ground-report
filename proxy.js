@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 // Simple shared-password admin protection. Good enough for a small trusted
 // editorial team; swap for real auth (NextAuth etc.) if the team grows.
-export function middleware(request) {
+export function proxy(request) {
   const { pathname } = request.nextUrl;
   const session = request.cookies.get("admin_session")?.value;
   const isAuthed = session && session === process.env.ADMIN_PASSWORD;
