@@ -22,51 +22,6 @@ function timeAgo(date) {
   return `${months} month${months > 1 ? "s" : ""} ago`;
 }
 
-function FeaturedCard({ video }) {
-  const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
-  return (
-    <a
-      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col col-span-2 row-span-2"
-    >
-      <div style={{ position: "relative", width: "100%" }}>
-        {video.thumbnailUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={video.thumbnailUrl}
-            alt=""
-            className="w-full object-cover"
-            style={{ aspectRatio: "16/9" }}
-          />
-        )}
-        <span style={{
-          position: "absolute",
-          top: 10,
-          left: 10,
-          background: "var(--signal)",
-          color: "#fff",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "10px",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          padding: "3px 8px",
-        }}>
-          Featured
-        </span>
-      </div>
-      <div className="p-4 flex-1 flex flex-col justify-between gap-3 w-full">
-        <div>
-          <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
-          <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
-        </div>
-        {primaryTag && <span className="stamp self-start">{primaryTag}</span>}
-      </div>
-    </a>
-  );
-}
-
 function StoryCard({ video }) {
   const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
@@ -74,24 +29,20 @@ function StoryCard({ video }) {
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col"
+      className="story-card overflow-hidden flex flex-col items-start"
     >
       {video.thumbnailUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={video.thumbnailUrl} alt="" className="w-full aspect-video object-cover shrink-0" />
       )}
-      <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
+      <div className="p-4 flex-1 flex flex-col justify-between gap-3 w-full">
         <div>
-          <p className="story-headline text-[13px] leading-snug mb-1">{video.title}</p>
-          <p className="story-meta" style={{ fontSize: "10px" }}>
+          <p className="story-headline text-[14px] leading-snug mb-2">{video.title}</p>
+          <p className="story-meta">
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
         </div>
-        {primaryTag && (
-          <span className="stamp self-start" style={{ fontSize: "9px" }}>
-            {primaryTag}
-          </span>
-        )}
+        {primaryTag && <span className="stamp self-start">{primaryTag}</span>}
       </div>
     </a>
   );
@@ -124,16 +75,37 @@ export default async function FeedPage({ searchParams }) {
 
   const published = await prisma.video.findMany({
     where: { status: "published" },
-    select: { beatTags: true },
+    select: { beatTags: true, channel: { select: { name: true } } },
   });
 
   const beatOptions = [
     ...new Set(
-      published.flatMap((v) =>
-        v.beatTags ? v.beatTags.split(",").map((t) => t.trim()) : []
-      )
+      published.flatMap((v) => (v.beatTags ? v.beatTags.split(",").map((t) => t.trim()) : []))
     ),
   ].filter(Boolean);
+
+  const beatCounts = {};
+  published.forEach((v) => {
+    if (!v.beatTags) return;
+    v.beatTags.split(",").forEach((t) => {
+      const tag = t.trim();
+      if (tag) beatCounts[tag] = (beatCounts[tag] || 0) + 1;
+    });
+  });
+  const trendingTags = Object.entries(beatCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag]) => tag);
+
+  const channelCounts = {};
+  published.forEach((v) => {
+    const name = v.channel?.name;
+    if (name) channelCounts[name] = (channelCounts[name] || 0) + 1;
+  });
+  const topChannels = Object.entries(channelCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([name]) => name);
 
   function hrefFor(nextLanguage, nextBeat) {
     const p = new URLSearchParams();
@@ -162,9 +134,40 @@ export default async function FeedPage({ searchParams }) {
           </a>
         ))}
       </div>
-
       {beatOptions.length > 0 && (
         <BeatFilters beatOptions={beatOptions} activeBeat={beat} language={language} />
+      )}
+
+      {hero && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          <div className="lg:col-span-3"><StoryCard video={hero} /></div>
+          <div className="flex flex-col gap-3">
+            {trendingTags.length > 0 && (
+              <div className="panel">
+                <p className="eyebrow mb-2">Trending tags</p>
+                <div className="flex flex-wrap gap-2">
+                  {trendingTags.map((tag) => (
+                    <a key={tag} href={hrefFor(language, tag)} className="tag">
+                      {tag}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {topChannels.length > 0 && (
+              <div className="panel">
+                <p className="eyebrow mb-2">Top channels</p>
+                <div className="flex flex-col gap-1">
+                  {topChannels.map((name) => (
+                    <p key={name} className="text-[13px]" style={{ color: "var(--ink)" }}>
+                      {name}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {videos.length === 0 && !hero && (
@@ -176,8 +179,7 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {hero && <FeaturedCard video={hero} />}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />
         ))}
