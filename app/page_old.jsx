@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+﻿import { prisma } from "../lib/prisma";
 import BeatFilters from "./BeatFilters";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ function timeAgo(date) {
 function StoryCard({ video }) {
   const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
-    <a
+    
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
@@ -112,7 +112,7 @@ export default async function FeedPage({ searchParams }) {
     if (nextLanguage) p.set("language", nextLanguage);
     if (nextBeat) p.set("beat", nextBeat);
     const qs = p.toString();
-    return qs ? "/" + "?" + qs : "/";
+    return qs ? ("/?") + qs : "/";
   }
 
   return (
@@ -125,7 +125,7 @@ export default async function FeedPage({ searchParams }) {
 
       <div className="flex flex-wrap gap-2 mb-2">
         {LANGUAGES.map((l) => (
-          <a
+          
             key={l.value}
             href={hrefFor(l.value, beat)}
             className={"tag " + (language === l.value ? "tag-active" : "")}
