@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import BeatFilters from "./BeatFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -132,6 +133,18 @@ export default async function FeedPage({ searchParams }) {
     take: 100,
   });
 
+  const published = await prisma.video.findMany({
+    where: { status: "published" },
+    select: { beatTags: true },
+  });
+
+  const beatOptions = [
+    ...new Set(
+      published.flatMap((v) =>
+        v.beatTags ? v.beatTags.split(",").map((t) => t.trim()) : []
+      )
+    ),
+  ].filter(Boolean);
 
   function hrefFor(nextLanguage, nextBeat) {
     const p = new URLSearchParams();
@@ -161,6 +174,9 @@ export default async function FeedPage({ searchParams }) {
         ))}
       </div>
 
+      {beatOptions.length > 0 && (
+        <BeatFilters beatOptions={beatOptions} activeBeat={beat} language={language} />
+      )}
 
       {videos.length === 0 && !hero && (
         <div className="panel text-center py-12">
