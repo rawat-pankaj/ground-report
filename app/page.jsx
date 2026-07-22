@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+﻿import { prisma } from "../lib/prisma";
 import BeatFilters from "./BeatFilters";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ function StoryCard({ video }) {
   const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
     
-      <a href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
+      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
       className="story-card overflow-hidden flex flex-col items-start"
@@ -112,7 +112,7 @@ export default async function FeedPage({ searchParams }) {
     if (nextLanguage) p.set("language", nextLanguage);
     if (nextBeat) p.set("beat", nextBeat);
     const qs = p.toString();
-    return qs ? `/?${qs}` : "/";
+    return qs ? ("/?") + qs : "/";
   }
 
   return (
@@ -128,7 +128,7 @@ export default async function FeedPage({ searchParams }) {
           
             key={l.value}
             href={hrefFor(l.value, beat)}
-            className={`tag ${language === l.value ? "tag-active" : ""}`}
+            className={"tag " + (language === l.value ? "tag-active" : "")}
           >
             {l.label}
           </a>
@@ -174,7 +174,7 @@ export default async function FeedPage({ searchParams }) {
         <div className="panel text-center py-12">
           <p className="story-meta mb-2">No dispatches yet</p>
           <p style={{ color: "var(--ink-soft)" }} className="text-sm">
-            Nothing matches these filters. Try "All" above, or come back once the desk has curated more.
+            Nothing matches these filters. Try "All" above.
           </p>
         </div>
       )}
