@@ -144,11 +144,8 @@ export default async function FeedPage({ searchParams }) {
   return (
     <div>
       <div className="mb-6">
-        <p style={{ color: "var(--ink)", fontSize: "15px", fontWeight: 600, fontFamily: "'IBM Plex Sans', sans-serif", marginBottom: "4px" }}>
-          Ground-level reporting on issues that affect ordinary people!
-        </p>
-        <p className="story-meta !text-[11px] !normal-case" style={{ color: "var(--ink-soft)" }}>
-          Picked by hand &nbsp;|&nbsp; Not by algorithm
+        <p className="story-meta !text-[13px] !normal-case" style={{ color: "var(--ink-soft)" }}>
+          Real issues. Stories about the people.
         </p>
       </div>
 
@@ -183,4 +180,3 @@ export default async function FeedPage({ searchParams }) {
     </div>
   );
 }
-
