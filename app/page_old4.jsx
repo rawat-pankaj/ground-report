@@ -23,11 +23,7 @@ function timeAgo(date) {
 }
 
 function FeaturedCard({ video }) {
-  const allTags = video.beatTags
-    ? video.beatTags.split(",").map((t) => t.trim()).filter(Boolean)
-    : [];
-  const langLabel = video.language === "hi" ? "हिंदी" : video.language === "en" ? "English" : null;
-
+  const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
     <a
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
@@ -60,38 +56,12 @@ function FeaturedCard({ video }) {
           Featured
         </span>
       </div>
-      <div className="p-4 flex-1 flex flex-col gap-3 w-full">
+      <div className="p-4 flex-1 flex flex-col justify-between gap-3 w-full">
         <div>
           <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
           <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          {langLabel && (
-            <span className="tag" style={{ fontSize: "9px", padding: "2px 7px" }}>
-              {langLabel}
-            </span>
-          )}
-          {allTags.map((tag) => (
-            <span key={tag} className="stamp" style={{ transform: "rotate(-2deg)" }}>
-              {tag}
-            </span>
-          ))}
-        </div>
-        <span style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "var(--ink)",
-          color: "var(--paper)",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "10px",
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-          padding: "8px 14px",
-          alignSelf: "flex-start",
-        }}>
-          Watch on YouTube →
-        </span>
+        {primaryTag && <span className="stamp self-start">{primaryTag}</span>}
       </div>
     </a>
   );
