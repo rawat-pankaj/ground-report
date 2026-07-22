@@ -23,7 +23,10 @@ function timeAgo(date) {
 }
 
 function FeaturedCard({ video }) {
-
+  const allTags = video.beatTags
+    ? video.beatTags.split(",").map((t) => t.trim()).filter(Boolean)
+    : [];
+  const langLabel = video.language === "hi" ? "हिंदी" : video.language === "en" ? "English" : null;
 
   return (
     <a
@@ -62,7 +65,18 @@ function FeaturedCard({ video }) {
           <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
           <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
         </div>
-
+        <div className="flex flex-wrap gap-2 items-center">
+          {langLabel && (
+            <span className="tag" style={{ fontSize: "9px", padding: "2px 7px" }}>
+              {langLabel}
+            </span>
+          )}
+          {allTags.map((tag) => (
+            <span key={tag} className="stamp" style={{ transform: "rotate(-2deg)" }}>
+              {tag}
+            </span>
+          ))}
+        </div>
         <span style={{
           display: "inline-flex",
           alignItems: "center",
@@ -84,6 +98,7 @@ function FeaturedCard({ video }) {
 }
 
 function StoryCard({ video }) {
+  const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
     <a
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
@@ -102,7 +117,11 @@ function StoryCard({ video }) {
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
         </div>
-
+        {primaryTag && (
+          <span className="stamp self-start" style={{ fontSize: "9px" }}>
+            {primaryTag}
+          </span>
+        )}
       </div>
     </a>
   );
