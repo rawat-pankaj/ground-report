@@ -26,7 +26,7 @@ function StoryCard({ video }) {
   const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
   return (
     
-      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
+      <a href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
       className="story-card overflow-hidden flex flex-col items-start"
