@@ -37,7 +37,7 @@ function StoryCard({ video }) {
       )}
       <div className="p-4 flex-1 flex flex-col justify-between gap-3 w-full">
         <div>
-          <p className="story-headline text-[14px] leading-snug mb-2">{video.title}</p>
+          <p className="story-headline text-[16px] leading-snug mb-2">{video.title}</p>
           <p className="story-meta">
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
@@ -139,8 +139,8 @@ export default async function FeedPage({ searchParams }) {
       )}
 
       {hero && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-          <div className="lg:col-span-3"><StoryCard video={hero} /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4 mb-8">
+          <StoryCard video={hero} />
           <div className="flex flex-col gap-3">
             {trendingTags.length > 0 && (
               <div className="panel">
@@ -179,7 +179,7 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />
         ))}
