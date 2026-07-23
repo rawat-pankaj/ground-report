@@ -32,6 +32,9 @@
 - [ ] **Admin: bulk language/tag edit** — Currently tags are edited one video at a time. A bulk-select-and-tag flow would speed up curation.
 - [ ] **Admin: sort/filter dashboard** — Admin video list grows long. Filtering by language, beat, or status would help.
 - [ ] **Nomination email alert** — When a new suggestion comes in via the public form, send a notification email to the admin.
+- [ ] **About section on home page
+- [ ] **Today's date on top of page
+- [ ] **Page footer
 
 ---
 

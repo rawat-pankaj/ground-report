@@ -104,11 +104,6 @@ body {
   background: #fff;
 }
 
-.story-card:hover {
-  border-color: var(--ink);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-}
-
 .story-card:hover .story-headline {
   color: var(--signal);
 }
@@ -241,4 +236,3 @@ body {
   border: none;
   border-top: 1px solid var(--rule);
 }
-
