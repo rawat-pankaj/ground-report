@@ -28,9 +28,7 @@ export default function SuggestPage() {
   if (status === "sent") {
     return (
       <div className="panel">
-        <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "8px" }}>
-          Suggestion received.
-        </h2>
+        <p className="story-headline mb-1">Suggestion received.</p>
         <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
           A human will take a look before it's added to the feed.
         </p>
@@ -39,10 +37,9 @@ export default function SuggestPage() {
   }
 
   return (
-    <div className="max-w-xl">
-      <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "8px" }}>
-        Suggest a video
-      </h1>
+    <div>
+      <p className="eyebrow mb-1">Route a tip to the desk</p>
+      <h1 className="masthead-mark text-[22px] mb-2">Suggest a source</h1>
       <p className="text-sm mb-6" style={{ color: "var(--ink-soft)" }}>
         Know a channel or a specific report worth surfacing? Tell us and we'll review it by hand.
       </p>
