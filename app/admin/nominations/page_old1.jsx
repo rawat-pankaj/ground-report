@@ -37,7 +37,7 @@ export default function NominationsPage() {
   return (
     <div>
       <p className="eyebrow mb-1">Review queue</p>
-      <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "16px" }}>Nominations ({pending.length} pending)</h1>
+      <h1 className="masthead-mark text-[22px] mb-4" style={{ color: "var(--ink)" }}>Nominations ({pending.length} pending)</h1>
 
       <div className="flex flex-col gap-3 mb-8">
         {pending.map((n) => (

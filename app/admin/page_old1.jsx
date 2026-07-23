@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em" }}>Curated videos ({videos.length})</h1>
+          <h1 className="masthead-mark text-[22px]" style={{ color: "var(--ink)" }}>Curated videos ({videos.length})</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/add-video" className="btn btn-outline">+ Video</a>

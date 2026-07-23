@@ -57,7 +57,7 @@ function AddVideoInner() {
   return (
     <div>
       <p className="eyebrow mb-1">Single dispatch</p>
-      <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "16px" }}>Add one video</h1>
+      <h1 className="masthead-mark text-[22px] mb-4" style={{ color: "var(--ink)" }}>Add one video</h1>
 
       <form onSubmit={handleLookup} className="panel flex gap-2 mb-6">
         <input
