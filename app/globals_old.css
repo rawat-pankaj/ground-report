@@ -41,17 +41,16 @@ body {
 
 /* Masthead */
 .masthead {
-  border-bottom: none;
-  background: #1A6EBD;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
 }
 
 .masthead-mark {
   font-family: "Archivo Narrow", sans-serif;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  font-size: 28px;
-  color: #fff;
+  font-size: 20px;
 }
 
 .masthead-nav a {
@@ -59,14 +58,14 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.85);
+  color: var(--ink-soft);
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
 }
 
 .masthead-nav a:hover {
-  color: #fff;
-  border-bottom-color: rgba(255,255,255,0.5);
+  color: var(--signal);
+  border-bottom-color: var(--signal);
 }
 
 /* Tag / filter chips */
