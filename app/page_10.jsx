@@ -148,7 +148,7 @@ export default async function FeedPage({ searchParams }) {
           Ground-level reporting on issues that affect ordinary people!
         </p>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
+          Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
       </div>
 
