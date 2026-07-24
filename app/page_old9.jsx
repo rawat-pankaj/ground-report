@@ -96,7 +96,7 @@ function StoryCard({ video }) {
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
-          <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
+          <p className="story-headline text-[13px] leading-snug mb-1">{video.title}</p>
           <p className="story-meta" style={{ fontSize: "10px" }}>
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
