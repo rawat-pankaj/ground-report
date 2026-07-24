@@ -8,7 +8,7 @@
 ## 🐛 Known Issues
 
 - [ ] **Featured card empty space** — `row-span-2` forces the hero card taller than its content when adjacent cards have short headlines. Workaround: accepted as-is for now. Fix: remove `row-span-2` from `FeaturedCard` in `app/page.jsx`.
-- [ ] **Hindi text at small sizes** — Devanagari script at 13px (regular story cards) can feel cramped on dense titles. Consider bumping `StoryCard` headline to 14px.
+- [X] **Hindi text at small sizes** — Devanagari script at 13px (regular story cards) can feel cramped on dense titles. Consider bumping `StoryCard` headline to 14px.
 - [X] **Card hover state** — Only the headline turns red on hover. A subtle border darkening or background shift on the card itself would make it feel more clearly clickable.
 - [ ] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one."
 - [ ] **Vercel Speed Insights PR** — Vercel bot auto-created a PR to add Speed Insights on a separate branch. Not yet merged. Review and merge or close at `github.com/rawat-pankaj/ground-report/pulls`.
@@ -32,7 +32,7 @@
 - [ ] **Admin: bulk language/tag edit** — Currently tags are edited one video at a time. A bulk-select-and-tag flow would speed up curation.
 - [ ] **Admin: sort/filter dashboard** — Admin video list grows long. Filtering by language, beat, or status would help.
 - [ ] **Nomination email alert** — When a new suggestion comes in via the public form, send a notification email to the admin.
-- [ ] **About section on home page
+- [X] **About section on home page
 - [ ] **Today's date on top of page
 - [ ] **Page footer
 

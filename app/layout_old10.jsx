@@ -16,7 +16,6 @@ export default function RootLayout({ children }) {
               Ground Report
             </a>
             <nav className="masthead-nav flex items-center gap-5">
-              <a href="/about">About</a>
               <a
                 href="/suggest"
                 style={{
