@@ -37,18 +37,7 @@ export async function PATCH(request, { params }) {
     data.featured = body.featured;
   }
 
-  if (body.categoryIds !== undefined) {
-    data.categories = {
-      deleteMany: {},
-      create: body.categoryIds.map((categoryId) => ({ categoryId })),
-    };
-  }
-
-  const video = await prisma.video.update({
-    where: { id },
-    data,
-    include: { categories: { include: { category: true } } },
-  });
+  const video = await prisma.video.update({ where: { id }, data });
   return NextResponse.json({ video });
 }
 

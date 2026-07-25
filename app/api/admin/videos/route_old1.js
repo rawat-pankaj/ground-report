@@ -22,7 +22,7 @@ function normalizeBeatTags(input) {
 
 export async function GET() {
   const videos = await prisma.video.findMany({
-    include: { channel: true, categories: { include: { category: true } } },
+    include: { channel: true },
     orderBy: [{ featured: "desc" }, { addedAt: "desc" }],
   });
   return NextResponse.json({ videos });

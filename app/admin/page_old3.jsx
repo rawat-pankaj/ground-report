@@ -4,18 +4,12 @@ import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [saveState, setSaveState] = useState({});
 
   async function load() {
-    const [videosRes, categoriesRes] = await Promise.all([
-      fetch("/api/admin/videos"),
-      fetch("/api/admin/categories"),
-    ]);
-    const videosData = await videosRes.json();
-    const categoriesData = await categoriesRes.json();
-    setVideos(videosData.videos);
-    setCategories(categoriesData.categories || []);
+    const res = await fetch("/api/admin/videos");
+    const data = await res.json();
+    setVideos(data.videos);
   }
 
   useEffect(() => {
@@ -58,20 +52,6 @@ export default function AdminDashboard() {
     } catch {
       setSaveState((prev) => ({ ...prev, [key]: "error" }));
     }
-  }
-
-  async function toggleCategory(video, categoryId) {
-    const currentIds = video.categories.map((vc) => vc.category.id);
-    const nextIds = currentIds.includes(categoryId)
-      ? currentIds.filter((id) => id !== categoryId)
-      : [...currentIds, categoryId];
-
-    await fetch(`/api/admin/videos/${video.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ categoryIds: nextIds }),
-    });
-    load();
   }
 
   async function remove(video) {
@@ -146,25 +126,6 @@ export default function AdminDashboard() {
                   onBlur={(e) => updateTags(video, "beatTags", e.target.value)}
                 />
               </div>
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {categories.map((category) => {
-                    const isActive = (video.categories || []).some(
-                      (vc) => vc.category.id === category.id
-                    );
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        className={"tag " + (isActive ? "tag-active" : "")}
-                        onClick={() => toggleCategory(video, category.id)}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
               <div className="mb-2 h-[16px]">
                 {["language", "beatTags"].map((field) => {
                   const state = saveState[`${video.id}:${field}`];
