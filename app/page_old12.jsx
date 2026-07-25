@@ -38,6 +38,10 @@ function FeaturedCard({ video }) {
           alt=""
           className="w-full object-cover"
           style={{ aspectRatio: "16/9" }}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = video.thumbnailUrl;
+          }}
         />
         <span style={{
           position: "absolute",
