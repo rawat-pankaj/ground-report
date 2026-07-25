@@ -24,7 +24,6 @@ export default function AdminLayout({ children }) {
           <a href="/admin/add" style={navLinkStyle}>Add channel</a>
           <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
           <a href="/admin/nominations" style={navLinkStyle}>Nominations</a>
-          <a href="/admin/categories" style={navLinkStyle}>Categories</a>
         </nav>
         <a
           href="#"
