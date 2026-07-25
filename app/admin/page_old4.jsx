@@ -66,16 +66,12 @@ export default function AdminDashboard() {
       ? currentIds.filter((id) => id !== categoryId)
       : [...currentIds, categoryId];
 
-    const res = await fetch(`/api/admin/videos/${video.id}`, {
+    await fetch(`/api/admin/videos/${video.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ categoryIds: nextIds }),
     });
-    if (!res.ok) return;
-    const data = await res.json();
-    setVideos((prev) =>
-      prev.map((v) => (v.id === video.id ? { ...v, categories: data.video.categories } : v))
-    );
+    load();
   }
 
   async function remove(video) {
