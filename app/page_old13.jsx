@@ -139,14 +139,6 @@ export default async function FeedPage({ searchParams }) {
     return qs ? "/" + "?" + qs : "/";
   }
 
-  const today = new Date().toLocaleDateString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <div>
       <div className="mb-8">
@@ -154,8 +146,7 @@ export default async function FeedPage({ searchParams }) {
           Ground-level reporting on issues that affect ordinary people!
         </p>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          <span style={{ color: "var(--signal)", fontWeight: 500 }}>{today}</span>
-          &nbsp;&nbsp;|&nbsp;&nbsp; Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
+          Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
       </div>
 
