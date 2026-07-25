@@ -34,7 +34,6 @@
 - [ ] **About section on home page - Translate to Hindi
 - [ ] **Page footer
 - [ ] **News/Story Categories
-- [ ] **Feature Story visible tag in Admin section
 
 ---
 
@@ -67,6 +66,7 @@
 - [X] Card hover state** — Only the headline turns red on hover. A subtle border darkening or background shift on the card itself would make it feel more clearly clickable.
 - [X] **Thumbnail of Featured story is not very clear, it is getting pixeleted
 - [X] **Today's date on top of page
+- [X] **Feature Story visible tag in Admin section
 ---
 
 *Last updated: 2026-07-25*
