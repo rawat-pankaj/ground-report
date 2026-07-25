@@ -22,7 +22,7 @@ function timeAgo(date) {
 }
 
 function FeaturedCard({ video }) {
-  const heroThumbnail = `https://i.ytimg.com/vi/${video.youtubeVideoId}/maxresdefault.jpg`;
+
 
   return (
     <a
@@ -32,17 +32,15 @@ function FeaturedCard({ video }) {
       className="story-card overflow-hidden flex flex-col col-span-2 row-span-2"
     >
       <div style={{ position: "relative", width: "100%" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={heroThumbnail}
-          alt=""
-          className="w-full object-cover"
-          style={{ aspectRatio: "16/9" }}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = video.thumbnailUrl;
-          }}
-        />
+        {video.thumbnailUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={video.thumbnailUrl}
+            alt=""
+            className="w-full object-cover"
+            style={{ aspectRatio: "16/9" }}
+          />
+        )}
         <span style={{
           position: "absolute",
           top: 10,
@@ -185,3 +183,4 @@ export default async function FeedPage({ searchParams }) {
     </div>
   );
 }
+
