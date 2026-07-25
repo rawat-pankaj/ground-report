@@ -10,7 +10,6 @@
 - [ ] **Featured card empty space** — `row-span-2` forces the hero card taller than its content when adjacent cards have short headlines. Workaround: accepted as-is for now. Fix: remove `row-span-2` from `FeaturedCard` in `app/page.jsx`.
 - [ ] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one."
 - [ ] **Vercel Speed Insights PR** — Vercel bot auto-created a PR to add Speed Insights on a separate branch. Not yet merged. Review and merge or close at `github.com/rawat-pankaj/ground-report/pulls`.
-- [ ] **Beat filter is case-sensitive** — `app/api/videos/route.js` uses Prisma `beatTags: { contains: beat }`, which maps to case-sensitive SQL `LIKE` on Postgres. Verified live: `/api/videos?beat=paper leak` → 3 results, `/api/videos?beat=Paper Leak` → 0. Masked today because admin normalizes beat tags to lowercase, so internal links always match. Becomes a real bug if beat URLs are ever exposed/typed by users (relevant to the backlog "clickable beat tags" item). Fix: add `mode: "insensitive"` to the `contains` filter.
 
 
 ---
@@ -35,6 +34,7 @@
 - [ ] **About section on home page - Translate to Hindi
 - [ ] **Page footer
 - [ ] **News/Story Categories
+- [ ] **Testing entire site
 
 ---
 
@@ -68,21 +68,6 @@
 - [X] **Thumbnail of Featured story is not very clear, it is getting pixeleted
 - [X] **Today's date on top of page
 - [X] **Feature Story visible tag in Admin section
----
-
-## 🧪 Testing Log
-
-**2026-07-25 — Live testing pass** (About, /suggest, filtered URLs, public API), tested against production `ground-report-sable.vercel.app`:
-
-- [x] **`/about`** — 200, prerendered (static). Title/meta correct, all sections render (intro, "What we look for", "How videos are chosen", "Anyone can contribute"), links back to `/` and `/suggest` work. Note: English-only (Hindi translation still open in backlog).
-- [x] **`/suggest`** — 200, prerendered. Form renders with channel/video toggle + all 3 fields (link/name, reason, optional contact) + submit. Backend `app/api/nominations/route.js` (POST → `Nomination` table) reviewed: validates non-empty `input`, defaults `type` to "channel", trims optional fields, returns 400 on empty input. Minor: page `<title>` falls back to the generic site title rather than a suggest-specific one (SEO nit, not a bug).
-- [x] **Public API `/api/videos`** — 200, valid JSON, 63 videos, correct shape (each includes nested `channel`), ordered by `addedAt DESC`, all `status: published`. Featured video correctly carries `featured: true`.
-- [x] **`/api/videos?language=en`** — 200, 8 results, all `language: en`. Correct.
-- [x] **`/api/videos?language=xx`** (invalid) — 200, `{"videos":[]}`. Graceful empty, no error.
-- [x] **`/api/videos?beat=paper leak`** — 200, 3 results, all match. URL-encoded space handled.
-- [x] **Filtered page `/?language=en`** — 200, "English" tag active, 8 cards, featured hero correctly suppressed under filter, dateline renders. Confirms Option-1 date change works on filtered views.
-- [x] **404 handling** — bad route (`/nonexistent-xyz`) returns proper 404 with masthead intact, no crash.
-- [ ] **FINDING: beat filter case-sensitive** — logged under Known Issues above.
 
 ---
 
