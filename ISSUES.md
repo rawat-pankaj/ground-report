@@ -32,7 +32,6 @@
 - [ ] **Admin: sort/filter dashboard** — Admin video list grows long. Filtering by language, beat, or status would help.
 - [ ] **Nomination email alert** — When a new suggestion comes in via the public form, send a notification email to the admin.
 - [ ] **About section on home page - Translate to Hindi
-- [ ] **Today's date on top of page
 - [ ] **Page footer
 - [ ] **News/Story Categories
 - [ ] **Feature Story visible tag in Admin section
@@ -67,7 +66,7 @@
 - [X] Hindi text at small sizes** — Devanagari script at 13px (regular story cards) can feel cramped on dense titles. Consider bumping `StoryCard` headline to 14px.
 - [X] Card hover state** — Only the headline turns red on hover. A subtle border darkening or background shift on the card itself would make it feel more clearly clickable.
 - [X] **Thumbnail of Featured story is not very clear, it is getting pixeleted
-
+- [X] **Today's date on top of page
 ---
 
 *Last updated: 2026-07-25*

@@ -84,7 +84,7 @@ export default function AdminDashboard() {
                 {video.featured && (
                   <span
                     className="stamp"
-                    style={{ position: "absolute", top: 6, left: 6, background: "var(--signal)", color: "#fff" }}
+                    style={{ position: "absolute", top: 6, left: 6, background: "#fff" }}
                   >
                     Featured
                   </span>
@@ -92,25 +92,7 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                {video.featured && (
-                  <span
-                    style={{
-                      background: "var(--signal)",
-                      color: "#fff",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "10px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      padding: "2px 8px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    Featured Story
-                  </span>
-                )}
-                <p className="story-headline text-[14px] leading-snug">{video.title}</p>
-              </div>
+              <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
               <p className="story-meta mb-2">{video.channel.name}</p>
               <div className="flex flex-wrap gap-2 mb-1 items-center">
                 <input
