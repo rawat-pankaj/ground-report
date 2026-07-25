@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "About — PeopleLens",
+  title: "About — Ground Report",
   description: "Why this exists and how videos are chosen.",
 };
 
