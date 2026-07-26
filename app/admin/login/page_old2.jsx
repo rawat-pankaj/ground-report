@@ -27,6 +27,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="max-w-sm mx-auto">
+      <p className="eyebrow mb-1">Desk access</p>
       <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "16px" }}>Admin login</h1>
       <form onSubmit={handleSubmit} className="panel flex flex-col gap-4">
         <input
