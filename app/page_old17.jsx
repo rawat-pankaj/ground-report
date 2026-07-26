@@ -151,7 +151,7 @@ export default async function FeedPage({ searchParams }) {
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-8">
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
           {today}
         </p>
