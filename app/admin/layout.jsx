@@ -1,6 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 export default function AdminLayout({ children }) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
+
   const navLinkStyle = {
     fontFamily: "'IBM Plex Mono', monospace",
     fontSize: "12px",
@@ -18,39 +23,41 @@ export default function AdminLayout({ children }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: "1px solid var(--rule)" }}>
-        <div className="flex items-center gap-5">
-          <span
-            style={{
-              fontFamily: "'Archivo Narrow', sans-serif",
-              fontWeight: 700,
-              fontSize: "13px",
-              color: "var(--ink)",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
+      {!isLoginPage && (
+        <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: "1px solid var(--rule)" }}>
+          <div className="flex items-center gap-5">
+            <span
+              style={{
+                fontFamily: "'Archivo Narrow', sans-serif",
+                fontWeight: 700,
+                fontSize: "13px",
+                color: "var(--ink)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Admin
+            </span>
+            <nav className="flex items-center gap-5">
+              <a href="/admin" style={navLinkStyle}>Published Videos</a>
+              <a href="/admin/nominations" style={navLinkStyle}>Suggested Videos</a>
+              <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
+              <a href="/admin/add" style={navLinkStyle}>Add channel</a>
+              <a href="/admin/categories" style={navLinkStyle}>Categories</a>
+            </nav>
+          </div>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              fetch("/api/auth/logout", { method: "POST" }).then(() => (window.location.href = "/"));
             }}
+            style={navLinkStyle}
           >
-            Admin
-          </span>
-          <nav className="flex items-center gap-5">
-            <a href="/admin" style={navLinkStyle}>Published Videos</a>
-            <a href="/admin/nominations" style={navLinkStyle}>Suggested Videos</a>
-            <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
-            <a href="/admin/add" style={navLinkStyle}>Add channel</a>
-            <a href="/admin/categories" style={navLinkStyle}>Categories</a>
-          </nav>
+            Log out
+          </a>
         </div>
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            fetch("/api/auth/logout", { method: "POST" }).then(() => (window.location.href = "/"));
-          }}
-          style={navLinkStyle}
-        >
-          Log out
-        </a>
-      </div>
+      )}
       {children}
     </div>
   );
