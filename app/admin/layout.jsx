@@ -24,39 +24,16 @@ export default function AdminLayout({ children }) {
   return (
     <div>
       {!isLoginPage && (
-        <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: "1px solid var(--rule)" }}>
-          <div className="flex items-center gap-5">
-            <span
-              style={{
-                fontFamily: "'Archivo Narrow', sans-serif",
-                fontWeight: 700,
-                fontSize: "13px",
-                color: "var(--ink)",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-              }}
-            >
-              Admin
-            </span>
-            <nav className="flex items-center gap-5">
-              <a href="/admin" style={navLinkStyle}>Published Videos</a>
-              <a href="/admin/nominations" style={navLinkStyle}>Suggested Videos</a>
-              <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
-              <a href="/admin/add" style={navLinkStyle}>Add channel</a>
-              <a href="/admin/categories" style={navLinkStyle}>Categories</a>
-            </nav>
-          </div>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              fetch("/api/auth/logout", { method: "POST" }).then(() => (window.location.href = "/"));
-            }}
-            style={navLinkStyle}
-          >
-            Log out
-          </a>
-        </div>
+        <nav
+          className="flex items-center gap-5 mb-6 pb-4"
+          style={{ borderBottom: "1px solid var(--rule)" }}
+        >
+          <a href="/admin" style={navLinkStyle}>Published Videos</a>
+          <a href="/admin/nominations" style={navLinkStyle}>Suggested Videos</a>
+          <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
+          <a href="/admin/add" style={navLinkStyle}>Add channel</a>
+          <a href="/admin/categories" style={navLinkStyle}>Categories</a>
+        </nav>
       )}
       {children}
     </div>
