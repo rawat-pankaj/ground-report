@@ -24,34 +24,21 @@ export default function AdminDashboard() {
 
   async function toggleStatus(video) {
     const nextStatus = video.status === "published" ? "hidden" : "published";
-    const res = await fetch(`/api/admin/videos/${video.id}`, {
+    await fetch(`/api/admin/videos/${video.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: nextStatus }),
     });
-    if (!res.ok) return;
-    const data = await res.json();
-    setVideos((prev) =>
-      prev.map((v) => (v.id === video.id ? { ...v, status: data.video.status } : v))
-    );
+    load();
   }
 
   async function setFeatured(video) {
-    const nextFeatured = !video.featured;
-    const res = await fetch(`/api/admin/videos/${video.id}`, {
+    await fetch(`/api/admin/videos/${video.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ featured: nextFeatured }),
+      body: JSON.stringify({ featured: !video.featured }),
     });
-    if (!res.ok) return;
-    const data = await res.json();
-    setVideos((prev) =>
-      prev.map((v) => {
-        if (v.id === video.id) return { ...v, featured: data.video.featured };
-        // Setting one video as featured un-features every other video server-side.
-        return nextFeatured ? { ...v, featured: false } : v;
-      })
-    );
+    load();
   }
 
   async function updateTags(video, field, value) {
@@ -93,12 +80,8 @@ export default function AdminDashboard() {
 
   async function remove(video) {
     if (!confirm(`Remove "${video.title}"?`)) return;
-    const res = await fetch(`/api/admin/videos/${video.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      alert("Could not remove — try again.");
-      return;
-    }
-    setVideos((prev) => prev.filter((v) => v.id !== video.id));
+    await fetch(`/api/admin/videos/${video.id}`, { method: "DELETE" });
+    load();
   }
 
   if (!videos) return <p className="story-meta">Loading…</p>;
