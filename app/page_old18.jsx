@@ -111,11 +111,10 @@ export default async function FeedPage({ searchParams }) {
   if (beat) where.beatTags = { contains: beat };
   if (category) where.categories = { some: { category: { slug: category } } };
 
-  const categoriesRaw = await prisma.category.findMany({
+  const categories = await prisma.category.findMany({
     where: { videos: { some: { video: { status: "published" } } } },
-    include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
+    orderBy: { name: "asc" },
   });
-  const categories = categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
 
   const hero = noFilters
     ? await prisma.video.findFirst({
