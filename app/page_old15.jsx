@@ -109,18 +109,11 @@ export default async function FeedPage({ searchParams }) {
   const params = await searchParams;
   const language = params?.language || "";
   const beat = params?.beat || "";
-  const category = params?.category || "";
-  const noFilters = !language && !beat && !category;
+  const noFilters = !language && !beat;
 
   const where = { status: "published" };
   if (language) where.language = language;
   if (beat) where.beatTags = { contains: beat };
-  if (category) where.categories = { some: { category: { slug: category } } };
-
-  const categories = await prisma.category.findMany({
-    where: { videos: { some: { video: { status: "published" } } } },
-    orderBy: { name: "asc" },
-  });
 
   const hero = noFilters
     ? await prisma.video.findFirst({
@@ -138,11 +131,10 @@ export default async function FeedPage({ searchParams }) {
   });
 
 
-  function hrefFor(nextLanguage, nextBeat, nextCategory) {
+  function hrefFor(nextLanguage, nextBeat) {
     const p = new URLSearchParams();
     if (nextLanguage) p.set("language", nextLanguage);
     if (nextBeat) p.set("beat", nextBeat);
-    if (nextCategory) p.set("category", nextCategory);
     const qs = p.toString();
     return qs ? "/" + "?" + qs : "/";
   }
@@ -169,47 +161,17 @@ export default async function FeedPage({ searchParams }) {
         </p>
       </div>
 
-      <div className="mb-2">
-        <div className="clabel" style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
-          Language
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {LANGUAGES.map((l) => (
-            <a
-              key={l.value}
-              href={hrefFor(l.value, beat, category)}
-              className={"tag " + (language === l.value ? "tag-active" : "")}
-            >
-              {l.label}
-            </a>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {LANGUAGES.map((l) => (
+          <a
+            key={l.value}
+            href={hrefFor(l.value, beat)}
+            className={"tag " + (language === l.value ? "tag-active" : "")}
+          >
+            {l.label}
+          </a>
+        ))}
       </div>
-
-      {categories.length > 0 && (
-        <div className="mb-2">
-          <div style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
-            Category
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={hrefFor(language, beat, "")}
-              className={"tag " + (category === "" ? "tag-active" : "")}
-            >
-              All
-            </a>
-            {categories.map((c) => (
-              <a
-                key={c.id}
-                href={hrefFor(language, beat, c.slug)}
-                className={"tag " + (category === c.slug ? "tag-active" : "")}
-              >
-                {c.name}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
 
 
       {videos.length === 0 && !hero && (
