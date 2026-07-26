@@ -1,6 +1,5 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
-import MastheadNav from "./MastheadNav";
 
 export const metadata = {
   title: "PeopleLens — independent journalism, curated",
@@ -16,7 +15,25 @@ export default function RootLayout({ children }) {
             <a href="/" className="masthead-mark">
               PeopleLens
             </a>
-            <MastheadNav />
+            <nav className="masthead-nav flex items-center gap-5">
+              <a href="/about">About</a>
+              <a
+                href="/suggest"
+                style={{
+                  background: "var(--signal)",
+                  color: "#fff",
+                  padding: "7px 14px",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  borderBottom: "none",
+                  display: "inline-block",
+                }}
+              >
+                + Suggest a video
+              </a>
+            </nav>
           </div>
         </header>
         <main className="max-w-6xl mx-auto px-6 pt-4 pb-8">{children}</main>
