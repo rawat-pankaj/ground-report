@@ -89,30 +89,4 @@
 
 ---
 
-## 🔒 Admin Security Audit — 2026-07-26
-
-Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`proxy.js`), prompted by the admin nav/auth cleanup earlier this session.
-
-**Fixed:**
-- [x] **Nomination status had zero validation** (`PATCH /api/admin/nominations/[id]`) — any string could be written straight to the DB. Fixed: whitelisted to `pending`/`approved`/`rejected`, invalid values now return 400.
-- [x] **Video status had weak validation** (`PATCH /api/admin/videos/[id]`) — old code used a truthy check only (`if (body.status)`), no whitelist, and silently ignored empty strings instead of rejecting them. Fixed: whitelisted to `published`/`hidden`, invalid values return 400.
-
-**Open — real security/robustness items, roughly priority order:**
-- [ ] **Public `/api/nominations` has no rate limit or input length cap** — open by design (it's the public suggestion form) but unprotected against spam/abuse or oversized payloads bloating the DB.
-- [ ] **Session cookie is the plaintext admin password, not a signed token** — `admin_session` cookie value literally equals `ADMIN_PASSWORD`. Functional and cookie flags (httpOnly/secure/sameSite) are correct, but there's no way to invalidate one leaked session without rotating the password for everyone. Acceptable tradeoff for a small trusted-editor tool per the comment in `proxy.js`; worth revisiting if the team grows.
-- [ ] **Timing-unsafe password comparison** (`===`) in both `proxy.js` and `/api/auth/login` — low real-world risk for a human-typed password, but not constant-time.
-- [ ] **No try/catch around `request.json()`** across admin API routes — a malformed request body would throw an unhandled 500 instead of a clean error.
-- [ ] **YouTube lookup routes' error handling is unpolished** — `lib/youtube.js` doesn't currently leak the API key in errors (checked), but a non-JSON error response from YouTube (e.g. during an outage) would throw an ugly generic error rather than a handled one.
-- [ ] **`DELETE` on categories/videos doesn't pre-check existence** — deleting an already-gone `id` throws a Prisma "not found" error instead of a clean 404. Cosmetic only.
-
-**Confirmed safe (checked, not assumed):**
-- No XSS risk anywhere in admin — no `dangerouslySetInnerHTML`, React's auto-escaping covers all rendered user-submitted content (nomination `input`/`reasonText` included).
-- `proxy.js` correctly covers every `/admin/*` page and `/api/admin/*` route found in the repo.
-- Cookie flags (`httpOnly`, `secure` in production, `sameSite: lax`) are correctly set.
-
-**Performance carryover (not new, not fixed today):**
-- [ ] **`toggleStatus` and `setFeatured` in `/admin/page.jsx` still use the slow full-list-reload pattern** — only `toggleCategory` was fixed for latency earlier this session. Same root cause (refetching all videos + categories after every click) still applies to Publish/Hide and Set as featured buttons.
-
----
-
 *Last updated: 2026-07-26*
