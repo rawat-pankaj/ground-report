@@ -3,7 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import MastheadBar from "./MastheadBar";
 
 export const metadata = {
-  title: "PeopleLens",
+  title: "PeopleLens — independent journalism, curated",
   description: "A hand-curated feed of independent YouTube journalists.",
 };
 
