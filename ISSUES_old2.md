@@ -110,17 +110,8 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 - `proxy.js` correctly covers every `/admin/*` page and `/api/admin/*` route found in the repo.
 - Cookie flags (`httpOnly`, `secure` in production, `sameSite: lax`) are correctly set.
 
-**Performance — fixed 2026-07-26:**
-- [x] **`toggleStatus` and `setFeatured` in `/admin/page.jsx` used the slow full-list-reload pattern** — every click refetched all videos + categories on top of the actual save. Fixed: both now patch local state directly from the PATCH response (single round-trip, matching the `toggleCategory` fix from earlier). `setFeatured` also correctly clears `featured` on other videos locally, mirroring the server's un-feature-others behavior, so no stale "Featured" badge lingers.
-- [x] **Bonus fix: `remove()` (Delete) had no error handling and also reloaded the full list** — now checks the DELETE response, alerts on failure instead of failing silently (closes audit finding on silent delete failure), and patches local state on success instead of reloading.
-
----
-
-## 🏷️ Browser Tab Titles — 2026-07-26
-
-- [x] **Admin login page had a "Desk access" eyebrow label above the heading** — removed (second time; first fix appears to have been reverted somewhere — worth checking git history if it recurs again).
-- [x] **Admin tab title showed the full public tagline** ("PeopleLens — independent journalism, curated") instead of a distinct label — `/admin/layout.jsx` was a client component so couldn't export its own `metadata`. Fixed by extracting the nav into `AdminNav.jsx` (client) and making `layout.jsx` a server component with `title: "Admin — PeopleLens"`.
-- [x] **Homepage tab title carried the tagline too** — shortened `app/layout.jsx` title from "PeopleLens — independent journalism, curated" to just "PeopleLens". `description` (used for search/link previews, not the tab) left unchanged.
+**Performance carryover (not new, not fixed today):**
+- [ ] **`toggleStatus` and `setFeatured` in `/admin/page.jsx` still use the slow full-list-reload pattern** — only `toggleCategory` was fixed for latency earlier this session. Same root cause (refetching all videos + categories after every click) still applies to Publish/Hide and Set as featured buttons.
 
 ---
 
