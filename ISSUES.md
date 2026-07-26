@@ -34,7 +34,6 @@
 - [ ] **Nomination email alert** — When a new suggestion comes in via the public form, send a notification email to the admin.
 - [ ] **About section on home page - Translate to Hindi
 - [ ] **Page footer
-- [ ] **News/Story Categories
 
 ---
 
@@ -68,6 +67,8 @@
 - [X] **Thumbnail of Featured story is not very clear, it is getting pixeleted
 - [X] **Today's date on top of page
 - [X] **Feature Story visible tag in Admin section
+- [X] **News/Story Categories
+
 ---
 
 ## 🧪 Testing Log

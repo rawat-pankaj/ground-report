@@ -2,6 +2,12 @@ import { prisma } from "../lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const LANGUAGES = [
+  { value: "", label: "All" },
+  { value: "hi", label: "हिंदी" },
+  { value: "en", label: "English" },
+];
+
 function timeAgo(date) {
   if (!date) return "";
   const diffMs = Date.now() - new Date(date).getTime();
@@ -161,6 +167,23 @@ export default async function FeedPage({ searchParams }) {
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
+      </div>
+
+      <div className="mb-2">
+        <div className="clabel" style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+          Language
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {LANGUAGES.map((l) => (
+            <a
+              key={l.value}
+              href={hrefFor(l.value, beat, category)}
+              className={"tag " + (language === l.value ? "tag-active" : "")}
+            >
+              {l.label}
+            </a>
+          ))}
+        </div>
       </div>
 
       {categories.length > 0 && (
