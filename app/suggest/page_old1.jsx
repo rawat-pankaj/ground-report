@@ -27,49 +27,19 @@ export default function SuggestPage() {
 
   if (status === "sent") {
     return (
-      <div className="max-w-xl">
-        <a
-          href="/"
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "11px",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            color: "var(--ink-soft)",
-            display: "inline-block",
-            marginBottom: "14px",
-          }}
-        >
-          ← Back to stories
-        </a>
-        <div className="panel">
-          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "8px" }}>
-            Suggestion received.
-          </h2>
-          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-            A human will take a look before it's added to the feed.
-          </p>
-        </div>
+      <div className="panel">
+        <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "8px" }}>
+          Suggestion received.
+        </h2>
+        <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          A human will take a look before it's added to the feed.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="max-w-xl">
-      <a
-        href="/"
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "11px",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          color: "var(--ink-soft)",
-          display: "inline-block",
-          marginBottom: "14px",
-        }}
-      >
-        ← Back to stories
-      </a>
       <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "8px" }}>
         Suggest a video
       </h1>

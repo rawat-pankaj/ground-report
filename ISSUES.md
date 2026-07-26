@@ -19,7 +19,7 @@
 
 - [ ] **View count display** — DB column `viewCount` already exists (added, defaults to 0). YouTube fetch code written (`lib/youtube.js`, `app/api/admin/videos/route.js`, `app/api/cron/update-views/route.js`). Display on all cards in abbreviated format (1.2M, 45K). Needs: `CRON_SECRET` env var on Vercel + cron-job.org setup pointing to `/api/cron/update-views?secret=YOUR_SECRET`. Daily refresh planned.
 - [ ] **Mobile review** — Site not yet tested on a phone. 2-column grid on mobile (featured card full width, regular cards 2-col) needs visual QA especially for Hindi text.
-- [ ] **Custom domain** — Not started. Can be added via Vercel dashboard → Domains.
+
 - [ ] **cron-job.org setup** — Needed for daily view count refresh once view counts are enabled. Sign up at cron-job.org, create job pointing to `https://ground-report-sable.vercel.app/api/cron/update-views?secret=CRON_SECRET`, schedule daily.
 
 ---
@@ -68,6 +68,7 @@
 - [X] **Today's date on top of page
 - [X] **Feature Story visible tag in Admin section
 - [X] **News/Story Categories
+- [X] **Custom domain** — Not started. Can be added via Vercel dashboard → Domains. (peoplelens.in)
 
 ---
 
