@@ -62,13 +62,14 @@
 - [x] Language normalization (Hindi/hindi/हिंदी → hi)
 - [x] viewCount column added to DB (Supabase migration run)
 - [X] About section on home page - English
-- [X] Hindi text at small sizes** — Devanagari script at 13px (regular story cards) can feel cramped on dense titles. Consider bumping `StoryCard` headline to 14px.
-- [X] Card hover state** — Only the headline turns red on hover. A subtle border darkening or background shift on the card itself would make it feel more clearly clickable.
-- [X] **Thumbnail of Featured story is not very clear, it is getting pixeleted
-- [X] **Today's date on top of page
-- [X] **Feature Story visible tag in Admin section
-- [X] **News/Story Categories
-- [X] **Custom domain** — Not started. Can be added via Vercel dashboard → Domains. (peoplelens.in)
+- [X] Hindi text at small sizes — Devanagari script at 13px (regular story cards) can feel cramped on dense titles. Consider bumping `StoryCard` headline to 14px.
+- [X] Card hover state — Only the headline turns red on hover. A subtle border darkening or background shift on the card itself would make it feel more clearly clickable.
+- [X] Thumbnail of Featured story is not very clear, it is getting pixeleted
+- [X] Today's date on top of page
+- [X] Feature Story visible tag in Admin section
+- [X] News/Story Categories
+- [X] Custom domain — Not started. Can be added via Vercel dashboard → Domains. (peoplelens.in)
+- [X] Admin Page cleanup - Navbar arrangment, Authentication check, Admin logged in user
 
 ---
 
@@ -88,4 +89,4 @@
 
 ---
 
-*Last updated: 2026-07-25*
+*Last updated: 2026-07-26*

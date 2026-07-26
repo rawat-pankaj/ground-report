@@ -18,23 +18,11 @@ function normalizeBeatTags(input) {
   return cleaned.length ? [...new Set(cleaned)].join(", ") : null;
 }
 
-const VALID_VIDEO_STATUSES = ["published", "hidden"];
-
 export async function PATCH(request, { params }) {
   const { id } = await params;
   const body = await request.json();
   const data = {};
-
-  if (body.status !== undefined) {
-    if (!VALID_VIDEO_STATUSES.includes(body.status)) {
-      return NextResponse.json(
-        { error: `status must be one of: ${VALID_VIDEO_STATUSES.join(", ")}` },
-        { status: 400 }
-      );
-    }
-    data.status = body.status;
-  }
-
+  if (body.status) data.status = body.status;
   if (body.language !== undefined) data.language = normalizeLanguage(body.language);
   if (body.region !== undefined) data.region = body.region;
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
