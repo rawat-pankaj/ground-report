@@ -8,7 +8,7 @@ export default function MastheadNav() {
 
   return (
     <nav className="masthead-nav flex items-center gap-5">
-      {!isAdmin && <a href="/about">About</a>}
+      <a href="/about">About</a>
       {!isAdmin && (
         <a
           href="/suggest"
