@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 
 function normalizeLanguage(input) {
@@ -62,13 +62,13 @@ export async function PATCH(request, { params }) {
     data,
     include: { categories: { include: { category: true } } },
   });
-  revalidateTag("videos");
+  revalidatePath("/");
   return NextResponse.json({ video });
 }
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
   await prisma.video.delete({ where: { id } });
-  revalidateTag("videos");
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

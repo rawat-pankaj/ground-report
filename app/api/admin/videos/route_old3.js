@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +67,6 @@ export async function POST(request) {
     created.push(video);
   }
 
-  revalidateTag("videos");
+  revalidatePath("/");
   return NextResponse.json({ videos: created });
 }

@@ -1,57 +1,10 @@
 import { prisma } from "../lib/prisma";
-import { unstable_cache } from "next/cache";
 import Link from "next/link";
 
-// The three Prisma queries below are wrapped in unstable_cache and tagged
-// "videos". Admin routes call revalidateTag("videos") after any write that
-// changes what's shown here (publish/hide/feature/categorize/add/delete a
-// video, or create/rename/delete a category) — see
-// app/api/admin/videos/[id]/route.js etc. That's what keeps this fresh;
-// there is no time-based revalidation. Reading searchParams below does NOT
-// defeat this caching, because the cache lives around the data fetch, keyed
-// by the actual filter values, not around the page render itself.
-
-const getCategories = unstable_cache(
-  async () => {
-    const categoriesRaw = await prisma.category.findMany({
-      where: { videos: { some: { video: { status: "published" } } } },
-      include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
-    });
-    return categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
-  },
-  ["homepage-categories"],
-  { tags: ["videos"] }
-);
-
-const getHero = unstable_cache(
-  async () => {
-    return prisma.video.findFirst({
-      where: { status: "published", featured: true },
-      include: { channel: true },
-    });
-  },
-  ["homepage-hero"],
-  { tags: ["videos"] }
-);
-
-const getVideos = unstable_cache(
-  async (language, beat, category, excludeId) => {
-    const where = { status: "published" };
-    if (language) where.language = language;
-    if (beat) where.beatTags = { contains: beat };
-    if (category) where.categories = { some: { category: { slug: category } } };
-    if (excludeId) where.id = { not: excludeId };
-
-    return prisma.video.findMany({
-      where,
-      include: { channel: true },
-      orderBy: { addedAt: "desc" },
-      take: 100,
-    });
-  },
-  ["homepage-videos"],
-  { tags: ["videos"] }
-);
+// This page is cached and served statically. Admin routes that change what's
+// shown here (publishing, hiding, featuring, categorizing, adding videos)
+// call revalidatePath("/") after their write, which is what keeps this
+// fresh — not a timer. See app/api/admin/videos/[id]/route.js etc.
 
 function timeAgo(date) {
   if (!date) return "";
@@ -157,9 +110,31 @@ export default async function FeedPage({ searchParams }) {
   const category = params?.category || "";
   const noFilters = !language && !beat && !category;
 
-  const categories = await getCategories();
-  const hero = noFilters ? await getHero() : null;
-  const videos = await getVideos(language, beat, category, hero?.id || null);
+  const where = { status: "published" };
+  if (language) where.language = language;
+  if (beat) where.beatTags = { contains: beat };
+  if (category) where.categories = { some: { category: { slug: category } } };
+
+  const categoriesRaw = await prisma.category.findMany({
+    where: { videos: { some: { video: { status: "published" } } } },
+    include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
+  });
+  const categories = categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
+
+  const hero = noFilters
+    ? await prisma.video.findFirst({
+        where: { status: "published", featured: true },
+        include: { channel: true },
+      })
+    : null;
+
+  const gridWhere = hero ? { ...where, id: { not: hero.id } } : where;
+  const videos = await prisma.video.findMany({
+    where: gridWhere,
+    include: { channel: true },
+    orderBy: { addedAt: "desc" },
+    take: 100,
+  });
 
 
   function hrefFor(nextLanguage, nextBeat, nextCategory) {

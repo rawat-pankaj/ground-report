@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 
 function slugify(name) {
@@ -32,13 +32,13 @@ export async function PATCH(request, { params }) {
   }
 
   const category = await prisma.category.update({ where: { id }, data: { name, slug } });
-  revalidateTag("videos");
+  revalidatePath("/");
   return NextResponse.json({ category });
 }
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
   await prisma.category.delete({ where: { id } });
-  revalidateTag("videos");
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }
