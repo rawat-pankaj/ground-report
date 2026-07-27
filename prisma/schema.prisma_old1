@@ -62,11 +62,3 @@ model VideoCategory {
 
   @@id([videoId, categoryId])
 }
-
-model NominationRateLimit {
-  id        String   @id @default(cuid())
-  ipAddress String
-  createdAt DateTime @default(now())
-
-  @@index([ipAddress, createdAt])
-}
