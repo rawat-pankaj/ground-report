@@ -2,10 +2,6 @@ import { prisma } from "../lib/prisma";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
 
-// TEMPORARY: console.log lines below (tagged [CACHE-PROOF]) are diagnostic
-// only, added to verify unstable_cache is actually skipping the DB on
-// repeat requests. Remove them once confirmed via Vercel function logs.
-//
 // The three Prisma queries below are wrapped in unstable_cache and tagged
 // "videos". Admin routes call revalidateTag("videos") after any write that
 // changes what's shown here (publish/hide/feature/categorize/add/delete a
@@ -17,7 +13,6 @@ import Link from "next/link";
 
 const getCategories = unstable_cache(
   async () => {
-    console.log("[CACHE-PROOF] getCategories: DB QUERY RAN at", new Date().toISOString());
     const categoriesRaw = await prisma.category.findMany({
       where: { videos: { some: { video: { status: "published" } } } },
       include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
@@ -30,7 +25,6 @@ const getCategories = unstable_cache(
 
 const getHero = unstable_cache(
   async () => {
-    console.log("[CACHE-PROOF] getHero: DB QUERY RAN at", new Date().toISOString());
     return prisma.video.findFirst({
       where: { status: "published", featured: true },
       include: { channel: true },
@@ -42,12 +36,6 @@ const getHero = unstable_cache(
 
 const getVideos = unstable_cache(
   async (language, beat, category, excludeId) => {
-    console.log(
-      "[CACHE-PROOF] getVideos: DB QUERY RAN at",
-      new Date().toISOString(),
-      "for filters:",
-      { language, beat, category }
-    );
     const where = { status: "published" };
     if (language) where.language = language;
     if (beat) where.beatTags = { contains: beat };
