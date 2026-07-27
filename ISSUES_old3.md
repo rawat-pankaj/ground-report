@@ -124,31 +124,4 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 
 ---
 
-## 🎨 Admin Masthead Label — 2026-07-26
-
-- [x] **Bold "Admin" text in the admin nav bar looked like a broken/unclickable nav link, sitting inline with real links** — replaced with a proper mode indicator: the blue masthead now reads "PeopleLens / Admin" next to the wordmark, and "Log out" moved up into that same masthead row. `admin/layout.jsx` simplified to just the page nav (Published Videos, Suggested Videos, etc.) on its own row underneath. New `MastheadBar.jsx` replaces the old `MastheadNav.jsx` (deleted) to handle both public and admin masthead states in one place.
-- [x] **"Log out" and the full admin nav were visible on the login page itself, before authenticating** — both now correctly hidden on `/admin/login`; the login screen shows only the PeopleLens wordmark and the password form.
-
----
-
-## ⚡ Homepage Performance & Caching Architecture — 2026-07-27
-
-**The problem:** category/language filter clicks on the homepage were slow — every click was a full page reload hitting Postgres fresh (`export const dynamic = "force-dynamic"`), with no caching layer at all, compounded by cross-region latency (Vercel `iad1` ↔ Supabase `ap-south-1`) and non-parallelized queries.
-
-**Root cause found:** removing `force-dynamic` alone doesn't enable caching, because reading `searchParams` (needed for `?category=`/`?language=`/`?beat=` filters) is itself a Next.js "dynamic API" that forces per-request rendering regardless of that flag. The page-level response will correctly always show `cache-control: private, no-store` / `x-vercel-cache: MISS` — that's expected and doesn't indicate a problem.
-
-**Fix implemented:** moved caching from the *page* to the *data fetching*, which doesn't depend on `searchParams` at the page level:
-- [x] The three Prisma queries (categories with counts, featured hero, filtered video list) are wrapped in `unstable_cache` (`app/page.jsx`), tagged `"videos"`. The video query takes `language`/`beat`/`category` as real function arguments so each filter combination gets its own cache entry, not one shared/colliding key.
-- [x] Category filter pills converted from plain `<a href>` to Next.js `<Link>` for client-side navigation — removes the full-page-reload feel on top of the data-layer fix.
-- [x] Every admin write route that changes public-facing content now calls `revalidateTag("videos")` instead of the earlier `revalidatePath("/")`: `videos/[id]` (PATCH + DELETE), `videos` (POST), `categories` (POST), `categories/[id]` (PATCH + DELETE). Tag-based invalidation is the correct primitive here since the cache is keyed by filter arguments, not the route path.
-- [x] `nominations/[id]` deliberately left alone — approving/rejecting a suggestion doesn't touch `Video` or `Category`, so it can't affect what's cached.
-
-**Verification note (why this took a few rounds):** HTTP-level cache headers (`x-vercel-cache`) cannot distinguish "page not cached" from "data not cached" — both look identical from outside, which caused an initial false read that the fix wasn't working. Confirmed the fix is real by adding temporary `console.log` markers inside each cached function, hitting the same filtered URL twice, and checking Vercel function logs: the DB query log line appeared on the first request only — the second, identical request produced no query log at all, proving Postgres was skipped. Logging has since been removed; the cached functions are clean.
-
-**Known edge case (not a bug, just documented behavior):** near-simultaneous concurrent requests for the *same uncached* filter combination can both miss the cache and both hit the DB (observed in logs — two requests 1ms apart for the same filter both queried). `unstable_cache` doesn't do in-flight request coalescing. Only matters under real concurrent load on a not-yet-cached key; harmless in practice for this traffic pattern.
-
-**Separate finding surfaced during this work, not yet actioned:** Vercel logs showed a burst of ~50 near-identical `GET /` requests within about one second, unrelated to this fix. Worth a look at Vercel Analytics or bot traffic sometime — not investigated further here.
-
----
-
-*Last updated: 2026-07-27*
+*Last updated: 2026-07-26*
