@@ -2,12 +2,6 @@ import { prisma } from "../lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const LANGUAGES = [
-  { value: "", label: "All" },
-  { value: "hi", label: "हिंदी" },
-  { value: "en", label: "English" },
-];
-
 function timeAgo(date) {
   if (!date) return "";
   const diffMs = Date.now() - new Date(date).getTime();
@@ -109,11 +103,19 @@ export default async function FeedPage({ searchParams }) {
   const params = await searchParams;
   const language = params?.language || "";
   const beat = params?.beat || "";
-  const noFilters = !language && !beat;
+  const category = params?.category || "";
+  const noFilters = !language && !beat && !category;
 
   const where = { status: "published" };
   if (language) where.language = language;
   if (beat) where.beatTags = { contains: beat };
+  if (category) where.categories = { some: { category: { slug: category } } };
+
+  const categoriesRaw = await prisma.category.findMany({
+    where: { videos: { some: { video: { status: "published" } } } },
+    include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
+  });
+  const categories = categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
 
   const hero = noFilters
     ? await prisma.video.findFirst({
@@ -131,10 +133,11 @@ export default async function FeedPage({ searchParams }) {
   });
 
 
-  function hrefFor(nextLanguage, nextBeat) {
+  function hrefFor(nextLanguage, nextBeat, nextCategory) {
     const p = new URLSearchParams();
     if (nextLanguage) p.set("language", nextLanguage);
     if (nextBeat) p.set("beat", nextBeat);
+    if (nextCategory) p.set("category", nextCategory);
     const qs = p.toString();
     return qs ? "/" + "?" + qs : "/";
   }
@@ -149,29 +152,42 @@ export default async function FeedPage({ searchParams }) {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-4">
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
           {today}
         </p>
         <p style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
-          Ground-level reporting on issues that affect ordinary people!
+          Stories that matter & issues that affect ordinary people!
         </p>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-2">
-        {LANGUAGES.map((l) => (
-          <a
-            key={l.value}
-            href={hrefFor(l.value, beat)}
-            className={"tag " + (language === l.value ? "tag-active" : "")}
-          >
-            {l.label}
-          </a>
-        ))}
-      </div>
+      {categories.length > 0 && (
+        <div className="mb-2">
+          <div style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+            Category
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={hrefFor(language, beat, "")}
+              className={"tag " + (category === "" ? "tag-active" : "")}
+            >
+              All
+            </a>
+            {categories.map((c) => (
+              <a
+                key={c.id}
+                href={hrefFor(language, beat, c.slug)}
+                className={"tag " + (category === c.slug ? "tag-active" : "")}
+              >
+                {c.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
 
       {videos.length === 0 && !hero && (

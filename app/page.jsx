@@ -1,6 +1,10 @@
 import { prisma } from "../lib/prisma";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// This page is cached and served statically. Admin routes that change what's
+// shown here (publishing, hiding, featuring, categorizing, adding videos)
+// call revalidatePath("/") after their write, which is what keeps this
+// fresh — not a timer. See app/api/admin/videos/[id]/route.js etc.
 
 function timeAgo(date) {
   if (!date) return "";
@@ -170,20 +174,20 @@ export default async function FeedPage({ searchParams }) {
             Category
           </div>
           <div className="flex flex-wrap gap-2">
-            <a
+            <Link
               href={hrefFor(language, beat, "")}
               className={"tag " + (category === "" ? "tag-active" : "")}
             >
               All
-            </a>
+            </Link>
             {categories.map((c) => (
-              <a
+              <Link
                 key={c.id}
                 href={hrefFor(language, beat, c.slug)}
                 className={"tag " + (category === c.slug ? "tag-active" : "")}
               >
                 {c.name}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

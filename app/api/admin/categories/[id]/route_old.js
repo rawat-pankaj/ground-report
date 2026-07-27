@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
-import { prisma } from "../../../../lib/prisma";
-
-export const dynamic = "force-dynamic";
+import { prisma } from "../../../../../lib/prisma";
 
 function slugify(name) {
   return name
@@ -12,15 +9,8 @@ function slugify(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function GET() {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { videos: true } } },
-  });
-  return NextResponse.json({ categories });
-}
-
-export async function POST(request) {
+export async function PATCH(request, { params }) {
+  const { id } = await params;
   const body = await request.json();
   const name = (body.name || "").trim();
 
@@ -33,14 +23,19 @@ export async function POST(request) {
     return NextResponse.json({ error: "That name can't be turned into a valid slug" }, { status: 400 });
   }
 
-  const existing = await prisma.category.findFirst({
-    where: { OR: [{ name }, { slug }] },
+  const clash = await prisma.category.findFirst({
+    where: { OR: [{ name }, { slug }], NOT: { id } },
   });
-  if (existing) {
+  if (clash) {
     return NextResponse.json({ error: "A category with that name already exists" }, { status: 409 });
   }
 
-  const category = await prisma.category.create({ data: { name, slug } });
-  revalidatePath("/");
+  const category = await prisma.category.update({ where: { id }, data: { name, slug } });
   return NextResponse.json({ category });
+}
+
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  await prisma.category.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }
