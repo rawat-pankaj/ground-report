@@ -1,6 +1,69 @@
 import { prisma } from "../lib/prisma";
+import { unstable_cache } from "next/cache";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// TEMPORARY: console.log lines below (tagged [CACHE-PROOF]) are diagnostic
+// only, added to verify unstable_cache is actually skipping the DB on
+// repeat requests. Remove them once confirmed via Vercel function logs.
+//
+// The three Prisma queries below are wrapped in unstable_cache and tagged
+// "videos". Admin routes call revalidateTag("videos") after any write that
+// changes what's shown here (publish/hide/feature/categorize/add/delete a
+// video, or create/rename/delete a category) — see
+// app/api/admin/videos/[id]/route.js etc. That's what keeps this fresh;
+// there is no time-based revalidation. Reading searchParams below does NOT
+// defeat this caching, because the cache lives around the data fetch, keyed
+// by the actual filter values, not around the page render itself.
+
+const getCategories = unstable_cache(
+  async () => {
+    console.log("[CACHE-PROOF] getCategories: DB QUERY RAN at", new Date().toISOString());
+    const categoriesRaw = await prisma.category.findMany({
+      where: { videos: { some: { video: { status: "published" } } } },
+      include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
+    });
+    return categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
+  },
+  ["homepage-categories"],
+  { tags: ["videos"] }
+);
+
+const getHero = unstable_cache(
+  async () => {
+    console.log("[CACHE-PROOF] getHero: DB QUERY RAN at", new Date().toISOString());
+    return prisma.video.findFirst({
+      where: { status: "published", featured: true },
+      include: { channel: true },
+    });
+  },
+  ["homepage-hero"],
+  { tags: ["videos"] }
+);
+
+const getVideos = unstable_cache(
+  async (language, beat, category, excludeId) => {
+    console.log(
+      "[CACHE-PROOF] getVideos: DB QUERY RAN at",
+      new Date().toISOString(),
+      "for filters:",
+      { language, beat, category }
+    );
+    const where = { status: "published" };
+    if (language) where.language = language;
+    if (beat) where.beatTags = { contains: beat };
+    if (category) where.categories = { some: { category: { slug: category } } };
+    if (excludeId) where.id = { not: excludeId };
+
+    return prisma.video.findMany({
+      where,
+      include: { channel: true },
+      orderBy: { addedAt: "desc" },
+      take: 100,
+    });
+  },
+  ["homepage-videos"],
+  { tags: ["videos"] }
+);
 
 function timeAgo(date) {
   if (!date) return "";
@@ -106,31 +169,9 @@ export default async function FeedPage({ searchParams }) {
   const category = params?.category || "";
   const noFilters = !language && !beat && !category;
 
-  const where = { status: "published" };
-  if (language) where.language = language;
-  if (beat) where.beatTags = { contains: beat };
-  if (category) where.categories = { some: { category: { slug: category } } };
-
-  const categoriesRaw = await prisma.category.findMany({
-    where: { videos: { some: { video: { status: "published" } } } },
-    include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
-  });
-  const categories = categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
-
-  const hero = noFilters
-    ? await prisma.video.findFirst({
-        where: { status: "published", featured: true },
-        include: { channel: true },
-      })
-    : null;
-
-  const gridWhere = hero ? { ...where, id: { not: hero.id } } : where;
-  const videos = await prisma.video.findMany({
-    where: gridWhere,
-    include: { channel: true },
-    orderBy: { addedAt: "desc" },
-    take: 100,
-  });
+  const categories = await getCategories();
+  const hero = noFilters ? await getHero() : null;
+  const videos = await getVideos(language, beat, category, hero?.id || null);
 
 
   function hrefFor(nextLanguage, nextBeat, nextCategory) {
@@ -157,7 +198,7 @@ export default async function FeedPage({ searchParams }) {
           {today}
         </p>
         <p style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
-          Ground-level reporting on issues that affect ordinary people!
+          Stories that matter & issues that affect ordinary people!
         </p>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
@@ -170,20 +211,20 @@ export default async function FeedPage({ searchParams }) {
             Category
           </div>
           <div className="flex flex-wrap gap-2">
-            <a
+            <Link
               href={hrefFor(language, beat, "")}
               className={"tag " + (category === "" ? "tag-active" : "")}
             >
               All
-            </a>
+            </Link>
             {categories.map((c) => (
-              <a
+              <Link
                 key={c.id}
                 href={hrefFor(language, beat, c.slug)}
                 className={"tag " + (category === c.slug ? "tag-active" : "")}
               >
                 {c.name}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

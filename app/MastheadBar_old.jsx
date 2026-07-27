@@ -8,7 +8,7 @@ export default function MastheadBar() {
   const isLoginPage = pathname === "/admin/login";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+    <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
       <div className="flex items-baseline gap-2">
         <a href="/" className="masthead-mark">
           PeopleLens
@@ -49,11 +49,23 @@ export default function MastheadBar() {
           </a>
         )
       ) : (
-        <nav className="masthead-nav flex items-center gap-5 shrink-0">
+        <nav className="masthead-nav flex items-center gap-5">
           <a href="/about">About</a>
-          <a href="/suggest" className="masthead-cta">
-            <span className="cta-full">+ Suggest a video</span>
-            <span className="cta-short">+ Suggest</span>
+          <a
+            href="/suggest"
+            style={{
+              background: "var(--signal)",
+              color: "#fff",
+              padding: "7px 14px",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              borderBottom: "none",
+              display: "inline-block",
+            }}
+          >
+            + Suggest a video
           </a>
         </nav>
       )}
