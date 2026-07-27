@@ -18,7 +18,7 @@
 ## ✨ Pending Features
 
 - [ ] **View count display** — DB column `viewCount` already exists (added, defaults to 0). YouTube fetch code written (`lib/youtube.js`, `app/api/admin/videos/route.js`, `app/api/cron/update-views/route.js`). Display on all cards in abbreviated format (1.2M, 45K). Needs: `CRON_SECRET` env var on Vercel + cron-job.org setup pointing to `/api/cron/update-views?secret=YOUR_SECRET`. Daily refresh planned.
-- [x] **Mobile review** — Done 2026-07-27, verified on a real device. See "Mobile Compatibility & QA" section below.
+- [ ] **Mobile review** — Site not yet tested on a phone. 2-column grid on mobile (featured card full width, regular cards 2-col) needs visual QA especially for Hindi text.
 
 - [ ] **cron-job.org setup** — Needed for daily view count refresh once view counts are enabled. Sign up at cron-job.org, create job pointing to `https://ground-report-sable.vercel.app/api/cron/update-views?secret=CRON_SECRET`, schedule daily.
 
@@ -148,45 +148,6 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 **Known edge case (not a bug, just documented behavior):** near-simultaneous concurrent requests for the *same uncached* filter combination can both miss the cache and both hit the DB (observed in logs — two requests 1ms apart for the same filter both queried). `unstable_cache` doesn't do in-flight request coalescing. Only matters under real concurrent load on a not-yet-cached key; harmless in practice for this traffic pattern.
 
 **Separate finding surfaced during this work, not yet actioned:** Vercel logs showed a burst of ~50 near-identical `GET /` requests within about one second, unrelated to this fix. Worth a look at Vercel Analytics or bot traffic sometime — not investigated further here.
-
----
-
-## 📱 Mobile Compatibility & QA — 2026-07-27
-
-**Context:** the site had never been opened on a phone despite targeting an audience that is overwhelmingly mobile. Code review at a 380px viewport found six concrete problems.
-
-**Root finding:** `app/globals.css` had **no responsive breakpoints at all** — 244 lines, and the only `@media` rule was `prefers-reduced-motion`. Every fixed size (28px wordmark, 11px chips) applied identically to a desktop monitor and a phone. All responsiveness came from a handful of Tailwind `lg:` classes in markup.
-
-**Fixed:**
-- [x] **Masthead overflowed narrow screens** — 28px `PEOPLELENS` wordmark + "About" + "+ Suggest a video" totalled roughly 408px of non-wrapping content inside a 380px viewport. Fixed: wordmark drops to 20px on mobile, nav gap tightens, and the CTA shortens to "+ Suggest". The CTA's inline styles moved into a `.masthead-cta` class so it can respond to viewport at all.
-- [x] **Category row consumed the whole first screen** — 13 `white-space: nowrap` pills in a `flex-wrap` container ≈ 1,140px of chips into ~330px usable width, wrapping to about five rows (~165px). Combined with the date, tagline and credo line, no video content was visible without scrolling. Fixed with a new `.filter-strip` class: wraps on desktop, becomes a single horizontally swipeable row on mobile, with negative margins bleeding it to the screen edges to signal scrollability. Confirmed on device that it reads and behaves as swipeable.
-- [x] **Tap targets too small** — `.tag` was `padding: 5px 10px` at 11px font ≈ 25px tall, well under Apple's 44px / Google's 48px guidance and packed with 8px gaps. Bumped to `padding: 11px 14px` at 12px on mobile.
-- [x] **Featured card dead space on mobile** — `row-span-2` forced a two-row height, but at 2 columns the card is already full-width so nothing sits beside it; it just stretched. Changed to `lg:row-span-2` so the 2×2 block is desktop-only. This also partly addresses the long-standing "Featured card empty space" known issue.
-- [x] **Sticky hover states on touch** — `.story-card:hover` (border darkening + shadow) and the headline colour change persist after a tap on touch devices. Disabled inside the mobile breakpoint.
-- [x] **Cramped horizontal padding** — `px-6` (24px each side) left only ~332px of content on a 380px screen. Reduced to `px-4 sm:px-6` in both `app/layout.jsx` and `app/MastheadBar.jsx`.
-
-**Verified on device (Vercel URL, real phone):** masthead fits, category strip swipes naturally, long Devanagari headlines in half-width cards render fine — that last one was the main thing not diagnosable from code. Single-column-below-400px was prepared as a fallback but proved unnecessary.
-
-**Note:** the same `page.jsx` in this change also removed the temporary `[CACHE-PROOF]` `console.log` lines from the caching work above — that cleanup had been prepared but never deployed, so it rode along here. The `unstable_cache` setup itself is untouched and intact.
-
-**Files touched:** `app/globals.css` (new mobile breakpoint block + `.filter-strip` / `.masthead-cta` classes), `app/page.jsx`, `app/MastheadBar.jsx`, `app/layout.jsx`. Desktop rendering is unchanged — every rule is inside a mobile media query or an `sm:`/`lg:` prefix.
-
----
-
-## 🚦 Public Nomination Rate Limiting — 2026-07-27
-
-**The problem:** `POST /api/nominations` (the `/suggest` form's backend) had no rate limit and no input length cap — genuinely open to the internet, unauthenticated by design. Risk was DB bloat from oversized payloads, the admin nominations queue getting flooded with scripted spam, and wasted function/DB load from casual bot abuse. Not an auth bypass or injection risk (both already confirmed safe in the security audit) — this was specifically a cost/abuse-resistance gap on the one open public write endpoint.
-
-**Fixed:**
-- [x] **New `NominationRateLimit` table** (Postgres, RLS enabled to match every other table) tracks one row per submission with `ipAddress` + `createdAt`, indexed on `(ipAddress, createdAt)`. A rolling window (not fixed buckets) avoids the classic burst-at-boundary flaw of fixed-window rate limiting.
-- [x] **Limit: 10 submissions per IP per rolling hour**, returns `429` past that. Checked *before* the request body is parsed, so an over-limit caller doesn't cost a JSON parse either.
-- [x] **Length caps, truncated not rejected**: `input` → 500 chars, `reasonText` → 1000, `submitterContact` → 200. Truncation (`.slice()`) rather than a hard error, so a genuine visitor who writes a long reason doesn't hit a confusing failure — matches the friendlier tone appropriate for a public form vs. the stricter enum-rejection used on the admin-side status fields.
-- [x] **Self-pruning**: every submission opportunistically deletes rate-limit rows older than the window, so the table doesn't grow unbounded — no separate cron job needed. Both the rate-limit insert and the cleanup are fire-and-forget (`.catch(() => {})`, not awaited/blocking) so a hiccup there can never fail a nomination that already succeeded.
-- [x] IP read from `x-forwarded-for` (first entry — Vercel's edge sets this authoritatively for real traffic), falling back to `x-real-ip`.
-
-**Validated:** both files (`app/api/nominations/route.js`, `prisma/schema.prisma`) confirmed deployed byte-for-byte as written; `NominationRateLimit` table live in Supabase with correct schema; correct commit ("Nominations Rate limit") live on production including `peoplelens.in`; route correctly 405s on GET (POST-only); code logic order re-verified on the live deployed file. Not directly load-tested with a real POST (intentionally avoided writing synthetic data into the live nominations table) — an end-to-end check would need one real submission through `/suggest` followed by confirming a row appears in both `Nomination` and `NominationRateLimit`.
-
-**Requires after deploy:** `npx prisma generate` so the Prisma client picks up the new `NominationRateLimit` model — same requirement as every prior schema change this project.
 
 ---
 
