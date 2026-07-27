@@ -1,7 +1,7 @@
 import AdminNav from "./AdminNav";
 
 export const metadata = {
-  title: "PeopleLens - Admin",
+  title: "Admin — PeopleLens",
 };
 
 export default function AdminLayout({ children }) {
