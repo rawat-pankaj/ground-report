@@ -39,7 +39,7 @@
 
 ## ✅ Done
 
-- [x] ~~Public feed with language filter (All / हिंदी / English)~~ — later removed from the homepage UI (2026-07-27); language field/data and admin editing kept, see Known Issues history.
+- [x] Public feed with language filter (All / हिंदी / English)
 - [x] Feed ordered by curation date (`addedAt DESC`)
 - [x] Beat tag deduplication and lowercase normalization
 - [x] Beat filter chips removed from public UI (tags stay in DB, power admin)
@@ -98,7 +98,7 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 - [x] **Video status had weak validation** (`PATCH /api/admin/videos/[id]`) — old code used a truthy check only (`if (body.status)`), no whitelist, and silently ignored empty strings instead of rejecting them. Fixed: whitelisted to `published`/`hidden`, invalid values return 400.
 
 **Open — real security/robustness items, roughly priority order:**
-- [x] ~~Public `/api/nominations` has no rate limit or input length cap~~ — **fixed 2026-07-27**, see "Public Nomination Rate Limiting" section below.
+- [ ] **Public `/api/nominations` has no rate limit or input length cap** — open by design (it's the public suggestion form) but unprotected against spam/abuse or oversized payloads bloating the DB.
 - [ ] **Session cookie is the plaintext admin password, not a signed token** — `admin_session` cookie value literally equals `ADMIN_PASSWORD`. Functional and cookie flags (httpOnly/secure/sameSite) are correct, but there's no way to invalidate one leaked session without rotating the password for everyone. Acceptable tradeoff for a small trusted-editor tool per the comment in `proxy.js`; worth revisiting if the team grows.
 - [ ] **Timing-unsafe password comparison** (`===`) in both `proxy.js` and `/api/auth/login` — low real-world risk for a human-typed password, but not constant-time.
 - [ ] **No try/catch around `request.json()`** across admin API routes — a malformed request body would throw an unhandled 500 instead of a clean error.
@@ -119,7 +119,7 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 ## 🏷️ Browser Tab Titles — 2026-07-26
 
 - [x] **Admin login page had a "Desk access" eyebrow label above the heading** — removed (second time; first fix appears to have been reverted somewhere — worth checking git history if it recurs again).
-- [x] **Admin tab title showed the full public tagline** ("PeopleLens — independent journalism, curated") instead of a distinct label — `/admin/layout.jsx` was a client component so couldn't export its own `metadata`. Fixed by extracting the nav into `AdminNav.jsx` (client) and making `layout.jsx` a server component that exports its own title. Initially set to "Admin — PeopleLens", later reordered to **"PeopleLens - Admin"** per explicit request (2026-07-27) — this is the current, final value.
+- [x] **Admin tab title showed the full public tagline** ("PeopleLens — independent journalism, curated") instead of a distinct label — `/admin/layout.jsx` was a client component so couldn't export its own `metadata`. Fixed by extracting the nav into `AdminNav.jsx` (client) and making `layout.jsx` a server component with `title: "Admin — PeopleLens"`.
 - [x] **Homepage tab title carried the tagline too** — shortened `app/layout.jsx` title from "PeopleLens — independent journalism, curated" to just "PeopleLens". `description` (used for search/link previews, not the tab) left unchanged.
 
 ---
@@ -190,40 +190,4 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 
 ---
 
-## 🌐 Custom Domain Not Serving Correctly — 2026-07-27
-
-**The problem:** `www.peoplelens.in` showed the mobile fixes correctly on the direct Vercel URL, but not on the custom domain — turned out to be four separate causes stacked on top of each other, each only visible after the previous one was cleared:
-
-- [x] **GoDaddy "Domain Forwarding / URL Masking" was framing the real site inside a legacy HTML frameset** instead of pointing DNS directly at Vercel — this is also where the "PoepleLens" tab-title typo (reported days earlier and never explained at the time) was actually coming from; the frameset page had its own stale, differently-branded title. Fixed by removing the forwarding/masking rule at the registrar.
-- [x] **Generic DNS record values didn't match what Vercel actually wanted** — Vercel's dashboard gave domain-specific values (`A` → `216.198.79.1`, `www` `CNAME` → `123d949c33f1ab7e.vercel-dns-017.com.`) rather than the generic ones in Vercel's general docs. Used the exact values shown on the project's own Domains page.
-- [x] **Vercel's own domain entries were set to "Redirect to Another Domain"** (307 → `ground-report-sable.vercel.app`) instead of "Connect to an environment" — meant the custom domain worked but always bounced the address bar to the `.vercel.app` URL. Switched both `peoplelens.in` and `www.peoplelens.in` to connect directly to Production.
-- [x] **Stale DNS cache on the original testing network** — after the above fixes, one specific desktop network still 404'd while mobile (different network) worked immediately; a second desktop on the same network also failed. Confirmed via `dnschecker.org` that DNS had fully propagated globally (`216.198.79.1` everywhere) — the network's own router/ISP resolver just hadn't refreshed yet. Resolved itself (or via a phone-hotspot workaround) rather than needing further changes.
-
-**Verified working:** confirmed via direct fetch (`200`, correct "PeopleLens" title, no redirect) and by the user on mobile, then on a PC via a different network. No code changes were involved — this was entirely registrar/Vercel dashboard configuration.
-
----
-
-## 🔐 Admin Security Review — Round 2, and Login Brute-Force Fix — 2026-07-28
-
-A second, deeper pass specifically hunting for anything an external attacker could exploit (as opposed to the first round's broader code-quality sweep). One real gap found and fixed; several specific, researched threats confirmed *not* present rather than just assumed safe.
-
-**Fixed:**
-- [x] **`/api/auth/login` had no rate limiting or lockout** — unlimited scripted password guesses were possible against the one endpoint on the site reachable without already being authenticated. Fixed: new `LoginAttempt` table (Postgres, same RLS/rolling-window pattern as `NominationRateLimit`); max **5 attempts per IP per rolling 15 minutes**, checked before the password is even compared, returns `429` past that. Every attempt (success or failure) is recorded. Failed attempts also get a **750ms artificial delay** before responding — free defense-in-depth on top of the rate limit. Self-pruning, same as the nomination limiter.
-- [x] **`ipAddress: "unknown"` bucket edge case reviewed** — if `x-forwarded-for` is ever absent, all such requests share one counter. Checked directly against Vercel's own docs: Vercel overwrites this header and does not forward client-supplied values, specifically to prevent spoofing — so this isn't attacker-exploitable, and the "unknown" fallback essentially never triggers on real Vercel traffic.
-
-**Specifically checked and confirmed NOT vulnerable (researched, not assumed):**
-- **CVE-2025-29927** (critical, publicly-exploitable Next.js middleware/auth-bypass vulnerability disclosed March 2025 — a crafted header could skip `proxy.js` entirely and reach `/admin` unauthenticated). Checked the actual pinned version in `package.json`: `next: "^16.2.10"`, well past every patched threshold (12.3.5 / 13.5.9 / 14.2.25 / 15.2.3+). Not vulnerable.
-- **SSRF via the YouTube lookup routes** (`lookup-channel`, `lookup-video`, `channel-videos`) — traced `lib/youtube.js` line by line: the fetch target is always the hardcoded `API_BASE` constant; admin-pasted input only ever lands in query-parameter values, never in the fetch URL itself. No path for the server to be tricked into fetching an attacker-chosen URL.
-- **Secrets leaking into the client bundle** — searched every `"use client"` component for `process.env` usage and any `NEXT_PUBLIC_` misuse. `ADMIN_PASSWORD` and `YOUTUBE_API_KEY` only ever appear in server-only files.
-- **Mass assignment on video updates** (`PATCH /api/admin/videos/[id]`) — the update object is built field-by-field from an explicit allowlist, not a raw spread of the request body.
-- **Rate-limit bypass via IP spoofing** — same Vercel-header-overwrite finding as above; the nomination rate limiter from 2026-07-27 is not trivially bypassable this way either.
-- **IDOR via ID guessing** — all IDs are `cuid()`-based (long, non-sequential). Not practically guessable.
-
-**New minor finding, not yet fixed:**
-- [ ] **`body.region` on the video PATCH route has zero validation** — accepts an arbitrary, unbounded string. Low real risk (admin-only input, not displayed anywhere special-cased), but inconsistent with how `status` is now protected. Same category as the pre-existing "no try/catch around `request.json()`" item above.
-
-**Validated:** both new files (`app/api/auth/login/route.js`, `prisma/schema.prisma`) confirmed deployed byte-for-byte via diff; `LoginAttempt` table live in Supabase with correct schema and RLS; correct commit ("admin login rate-limiter") live in production. Logic re-verified on the live file. Not load-tested with real repeated login attempts (no POST-capable tool available this session) — a manual check would be deliberately mistyping the password 5-6 times on `/admin/login` and confirming the 6th attempt returns "Too many login attempts."
-
----
-
-*Last updated: 2026-07-28*
+*Last updated: 2026-07-27*
