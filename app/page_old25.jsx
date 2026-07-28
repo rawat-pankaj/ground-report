@@ -35,9 +35,10 @@ const getHero = unstable_cache(
 );
 
 const getVideos = unstable_cache(
-  async (language, category, excludeId) => {
+  async (language, beat, category, excludeId) => {
     const where = { status: "published" };
     if (language) where.language = language;
+    if (beat) where.beatTags = { contains: beat };
     if (category) where.categories = { some: { category: { slug: category } } };
     if (excludeId) where.id = { not: excludeId };
 
@@ -151,21 +152,20 @@ function StoryCard({ video }) {
 
 export default async function FeedPage({ searchParams }) {
   const params = await searchParams;
-  // `language` is no longer surfaced in the UI (the language pills were
-  // removed), but is still honoured so older bookmarked/shared links keep
-  // working. Length-capped since it comes straight from the URL.
-  const language = (params?.language || "").slice(0, 20);
+  const language = params?.language || "";
+  const beat = params?.beat || "";
   const category = params?.category || "";
-  const noFilters = !language && !category;
+  const noFilters = !language && !beat && !category;
 
   const categories = await getCategories();
   const hero = noFilters ? await getHero() : null;
-  const videos = await getVideos(language, category, hero?.id || null);
+  const videos = await getVideos(language, beat, category, hero?.id || null);
 
 
-  function hrefFor(nextLanguage, nextCategory) {
+  function hrefFor(nextLanguage, nextBeat, nextCategory) {
     const p = new URLSearchParams();
     if (nextLanguage) p.set("language", nextLanguage);
+    if (nextBeat) p.set("beat", nextBeat);
     if (nextCategory) p.set("category", nextCategory);
     const qs = p.toString();
     return qs ? "/" + "?" + qs : "/";
@@ -200,7 +200,7 @@ export default async function FeedPage({ searchParams }) {
           </div>
           <div className="filter-strip">
             <Link
-              href={hrefFor(language, "")}
+              href={hrefFor(language, beat, "")}
               className={"tag " + (category === "" ? "tag-active" : "")}
             >
               All
@@ -208,7 +208,7 @@ export default async function FeedPage({ searchParams }) {
             {categories.map((c) => (
               <Link
                 key={c.id}
-                href={hrefFor(language, c.slug)}
+                href={hrefFor(language, beat, c.slug)}
                 className={"tag " + (category === c.slug ? "tag-active" : "")}
               >
                 {c.name}
