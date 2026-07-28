@@ -224,56 +224,6 @@ A second, deeper pass specifically hunting for anything an external attacker cou
 
 **Validated:** both new files (`app/api/auth/login/route.js`, `prisma/schema.prisma`) confirmed deployed byte-for-byte via diff; `LoginAttempt` table live in Supabase with correct schema and RLS; correct commit ("admin login rate-limiter") live in production. Logic re-verified on the live file. Not load-tested with real repeated login attempts (no POST-capable tool available this session) — a manual check would be deliberately mistyping the password 5-6 times on `/admin/login` and confirming the 6th attempt returns "Too many login attempts."
 
-> ⚠️ **Follow-up: that untested caveat mattered.** When the manual test was actually run, the rate limit appeared not to work at all. Two separate bugs were behind it — see "Architecture Review & Course Correction" below. Worth remembering as a general lesson: "deployed and logically correct" is not the same as "verified working."
-
----
-
-## 🏗️ Architecture Review & Course Correction — 2026-07-28
-
-A deliberate step back to critique the recently-built work rather than add to it. It found two live bugs and reversed an approach that was about to ship.
-
-### The review's main findings
-
-- **The `/api/videos` rate limiter (built, never deployed) was self-defeating.** It added a `COUNT`, an `INSERT`, and a `deleteMany` to every request — **four database operations where there had been one** — in order to defend against a *hypothetical* amplification of database load. Under the exact attack it targeted, it made things worse. It also enforced at the wrong tier: the function had already been invoked and a Postgres connection opened *before* the limit was evaluated, so the expensive part had already happened.
-- **It defended a parameter that should simply have been deleted.** `beat` appeared on the homepage only inside `hrefFor(...)`, passed through to preserve state — **no UI element anywhere produced it** (the beat filter chips were removed from the public UI long ago). The correct fix was deleting a vestigial parameter, not building infrastructure around it.
-- **Wrong storage tier, now duplicated three times.** Postgres is a poor substrate for rate-limit state (durable and transactional, for data that is ephemeral and disposable). Redis/Upstash or edge enforcement — Vercel's WAF/BotID, which reject *before* a function is invoked — are the conventional choices. Three structurally identical tables and three copy-pasted `getClientIp` implementations had accumulated.
-- **The CSP oversells itself.** `script-src 'unsafe-inline'` (required by Next.js App Router's inline hydration scripts) gives up most of a CSP's XSS value. The directives genuinely doing work are `frame-ancestors`, `object-src`, `base-uri`, `form-action`, and blocking third-party script/style origins.
-- **Core caching rests on `unstable_cache`** — the name is the maintainer's warning. Next.js 16 has `use cache` with `cacheTag`/`cacheLife` as the stable successor. Worth planning a migration rather than discovering it at an upgrade.
-- **No instrumentation.** Every threat addressed recently was inferred from reading code, not observed in traffic. The right sequence is measure → confirm → size the mitigation; skipping to mitigation is how you end up with a limiter costing more than the attack.
-
-### Two live bugs it surfaced in the login rate limiter
-
-- [x] **The attempt-recording write was not awaited.** `prisma.loginAttempt.create(...)` had no `await`, on the reasoning that it "must never block the login." In a serverless runtime the container can be frozen the moment a response is returned, so the write could be killed before reaching Postgres — leaving the counter near zero and **silently disabling the rate limit entirely**. It failed open, with no error anywhere. Fixed by awaiting both the insert and the cleanup `deleteMany` (logins are rare; the latency is irrelevant). The misleading comment that justified the original approach was rewritten so it doesn't invite the same mistake again.
-- [x] **The login page hardcoded "Incorrect password" for every failure.** `if (res.ok) {...} else { setError("Incorrect password") }` discarded the server's message, so a `429` "Too many login attempts" was displayed as a wrong password. This masked the first bug and made a *working* limiter look broken. Fixed by reading `data.error` with the old string as fallback.
-- **How it was diagnosed:** the `LoginAttempt` table showed exactly 5 rows, one IP, consecutive, all inside the window. That's the precise signature of a *working* limiter — attempts 1-5 recorded, attempt 6 rejected before the write. The data pointed at the UI, not the limiter. Confirmed working end to end after both fixes.
-
-### The homepage package, revised
-
-The four-file package was reduced to three and shipped:
-
-| | Original (not shipped) | Revised (shipped) |
-|---|---|---|
-| `beat` param | length-capped at 50 chars, kept | **deleted entirely** from homepage and `/api/videos` |
-| `/api/videos` | + rate limiter (4 DB ops/request) | no rate limiter |
-| New DB table | `PublicApiRateLimit` | none — and the already-created table was **dropped** |
-| Security headers | added | added, unchanged |
-
-- [x] `beat` removed from `app/page.jsx` (all 8 references: cached-query parameter, filter, `hrefFor` signature, both pill call sites) and from `app/api/videos/route.js`. `beatTags` remains in the DB and the admin editor — this only removed it as a *public URL filter*.
-- [x] `language` kept and length-capped (20 chars) — still honoured so older bookmarked links work, though no UI produces it either. Cheap equality match, unlike `beat`'s substring scan.
-- [x] Security headers live in `next.config.mjs`: CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
-- [x] Orphan `PublicApiRateLimit` table dropped from Supabase (verified empty first). Schema back to seven tables, all RLS-enabled.
-
-**Validated:** all three files confirmed deployed byte-for-byte; headers confirmed present on both page *and* API responses; `?beat=paper leak` confirmed inert (returns the full unfiltered list rather than the 3 matching videos); `?category=poetry` confirmed still filtering correctly with the right pill active and clean hrefs — no regression from the changed `getVideos`/`hrefFor` signatures.
-
-**Still worth watching:** `connect-src 'self'` is the CSP directive most likely to break something quietly — check the Vercel Analytics dashboard in a day or two to confirm data is still flowing.
-
-### Carried forward
-
-- [ ] Consolidate rate limiting onto Vercel WAF/BotID or Upstash; retire the duplicated Postgres tables and `getClientIp` copies.
-- [ ] Plan the `unstable_cache` → `use cache` migration.
-- [ ] Add basic alerting, so the next threat is observed rather than theorized.
-- [ ] Decide whether `/api/videos` should exist at all — the site itself doesn't consume it (the homepage queries Prisma directly). The most secure endpoint is one that doesn't exist.
-
 ---
 
 *Last updated: 2026-07-28*
