@@ -32,15 +32,11 @@ export async function POST(request) {
     );
   }
 
-  // Record this attempt BEFORE checking the password. This must be awaited:
-  // serverless functions can be frozen the moment a response is returned, so
-  // an un-awaited write may never reach the database — which would leave the
-  // counter at zero and silently disable the rate limit entirely.
-  // Logins are rare, so the added latency here is irrelevant.
-  await prisma.loginAttempt.create({ data: { ipAddress: ip } }).catch(() => {});
-  await prisma.loginAttempt
-    .deleteMany({ where: { createdAt: { lt: windowStart } } })
-    .catch(() => {});
+  // Record this attempt before checking the password, and clean up old
+  // rows opportunistically. Both are fire-and-forget — a hiccup here must
+  // never block or fail the login itself.
+  prisma.loginAttempt.create({ data: { ipAddress: ip } }).catch(() => {});
+  prisma.loginAttempt.deleteMany({ where: { createdAt: { lt: windowStart } } }).catch(() => {});
 
   const { password } = await request.json();
   const trimmed = (password || "").trim();
