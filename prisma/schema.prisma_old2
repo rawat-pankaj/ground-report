@@ -70,11 +70,3 @@ model NominationRateLimit {
 
   @@index([ipAddress, createdAt])
 }
-
-model LoginAttempt {
-  id        String   @id @default(cuid())
-  ipAddress String
-  createdAt DateTime @default(now())
-
-  @@index([ipAddress, createdAt])
-}
