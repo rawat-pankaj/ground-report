@@ -21,10 +21,7 @@ export default function AdminLoginPage() {
     if (res.ok) {
       window.location.href = "/admin";
     } else {
-      // Use the server's message so rate-limit responses (429) are shown as
-      // such, rather than being mislabelled as a wrong password.
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || "Incorrect password");
+      setError("Incorrect password");
     }
   }
 
