@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function POST(request) {
   const body = await request.json();
-  const { channel, videos, language, beatTags } = body;
+  const { channel, videos, language, region, beatTags } = body;
 
   if (!channel?.youtubeChannelId || !videos?.length) {
     return NextResponse.json({ error: "channel and videos are required" }, { status: 400 });
@@ -59,6 +59,7 @@ export async function POST(request) {
         thumbnailUrl: v.thumbnailUrl,
         publishedAt: v.publishedAt ? new Date(v.publishedAt) : null,
         language: normalizeLanguage(language),
+        region: region || null,
         beatTags: normalizeBeatTags(beatTags),
         channelId: channelRow.id,
       },

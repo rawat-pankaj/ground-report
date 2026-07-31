@@ -37,6 +37,7 @@ export async function PATCH(request, { params }) {
   }
 
   if (body.language !== undefined) data.language = normalizeLanguage(body.language);
+  if (body.region !== undefined) data.region = body.region;
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
 
   if (body.featured !== undefined) {
