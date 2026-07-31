@@ -17,7 +17,7 @@
 
 ## ✨ Pending Features
 
-- [ ] **View count display** — ⚠️ **Entry corrected 2026-07-31.** This previously claimed the `viewCount` DB column existed and that fetch/cron code was written. An audit found none of that was true in any usable sense: `app/api/cron/update-views/route.js` **does not exist in the repo**, no code anywhere referenced `viewCount`, and the column was 0-of-98 populated. The column has since been dropped (see "Dead Code & Schema Cleanup" below). Treat this as **from-scratch work**: add the column, write the YouTube view-fetch, add a cron route, set `CRON_SECRET`, configure cron-job.org, and display in abbreviated format (1.2M, 45K). Note when re-adding: if the column is `bigint`, Prisma returns a JS `BigInt`, which `JSON.stringify` throws on — that would break every route returning video objects unless serialization is handled.
+- [ ] **View count display** — DB column `viewCount` already exists (added, defaults to 0). YouTube fetch code written (`lib/youtube.js`, `app/api/admin/videos/route.js`, `app/api/cron/update-views/route.js`). Display on all cards in abbreviated format (1.2M, 45K). Needs: `CRON_SECRET` env var on Vercel + cron-job.org setup pointing to `/api/cron/update-views?secret=YOUR_SECRET`. Daily refresh planned.
 - [x] **Mobile review** — Done 2026-07-27, verified on a real device. See "Mobile Compatibility & QA" section below.
 
 - [ ] **cron-job.org setup** — Needed for daily view count refresh once view counts are enabled. Sign up at cron-job.org, create job pointing to `https://ground-report-sable.vercel.app/api/cron/update-views?secret=CRON_SECRET`, schedule daily.
@@ -220,7 +220,7 @@ A second, deeper pass specifically hunting for anything an external attacker cou
 - **IDOR via ID guessing** — all IDs are `cuid()`-based (long, non-sequential). Not practically guessable.
 
 **New minor finding, not yet fixed:**
-- [x] ~~**`body.region` on the video PATCH route has zero validation**~~ — **resolved 2026-07-31 by deletion rather than validation.** The audit found `region` was never read, never populated (0/98 rows), and collected by no admin form — so both write paths and the column itself were removed. See "Dead Code & Schema Cleanup" below.
+- [ ] **`body.region` on the video PATCH route has zero validation** — accepts an arbitrary, unbounded string. Low real risk (admin-only input, not displayed anywhere special-cased), but inconsistent with how `status` is now protected. Same category as the pre-existing "no try/catch around `request.json()`" item above.
 
 **Validated:** both new files (`app/api/auth/login/route.js`, `prisma/schema.prisma`) confirmed deployed byte-for-byte via diff; `LoginAttempt` table live in Supabase with correct schema and RLS; correct commit ("admin login rate-limiter") live in production. Logic re-verified on the live file. Not load-tested with real repeated login attempts (no POST-capable tool available this session) — a manual check would be deliberately mistyping the password 5-6 times on `/admin/login` and confirming the 6th attempt returns "Too many login attempts."
 
@@ -276,44 +276,4 @@ The four-file package was reduced to three and shipped:
 
 ---
 
-## 🧹 Dead Code & Schema Cleanup — 2026-07-31
-
-A deliberate audit for unused code, columns, and files — prompted partly by the `beat` removal, which orphaned things downstream.
-
-### Method
-
-Rather than eyeballing, each candidate was checked three ways: what the homepage actually reads, what the code references, and what the **data** shows. That last one settled several cases — a column referenced in code but empty in all 98 rows is dead regardless of what the code implies.
-
-### Removed
-
-- [x] **`Video.region` column** — 0 of 98 rows populated. Never read by the homepage, public API, or admin UI. **No admin form collected it** — neither add page had a region input. Yet it had *two* write paths (`POST /api/admin/videos` and `PATCH /api/admin/videos/[id]`). Both paths removed, column dropped.
-- [x] **`Video.viewCount` column** — 0 of 98 rows non-zero, **zero code references anywhere**, and absent from `prisma/schema.prisma` entirely. This was live **schema drift**: had anyone run `prisma migrate dev`, Prisma would have generated a migration to drop it as an unknown column. Dropped deliberately instead.
-- [x] **`app/BeatFilters.jsx`** — orphaned client component rendering the old beat filter chips, with an internal `hrefFor` building `?beat=` URLs — the exact parameter deleted the day before. Nothing imported it; the only file mentioning "BeatFilters" was itself. Verified it was the sole user of no CSS class, so deleting it stranded nothing.
-
-### Verified clean — no action needed
-
-- **CSS**: all 21 classes in `globals.css` are genuinely referenced. No dead styles.
-- **Homepage code**: every import (`prisma`, `unstable_cache`, `Link`) is used, and every declared function (`timeAgo`, `hrefFor`, `getCategories`, `getHero`, `getVideos`, `FeaturedCard`, `StoryCard`) is called. **No dead code in `page.jsx`** — the waste was all in the schema and that orphaned component.
-- **Full DB drift audit, all seven tables**: `Channel`, `Nomination`, `Category`, `VideoCategory`, `NominationRateLimit`, `LoginAttempt` all match the Prisma schema column-for-column. `viewCount` was the single drift point in the entire database.
-- **`beatTags`**: 98/98 populated, actively used by admin tagging. Keep.
-- **`language`**: 98/98 populated. No UI produces `?language=` anymore, but it's deliberately kept working for old bookmarked links — vestigial *by choice*, not by accident.
-- **`Channel.lastBrowsedAt`**: genuinely used by the channel-browse flow.
-- **`/admin/add` vs `/admin/add-video`**: previously flagged as possible duplicates — they're not. Distinct purposes (channel vs video), both linked in the nav.
-
-### A near-miss worth recording
-
-The first version of this cleanup **added `viewCount BigInt @default(0)` to the schema** to resolve the drift non-destructively — described at the time as safe. It was not. Prisma returns a JS `BigInt` for a `bigint` column, and `JSON.stringify` throws on `BigInt`. Four routes serialize video objects: `GET /api/videos`, `GET /api/admin/videos`, `POST /api/admin/videos`, and `PATCH /api/admin/videos/[id]`. Pushing it would have 500'd **the entire admin video management UI plus the public API**. Caught before deploy only because a check of `main` revealed the push hadn't happened yet. Dropping the column was the correct resolution.
-
-### Sequencing (this mattered)
-
-Columns were dropped **only after** the code deploy, never before. The live Prisma client had `region` in its schema and selected it on every video query — dropping the column first would have 500'd the homepage instantly. Order was: deploy code → confirm the live API response no longer contained `region` → then drop. Verified healthy before and after.
-
-**Final state:** `Video` is 11 columns, matching the Prisma schema field-for-field. **Zero drift across the entire database.**
-
-### Still outstanding
-
-- [ ] **~40 `*_old*.jsx` / `*_old*.js` backup files** still in the repo. Next.js ignores them entirely (they don't match its routing filenames) so they can't affect the running site, but they make it materially harder to tell what's current — which matters now that dead-code audits are a recurring activity. Deliberately held back as a separate commit: largest diff, least consequence.
-
----
-
-*Last updated: 2026-07-31*
+*Last updated: 2026-07-28*
