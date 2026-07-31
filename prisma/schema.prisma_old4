@@ -28,6 +28,7 @@ model Video {
   beatTags       String?
   status         String    @default("published") // published | hidden
   featured       Boolean   @default(false)
+  viewCount      BigInt    @default(0)
   addedAt        DateTime  @default(now())
   channelId      String
   channel        Channel   @relation(fields: [channelId], references: [id])
