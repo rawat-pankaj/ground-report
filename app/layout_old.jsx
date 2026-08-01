@@ -3,25 +3,8 @@ import { Analytics } from "@vercel/analytics/next";
 import MastheadBar from "./MastheadBar";
 
 export const metadata = {
-  metadataBase: new URL("https://www.peoplelens.in"),
   title: "PeopleLens",
   description: "A hand-curated feed of independent YouTube journalists.",
-  icons: {
-    icon: "/favicon.ico",
-  },
-  openGraph: {
-    title: "PeopleLens",
-    description: "A hand-curated feed of independent YouTube journalists.",
-    url: "https://www.peoplelens.in",
-    siteName: "PeopleLens",
-    locale: "en_IN",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: "PeopleLens",
-    description: "A hand-curated feed of independent YouTube journalists.",
-  },
 };
 
 export default function RootLayout({ children }) {

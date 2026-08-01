@@ -1,15 +1,6 @@
 export const metadata = {
   title: "About — PeopleLens",
   description: "Why this exists and how videos are chosen.",
-  openGraph: {
-    title: "About — PeopleLens",
-    description: "Why this exists and how videos are chosen.",
-    url: "https://www.peoplelens.in/about",
-  },
-  twitter: {
-    title: "About — PeopleLens",
-    description: "Why this exists and how videos are chosen.",
-  },
 };
 
 export default function AboutPage() {
