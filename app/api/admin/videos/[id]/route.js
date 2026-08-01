@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 
 function normalizeLanguage(input) {
@@ -18,13 +19,24 @@ function normalizeBeatTags(input) {
   return cleaned.length ? [...new Set(cleaned)].join(", ") : null;
 }
 
+const VALID_VIDEO_STATUSES = ["published", "hidden"];
+
 export async function PATCH(request, { params }) {
   const { id } = await params;
   const body = await request.json();
   const data = {};
-  if (body.status) data.status = body.status;
+
+  if (body.status !== undefined) {
+    if (!VALID_VIDEO_STATUSES.includes(body.status)) {
+      return NextResponse.json(
+        { error: `status must be one of: ${VALID_VIDEO_STATUSES.join(", ")}` },
+        { status: 400 }
+      );
+    }
+    data.status = body.status;
+  }
+
   if (body.language !== undefined) data.language = normalizeLanguage(body.language);
-  if (body.region !== undefined) data.region = body.region;
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
 
   if (body.featured !== undefined) {
@@ -37,12 +49,25 @@ export async function PATCH(request, { params }) {
     data.featured = body.featured;
   }
 
-  const video = await prisma.video.update({ where: { id }, data });
+  if (body.categoryIds !== undefined) {
+    data.categories = {
+      deleteMany: {},
+      create: body.categoryIds.map((categoryId) => ({ categoryId })),
+    };
+  }
+
+  const video = await prisma.video.update({
+    where: { id },
+    data,
+    include: { categories: { include: { category: true } } },
+  });
+  revalidateTag("videos");
   return NextResponse.json({ video });
 }
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
   await prisma.video.delete({ where: { id } });
+  revalidateTag("videos");
   return NextResponse.json({ ok: true });
 }

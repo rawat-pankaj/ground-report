@@ -25,13 +25,13 @@ model Video {
   thumbnailUrl   String?
   publishedAt    DateTime?
   language       String?
-  region         String?
   beatTags       String?
   status         String    @default("published") // published | hidden
   featured       Boolean   @default(false)
   addedAt        DateTime  @default(now())
   channelId      String
   channel        Channel   @relation(fields: [channelId], references: [id])
+  categories     VideoCategory[]
 }
 
 model Nomination {
@@ -43,4 +43,37 @@ model Nomination {
   status           String    @default("pending") // pending | approved | rejected
   submittedAt      DateTime  @default(now())
   reviewedAt       DateTime?
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  videos    VideoCategory[]
+}
+
+model VideoCategory {
+  videoId    String
+  categoryId String
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([videoId, categoryId])
+}
+
+model NominationRateLimit {
+  id        String   @id @default(cuid())
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@index([ipAddress, createdAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@index([ipAddress, createdAt])
 }

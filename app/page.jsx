@@ -1,13 +1,56 @@
 import { prisma } from "../lib/prisma";
-import BeatFilters from "./BeatFilters";
+import { unstable_cache } from "next/cache";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// The three Prisma queries below are wrapped in unstable_cache and tagged
+// "videos". Admin routes call revalidateTag("videos") after any write that
+// changes what's shown here (publish/hide/feature/categorize/add/delete a
+// video, or create/rename/delete a category) — see
+// app/api/admin/videos/[id]/route.js etc. That's what keeps this fresh;
+// there is no time-based revalidation. Reading searchParams below does NOT
+// defeat this caching, because the cache lives around the data fetch, keyed
+// by the actual filter values, not around the page render itself.
 
-const LANGUAGES = [
-  { value: "", label: "All" },
-  { value: "hi", label: "हिंदी" },
-  { value: "en", label: "English" },
-];
+const getCategories = unstable_cache(
+  async () => {
+    const categoriesRaw = await prisma.category.findMany({
+      where: { videos: { some: { video: { status: "published" } } } },
+      include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
+    });
+    return categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
+  },
+  ["homepage-categories"],
+  { tags: ["videos"] }
+);
+
+const getHero = unstable_cache(
+  async () => {
+    return prisma.video.findFirst({
+      where: { status: "published", featured: true },
+      include: { channel: true },
+    });
+  },
+  ["homepage-hero"],
+  { tags: ["videos"] }
+);
+
+const getVideos = unstable_cache(
+  async (language, category, excludeId) => {
+    const where = { status: "published" };
+    if (language) where.language = language;
+    if (category) where.categories = { some: { category: { slug: category } } };
+    if (excludeId) where.id = { not: excludeId };
+
+    return prisma.video.findMany({
+      where,
+      include: { channel: true },
+      orderBy: { addedAt: "desc" },
+      take: 100,
+    });
+  },
+  ["homepage-videos"],
+  { tags: ["videos"] }
+);
 
 function timeAgo(date) {
   if (!date) return "";
@@ -22,27 +65,85 @@ function timeAgo(date) {
   return `${months} month${months > 1 ? "s" : ""} ago`;
 }
 
-function StoryCard({ video }) {
-  const primaryTag = video.beatTags ? video.beatTags.split(",")[0].trim() : video.language;
+function FeaturedCard({ video }) {
+  const heroThumbnail = `https://i.ytimg.com/vi/${video.youtubeVideoId}/maxresdefault.jpg`;
+
   return (
     <a
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col items-start"
+      className="story-card overflow-hidden flex flex-col col-span-2 lg:row-span-2"
+    >
+      <div style={{ position: "relative", width: "100%" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={heroThumbnail}
+          alt=""
+          className="w-full object-cover"
+          style={{ aspectRatio: "16/9" }}
+        />
+        <span style={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          background: "var(--signal)",
+          color: "#fff",
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "10px",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          padding: "3px 8px",
+        }}>
+          Featured
+        </span>
+      </div>
+      <div className="p-4 flex-1 flex flex-col gap-3 w-full">
+        <div>
+          <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
+          <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
+        </div>
+
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          background: "var(--ink)",
+          color: "var(--paper)",
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          padding: "8px 14px",
+          alignSelf: "flex-start",
+        }}>
+          Watch on YouTube →
+        </span>
+      </div>
+    </a>
+  );
+}
+
+function StoryCard({ video }) {
+  return (
+    <a
+      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="story-card overflow-hidden flex flex-col"
     >
       {video.thumbnailUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={video.thumbnailUrl} alt="" className="w-full aspect-video object-cover shrink-0" />
       )}
-      <div className="p-4 flex-1 flex flex-col justify-between gap-3 w-full">
+      <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
-          <p className="story-headline text-[16px] leading-snug mb-2">{video.title}</p>
-          <p className="story-meta">
+          <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
+          <p className="story-meta" style={{ fontSize: "10px" }}>
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
         </div>
-        {primaryTag && <span className="stamp self-start">{primaryTag}</span>}
+
       </div>
     </a>
   );
@@ -50,125 +151,73 @@ function StoryCard({ video }) {
 
 export default async function FeedPage({ searchParams }) {
   const params = await searchParams;
-  const language = params?.language || "";
-  const beat = params?.beat || "";
-  const noFilters = !language && !beat;
+  // `language` is no longer surfaced in the UI (the language pills were
+  // removed), but is still honoured so older bookmarked/shared links keep
+  // working. Length-capped since it comes straight from the URL.
+  const language = (params?.language || "").slice(0, 20);
+  const category = params?.category || "";
+  const noFilters = !language && !category;
 
-  const where = { status: "published" };
-  if (language) where.language = language;
-  if (beat) where.beatTags = { contains: beat };
+  const categories = await getCategories();
+  const hero = noFilters ? await getHero() : null;
+  const videos = await getVideos(language, category, hero?.id || null);
 
-  const hero = noFilters
-    ? await prisma.video.findFirst({
-        where: { status: "published", featured: true },
-        include: { channel: true },
-      })
-    : null;
 
-  const gridWhere = hero ? { ...where, id: { not: hero.id } } : where;
-  const videos = await prisma.video.findMany({
-    where: gridWhere,
-    include: { channel: true },
-    orderBy: { addedAt: "desc" },
-    take: 100,
-  });
-
-  const published = await prisma.video.findMany({
-    where: { status: "published" },
-    select: { beatTags: true, channel: { select: { name: true } } },
-  });
-
-  const beatOptions = [
-    ...new Set(
-      published.flatMap((v) => (v.beatTags ? v.beatTags.split(",").map((t) => t.trim()) : []))
-    ),
-  ].filter(Boolean);
-
-  const beatCounts = {};
-  published.forEach((v) => {
-    if (!v.beatTags) return;
-    v.beatTags.split(",").forEach((t) => {
-      const tag = t.trim();
-      if (tag) beatCounts[tag] = (beatCounts[tag] || 0) + 1;
-    });
-  });
-  const trendingTags = Object.entries(beatCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([tag]) => tag);
-
-  const channelCounts = {};
-  published.forEach((v) => {
-    const name = v.channel?.name;
-    if (name) channelCounts[name] = (channelCounts[name] || 0) + 1;
-  });
-  const topChannels = Object.entries(channelCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([name]) => name);
-
-  function hrefFor(nextLanguage, nextBeat) {
+  function hrefFor(nextLanguage, nextCategory) {
     const p = new URLSearchParams();
     if (nextLanguage) p.set("language", nextLanguage);
-    if (nextBeat) p.set("beat", nextBeat);
+    if (nextCategory) p.set("category", nextCategory);
     const qs = p.toString();
     return qs ? "/" + "?" + qs : "/";
   }
 
+  const today = new Date().toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div>
-      <div className="mb-6">
-        <p className="story-meta !text-[13px] !normal-case" style={{ color: "var(--ink-soft)" }}>
-          Real issues. Stories about the people.
+      <div className="mb-4">
+        <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
+          {today}
+        </p>
+        <p style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
+          Stories that matter & issues that affect ordinary people!
+        </p>
+        <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-2">
-        {LANGUAGES.map((l) => (
-          <a
-            key={l.value}
-            href={hrefFor(l.value, beat)}
-            className={"tag " + (language === l.value ? "tag-active" : "")}
-          >
-            {l.label}
-          </a>
-        ))}
-      </div>
-      {beatOptions.length > 0 && (
-        <BeatFilters beatOptions={beatOptions} activeBeat={beat} language={language} />
-      )}
-
-      {hero && (
-        <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4 mb-8">
-          <StoryCard video={hero} />
-          <div className="flex flex-col gap-3">
-            {trendingTags.length > 0 && (
-              <div className="panel">
-                <p className="eyebrow mb-2">Trending tags</p>
-                <div className="flex flex-wrap gap-2">
-                  {trendingTags.map((tag) => (
-                    <a key={tag} href={hrefFor(language, tag)} className="tag">
-                      {tag}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-            {topChannels.length > 0 && (
-              <div className="panel">
-                <p className="eyebrow mb-2">Top channels</p>
-                <div className="flex flex-col gap-1">
-                  {topChannels.map((name) => (
-                    <p key={name} className="text-[13px]" style={{ color: "var(--ink)" }}>
-                      {name}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
+      {categories.length > 0 && (
+        <div className="mb-2">
+          <div style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+            Category
+          </div>
+          <div className="filter-strip">
+            <Link
+              href={hrefFor(language, "")}
+              className={"tag " + (category === "" ? "tag-active" : "")}
+            >
+              All
+            </Link>
+            {categories.map((c) => (
+              <Link
+                key={c.id}
+                href={hrefFor(language, c.slug)}
+                className={"tag " + (category === c.slug ? "tag-active" : "")}
+              >
+                {c.name}
+              </Link>
+            ))}
           </div>
         </div>
       )}
+
 
       {videos.length === 0 && !hero && (
         <div className="panel text-center py-12">
@@ -179,7 +228,8 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {hero && <FeaturedCard video={hero} />}
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />
         ))}

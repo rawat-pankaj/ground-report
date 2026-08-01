@@ -4,12 +4,18 @@ import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [saveState, setSaveState] = useState({});
 
   async function load() {
-    const res = await fetch("/api/admin/videos");
-    const data = await res.json();
-    setVideos(data.videos);
+    const [videosRes, categoriesRes] = await Promise.all([
+      fetch("/api/admin/videos"),
+      fetch("/api/admin/categories"),
+    ]);
+    const videosData = await videosRes.json();
+    const categoriesData = await categoriesRes.json();
+    setVideos(videosData.videos);
+    setCategories(categoriesData.categories || []);
   }
 
   useEffect(() => {
@@ -18,21 +24,34 @@ export default function AdminDashboard() {
 
   async function toggleStatus(video) {
     const nextStatus = video.status === "published" ? "hidden" : "published";
-    await fetch(`/api/admin/videos/${video.id}`, {
+    const res = await fetch(`/api/admin/videos/${video.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: nextStatus }),
     });
-    load();
+    if (!res.ok) return;
+    const data = await res.json();
+    setVideos((prev) =>
+      prev.map((v) => (v.id === video.id ? { ...v, status: data.video.status } : v))
+    );
   }
 
   async function setFeatured(video) {
-    await fetch(`/api/admin/videos/${video.id}`, {
+    const nextFeatured = !video.featured;
+    const res = await fetch(`/api/admin/videos/${video.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ featured: !video.featured }),
+      body: JSON.stringify({ featured: nextFeatured }),
     });
-    load();
+    if (!res.ok) return;
+    const data = await res.json();
+    setVideos((prev) =>
+      prev.map((v) => {
+        if (v.id === video.id) return { ...v, featured: data.video.featured };
+        // Setting one video as featured un-features every other video server-side.
+        return nextFeatured ? { ...v, featured: false } : v;
+      })
+    );
   }
 
   async function updateTags(video, field, value) {
@@ -54,10 +73,32 @@ export default function AdminDashboard() {
     }
   }
 
+  async function toggleCategory(video, categoryId) {
+    const currentIds = video.categories.map((vc) => vc.category.id);
+    const nextIds = currentIds.includes(categoryId)
+      ? currentIds.filter((id) => id !== categoryId)
+      : [...currentIds, categoryId];
+
+    const res = await fetch(`/api/admin/videos/${video.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryIds: nextIds }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    setVideos((prev) =>
+      prev.map((v) => (v.id === video.id ? { ...v, categories: data.video.categories } : v))
+    );
+  }
+
   async function remove(video) {
     if (!confirm(`Remove "${video.title}"?`)) return;
-    await fetch(`/api/admin/videos/${video.id}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/admin/videos/${video.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("Could not remove — try again.");
+      return;
+    }
+    setVideos((prev) => prev.filter((v) => v.id !== video.id));
   }
 
   if (!videos) return <p className="story-meta">Loading…</p>;
@@ -66,8 +107,7 @@ export default function AdminDashboard() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="eyebrow mb-1">The desk</p>
-          <h1 className="masthead-mark text-[22px]">Curated videos ({videos.length})</h1>
+          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", fontFamily: "'Archivo Narrow', sans-serif", textTransform: "uppercase", letterSpacing: "0.02em" }}>Curated videos ({videos.length})</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/add-video" className="btn btn-outline">+ Video</a>
@@ -85,7 +125,7 @@ export default function AdminDashboard() {
                 {video.featured && (
                   <span
                     className="stamp"
-                    style={{ position: "absolute", top: 6, left: 6, background: "#fff" }}
+                    style={{ position: "absolute", top: 6, left: 6, background: "var(--signal)", color: "#fff" }}
                   >
                     Featured
                   </span>
@@ -93,7 +133,25 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                {video.featured && (
+                  <span
+                    style={{
+                      background: "var(--signal)",
+                      color: "#fff",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "10px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      padding: "2px 8px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Featured Story
+                  </span>
+                )}
+                <p className="story-headline text-[14px] leading-snug">{video.title}</p>
+              </div>
               <p className="story-meta mb-2">{video.channel.name}</p>
               <div className="flex flex-wrap gap-2 mb-1 items-center">
                 <input
@@ -109,6 +167,25 @@ export default function AdminDashboard() {
                   onBlur={(e) => updateTags(video, "beatTags", e.target.value)}
                 />
               </div>
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {categories.map((category) => {
+                    const isActive = (video.categories || []).some(
+                      (vc) => vc.category.id === category.id
+                    );
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className={"tag " + (isActive ? "tag-active" : "")}
+                        onClick={() => toggleCategory(video, category.id)}
+                      >
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="mb-2 h-[16px]">
                 {["language", "beatTags"].map((field) => {
                   const state = saveState[`${video.id}:${field}`];
