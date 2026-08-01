@@ -9,7 +9,7 @@
 
 - [ ] **Featured card empty space** — `row-span-2` forces the hero card taller than its content when adjacent cards have short headlines. Workaround: accepted as-is for now. Fix: remove `row-span-2` from `FeaturedCard` in `app/page.jsx`.
 - [ ] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one."
-- [x] ~~**Vercel Speed Insights PR**~~ — merged 2026-08-02, real data now flowing. Turned into a multi-round debugging saga — see "Speed Insights Rollout" below.
+- [ ] **Vercel Speed Insights PR** — Vercel bot auto-created a PR to add Speed Insights on a separate branch. Not yet merged. Review and merge or close at `github.com/rawat-pankaj/ground-report/pulls`.
 - [ ] **Beat filter is case-sensitive** — `app/api/videos/route.js` uses Prisma `beatTags: { contains: beat }`, which maps to case-sensitive SQL `LIKE` on Postgres. Verified live: `/api/videos?beat=paper leak` → 3 results, `/api/videos?beat=Paper Leak` → 0. Masked today because admin normalizes beat tags to lowercase, so internal links always match. Becomes a real bug if beat URLs are ever exposed/typed by users (relevant to the backlog "clickable beat tags" item). Fix: add `mode: "insensitive"` to the `contains` filter.
 
 
@@ -351,31 +351,4 @@ Every item above confirmed live via direct fetch/diff against what was written, 
 
 ---
 
-## 📊 Speed Insights Rollout — 2026-08-02
-
-Merging the long-dormant Vercel bot PR (see Known Issues, resolved above) turned into a genuine multi-round debugging exercise — logged in full because the failure mode is worth remembering, not just the fix.
-
-### What went wrong
-
-- [x] **The bot's PR was built against a stale `layout.jsx`** — from before the container-width change (`max-w-3xl` → `max-w-6xl`) and padding adjustment made earlier in the project. Merging it didn't cleanly reconcile the two versions.
-- [x] **GitHub auto-merged without conflict markers — and still produced broken JSX.** No `<<<<<<<`/`=======`/`>>>>>>>` appeared, which looked like success, but the merge left two `<main>` tags, a duplicated `<Analytics />`, a `<SpeedInsights />` indented with raw tabs, and a `</body>` closing in the wrong place — all sitting in the file as invalid JSX. **Lesson: "auto-merged, no conflicts" is not the same as "merged correctly."** Git can silently combine non-overlapping line ranges into a structurally broken result.
-- [x] **The same corruption reappeared three times** across this rollout, each after a fix had been applied and confirmed correct in isolation — because each new `git pull` re-triggered the same automatic (and wrong) merge resolution between local and remote history. A local edit/push cycle could not break the loop on its own.
-- [x] **`package.json` had a real, separate merge conflict** (this one *did* show markers) — local guessed `@vercel/speed-insights: ^1.1.0`, the bot's actual PR specified `^2.0.0`. Resolved by keeping the bot's real version rather than the guess.
-- [x] **Installing the package and rendering the component was necessary but not sufficient.** Even with fully correct code confirmed live and bundled (verified via the page's React Server Components manifest), the Speed Insights dashboard still showed the "Get Started" onboarding screen. Root cause: Vercel has a **separate project-level activation step** — `POST /speed-insights/toggle` in their API, or `vercel project speed-insights` via CLI, or an Enable button in the dashboard — independent of the code being present at all.
-
-### How it was actually resolved
-
-- [x] Repeated local pull/push cycles kept reproducing the corruption. **Broke the loop by editing `app/layout.jsx` directly in GitHub's web UI** — full select-all, delete, paste the correct content, commit straight to `main`. That bypassed whatever was going wrong in the local git state, and the fix finally held.
-- [x] `package.json` conflict resolved by keeping the bot's real `^2.0.0`, confirmed via `git status`/conflict markers rather than assumption.
-- [x] Verified the code fix independently at each step: raw-content diff against what was written, aggressive cache-busting to rule out stale reads, and `state: READY` on the actual Vercel deployment — not just "the file looks right."
-- [x] Found and flipped the separate dashboard/API activation step. Confirmed working: real Core Web Vitals data now visible in Speed Insights.
-
-### Why this matters going forward
-
-This closes the "no instrumentation" gap flagged in the Architecture Review (2026-07-28) — every performance claim since then had been inferred from code or logs, never observed in real traffic. That's no longer true for Core Web Vitals specifically.
-
-**Worth remembering if a bot-generated PR ever surfaces again:** check what base commit it was built against before merging — a PR sitting unmerged for a while is likely stale relative to `main`, and merging it may silently corrupt whatever file it touches even without triggering a visible conflict.
-
----
-
-*Last updated: 2026-08-02*
+*Last updated: 2026-08-01*
