@@ -32,6 +32,10 @@ export default function RootLayout({ children }) {
         <header className="masthead">
           <MastheadBar />
         </header>
+        <main className="max-w-3xl mx-auto px-4 py-8">{children}</main>
+	<Analytics />
+	<SpeedInsights />
+	</body>      
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">{children}</main>
         <Analytics />
         <SpeedInsights />
