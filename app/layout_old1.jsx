@@ -18,7 +18,7 @@ export const metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "PeopleLens",
     description: "A hand-curated feed of independent YouTube journalists.",
   },
