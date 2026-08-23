@@ -206,6 +206,19 @@ export default function AdminStats() {
           <StatCard label="Featured" value={stats.totals.featured} />
           <StatCard label="Channels" value={stats.totals.channels} />
         </div>
+
+        {stats.totals.featured === 0 && (
+          <p
+            style={{
+              fontSize: "12px",
+              color: "var(--signal)",
+              marginTop: "-20px",
+              marginBottom: "24px",
+            }}
+          >
+            No featured story set — go to <a href="/admin" style={{ textDecoration: "underline" }}>Published Videos</a> to pin one.
+          </p>
+        )}
       </div>
 
       <div>

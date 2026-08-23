@@ -67,6 +67,12 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
+
+  const existing = await prisma.video.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Video not found" }, { status: 404 });
+  }
+
   await prisma.video.delete({ where: { id } });
   revalidateTag("videos");
   return NextResponse.json({ ok: true });

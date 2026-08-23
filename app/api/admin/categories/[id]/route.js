@@ -38,6 +38,12 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
+
+  const existing = await prisma.category.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
   await prisma.category.delete({ where: { id } });
   revalidateTag("videos");
   return NextResponse.json({ ok: true });
