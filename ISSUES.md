@@ -378,4 +378,39 @@ This closes the "no instrumentation" gap flagged in the Architecture Review (202
 
 ---
 
-*Last updated: 2026-08-02*
+## 📈 Admin Stats Section — 2026-08-23
+
+New "Stats" tab added to the admin nav, alongside the existing Published Videos / Suggested Videos / Add video / Add channel / Categories tabs.
+
+### What it shows
+
+- **Header cards**: total videos, published, hidden, featured, channel count
+- **Curation activity chart**: videos added per day, plain inline SVG bar chart, toggleable between 30 days / 90 days / 1 year (default 30, days backfilled to zero rather than skipped so gaps aren't misrepresented as a compressed timeline)
+- **Top sources**: horizontal bar chart, top 12 channels by video count
+- **Categories** and **language** breakdowns, same horizontal-bar treatment
+- **Suggestions**: pending / approved / rejected counts
+
+### Design decisions
+
+- [x] **No new database tables or columns.** Everything needed (`addedAt`, `publishedAt`, channel relation, category relation, language) already existed. Pure read-only aggregation via `groupBy`/`count` against existing tables — retroactively covers full history (188 videos at build time), not just data going forward.
+- [x] **No charting library added.** Given the `package.json` merge-conflict saga from the Speed Insights rollout, deliberately built the chart as plain inline SVG rather than pulling in a new npm dependency — nothing to version-pin, nothing that can produce a install-time merge conflict.
+- [x] **Already covered by existing auth.** `proxy.js`'s wildcard matchers (`/admin/:path*`, `/api/admin/:path*`) automatically protected the new routes — no changes needed there.
+
+### What went wrong during rollout — a new, distinct failure mode
+
+Unlike prior incidents (stale PR merges, missing dependencies), this was a **file-placement mistake**, not a code or Git-history problem:
+
+- [x] **The new `page.jsx` was saved to `app/api/admin/stats/page.jsx` instead of `app/admin/stats/page.jsx`** — two visually similar but structurally different folder trees (`app/admin/` for UI pages, `app/api/admin/` for API routes) that share the same final segment name (`stats`), making the mistake easy to make when creating brand-new nested folders locally.
+- [x] **Next.js's build error was precise and correctly diagnostic**: *"Conflicting route and page at /api/admin/stats: route at /api/admin/stats/route and page at /api/admin/stats/page"* — a folder can be an API route or a page, not both. The error pointed directly at the cause.
+- [x] **First fix attempt was incomplete**: a correct copy of the page was created at the right path, but the wrong copy was left in place rather than deleted, so the collision persisted. Confirmed via diff that both copies had identical content — pure duplication, no risk in deleting the stray one.
+- [x] Resolved by deleting `app/api/admin/stats/page.jsx` directly on GitHub, leaving `route.js` alone in that folder and `page.jsx` alone in `app/admin/stats/`.
+
+**Lesson for next time a new nested route is added:** double-check the full path, not just the filename, before creating new files — `stats` under `app/admin/` and `stats` under `app/api/admin/` look identical at a glance but are not interchangeable.
+
+### Validated
+
+File structure confirmed correct via direct fetch (route.js present alone, page.jsx present alone in the correct folder, stray duplicate gone, nav link present). Vercel's own deployment-status API was intermittently unavailable during validation (transient connector issue, unrelated to the site itself) — final confirmation came from an independent fetch of the live homepage (full content, correct metadata) plus the user directly confirming the Stats page renders correctly when logged in.
+
+---
+
+*Last updated: 2026-08-23*
