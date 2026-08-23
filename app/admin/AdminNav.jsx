@@ -29,6 +29,7 @@ export default function AdminNav() {
       <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
       <a href="/admin/add" style={navLinkStyle}>Add channel</a>
       <a href="/admin/categories" style={navLinkStyle}>Categories</a>
+      <a href="/admin/stats" style={navLinkStyle}>Stats</a>
     </nav>
   );
 }
