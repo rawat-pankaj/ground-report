@@ -197,9 +197,9 @@ export default async function FeedPage({ searchParams }) {
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
           {today}
         </p>
-        <p style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
-          Stories that matter & issues that affect ordinary people!
-        </p>
+        <h1 style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
+          Stories that matter &amp; issues that affect ordinary people!
+        </h1>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
@@ -207,9 +207,9 @@ export default async function FeedPage({ searchParams }) {
 
       {categories.length > 0 && (
         <div className="mb-2">
-          <div style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+          <h2 style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", fontWeight: 400 }}>
             Category
-          </div>
+          </h2>
           <div className="filter-strip">
             <Link
               href={hrefFor(language, "")}

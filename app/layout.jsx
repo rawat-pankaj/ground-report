@@ -5,14 +5,23 @@ import MastheadBar from "./MastheadBar";
 
 export const metadata = {
   metadataBase: new URL("https://www.peoplelens.in"),
-  title: "PeopleLens",
-  description: "A hand-curated feed of independent YouTube journalists.",
+  title: "PeopleLens — Independent Ground Reporting from India",
+  description:
+    "Hand-picked ground reports from independent Indian journalists on YouTube — covering education, corruption, infrastructure, protests and the issues that affect ordinary people. In Hindi and English. Curated by hand, not by algorithm.",
+  keywords: [
+    "independent journalism India",
+    "ground report India",
+    "Hindi news videos",
+    "Indian independent journalists",
+    "curated news India",
+  ],
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
-    title: "PeopleLens",
-    description: "A hand-curated feed of independent YouTube journalists.",
+    title: "PeopleLens — Independent Ground Reporting from India",
+    description:
+      "Hand-picked ground reports from independent Indian journalists on YouTube. Curated by hand, not by algorithm.",
     url: "https://www.peoplelens.in",
     siteName: "PeopleLens",
     locale: "en_IN",
@@ -20,8 +29,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PeopleLens",
-    description: "A hand-curated feed of independent YouTube journalists.",
+    title: "PeopleLens — Independent Ground Reporting from India",
+    description:
+      "Hand-picked ground reports from independent Indian journalists on YouTube. Curated by hand, not by algorithm.",
   },
 };
 
