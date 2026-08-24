@@ -155,10 +155,22 @@ export default async function FeedPage({ searchParams }) {
   // removed), but is still honoured so older bookmarked/shared links keep
   // working. Length-capped since it comes straight from the URL.
   const language = (params?.language || "").slice(0, 20);
-  const category = params?.category || "";
-  const noFilters = !language && !category;
 
   const categories = await getCategories();
+
+  // Validate the requested category against the real list rather than
+  // passing the raw value through. getVideos() is unstable_cache-wrapped and
+  // keyed on its arguments, so an unvalidated param would let anyone mint
+  // unlimited distinct cache entries (and a fresh DB query each) by sending
+  // /?category=<random>. Whitelisting bounds the key space to the categories
+  // that actually exist; anything else falls back to the unfiltered feed.
+  const requestedCategory = params?.category || "";
+  const category = categories.some((c) => c.slug === requestedCategory)
+    ? requestedCategory
+    : "";
+
+  const noFilters = !language && !category;
+
   const hero = noFilters ? await getHero() : null;
   const videos = await getVideos(language, category, hero?.id || null);
 
