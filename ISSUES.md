@@ -413,4 +413,46 @@ File structure confirmed correct via direct fetch (route.js present alone, page.
 
 ---
 
-*Last updated: 2026-08-23*
+## 🔒 Public-Surface Security Review & Dependency Upgrade — 2026-08-24
+
+An adversarial review of the public homepage ("how would someone actually compromise this?"), plus the resulting fixes.
+
+### Fixed
+
+- [x] **`?category=` was unvalidated, allowing unbounded cache-key growth.** `getVideos()` is `unstable_cache`-wrapped and keyed on its arguments, so every distinct `?category=` value minted a new cache entry *and* a fresh DB query. Anyone could script `/?category=<random>` to force unlimited entries — the homepage has no rate limiting (deliberately, to avoid throttling real visitors). **Fixed by whitelisting** against the real category list (`getCategories()` already runs first), bounding the key space to the ~21 categories that actually exist. Invalid values now fall back to the unfiltered feed rather than an empty grid.
+  - **This was a repeat of the `beat` amplification issue** solved earlier by deleting `beat`. When `category` was assessed at that time it was waved through as "a cheap indexed lookup" — which addressed *query cost* but missed *cache-key growth*, the actual core of the problem. Same flaw, second occurrence.
+- [x] **Next.js 16.2.10 → 16.2.11** — closes 9 published CVEs (4 high, 5 medium) from the July 2026 release. Pinned with `--save-exact` (no caret) so `npm audit fix` can't silently drift the version again.
+
+### Assessed and deliberately accepted
+
+- **3 remaining npm advisories** (`postcss` ×2, `nanoid`, `sharp`): `postcss`/`nanoid` are build-time only and never run at request time; `sharp`'s image-parsing CVEs are gated behind `next.config.mjs`'s `remotePatterns` allowlist (three YouTube domains), so an attacker can't feed it their own image. **Do not run `npm audit fix --force`** — it resolves these only by jumping to 16.3, which is unvalidated here.
+- **Which July CVEs actually applied:** checked each against real feature usage. The most dangerous — a *middleware/proxy bypass that would defeat `proxy.js` and expose `/admin` unauthenticated* — requires an `i18n.locales` config this app doesn't have. SSRF and Server Action issues also didn't apply (no `rewrites()`, no `"use server"`, Vercel-hosted). That was luck, not design.
+
+### ⚠️ Local Windows builds fail — this is expected, do not chase it
+
+`npm run build` fails locally with `Error [InvariantError]: Invariant: Expected workStore to be initialized. This is a bug in Next.js.` — **on every version tested: 16.2.10, 16.2.11, and 16.3.2.**
+
+Key evidence it's environmental, not a code or version problem:
+- **16.2.10 — the exact version then running fine in production — also fails locally.** This was the decisive test.
+- Each run fails on a *different* page (`/admin/add-video`, `/_global-error`, `/_not-found`), i.e. non-deterministic — pointing at the parallel prerender workers, not any page's code.
+- Two of those three are Next.js's own internal error boundaries, not app code.
+- Next.js labels it "a bug in Next.js" in the error text itself.
+- Vercel's Linux builds succeed consistently.
+
+**Lesson:** when a build breaks right after a version bump, establish a baseline on the *known-good* version before assuming the bump caused it. Attributing the first failure to the 16.3 upgrade cost several rounds of unnecessary version-juggling.
+
+### Also noted
+
+- **16.3.2 was reached accidentally** via `npm audit fix` (a *minor* bump, not the patch-level change expected). Reverted. Worth knowing `audit fix` can move minors.
+- **August 26 release targets 16.3 and 15.5, not 16.2** — so a deliberate 16.3 migration will be needed to receive it, ideally re-testing the prerender behaviour at that point.
+- [ ] **Apex→www 308 redirect appears to strip query strings** — `peoplelens.in/?category=poetry` may lose the filter while `www.peoplelens.in/?category=poetry` works. Only affects manually typed/shared apex URLs (every link the site generates already uses `www`). Not yet investigated.
+
+### Verified clean (checked, not assumed)
+
+No raw SQL anywhere (`$queryRaw`/`$queryRawUnsafe` absent — all Prisma parameterized); no XSS surface (`dangerouslySetInnerHTML`/`eval`/`innerHTML` absent, and every `href` built via `URLSearchParams` resolving to relative paths, so no `javascript:` injection); no open redirect (only `window.location` assignment is a hardcoded `"/"`); no mass assignment (no `...body` spreads); no secrets in the client bundle (no `NEXT_PUBLIC_` vars, no `process.env` in any client component); `status: "published"` enforced on all homepage queries, the public API, *and* the sitemap.
+
+**CSP caveat:** `script-src 'unsafe-inline'` is required by Next's App Router hydration, which means the CSP provides **almost no XSS protection**. Fine today since no XSS vector exists, but it is not a safety net if one is ever introduced.
+
+---
+
+*Last updated: 2026-08-24*
