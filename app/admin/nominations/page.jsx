@@ -16,12 +16,19 @@ export default function NominationsPage() {
   }, []);
 
   async function setStatus(nomination, status) {
-    await fetch(`/api/admin/nominations/${nomination.id}`, {
+    const res = await fetch(`/api/admin/nominations/${nomination.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    load();
+    if (!res.ok) {
+      alert("Could not update — try again.");
+      return;
+    }
+    const data = await res.json();
+    setNominations((prev) =>
+      prev.map((n) => (n.id === nomination.id ? data.nomination : n))
+    );
   }
 
   function reviewInPicker(nomination) {
