@@ -455,4 +455,30 @@ No raw SQL anywhere (`$queryRaw`/`$queryRawUnsafe` absent — all Prisma paramet
 
 ---
 
-*Last updated: 2026-08-24*
+## 🔎 Discoverability Review & On-Page Fixes — 2026-08-25
+
+A search-results reality check ("what actually shows up if someone searches for this"), which surfaced a real strategic problem alongside two small, genuinely useful technical gaps.
+
+### The big finding — not fixable with code
+
+- **Searching "PeopleLens" returns none of this site.** It returns **Microsoft Research's own "PeopleLens"** (an AI accessibility project, covered by TechCrunch/WinBuzzer/ACM) and **peoplelens.ai**, an established sales-intelligence SaaS company with LinkedIn/Crunchbase/podcast presence. Both have far more domain authority than a new site can realistically out-rank for that exact term, likely ever.
+- **Implication:** stop optimizing for the brand name — nobody searching "PeopleLens" is looking for this site anyway — and optimize for what the site actually covers (India, ground reporting, specific beats). This directly shaped the title/description rewrite below.
+- **PARI (People's Archive of Rural India)** surfaced as a directly comparable, established Indian independent-journalism site with a Wikipedia page — a plausible benchmark and backlink/community target, not previously identified.
+
+### Fixed
+
+- [x] **Homepage had zero heading tags.** No `<h1>`, `<h2>`, or `<h3>` anywhere — the tagline and the "Category" label were both plain styled `<p>`/`<div>`. This is one of the strongest on-page signals Google uses to determine page topic, and it was entirely absent. Fixed: tagline → `<h1>`, "Category" label → `<h2>` (with `fontWeight: 400` added to counter the browser's default heading bold, so the visual result is unchanged). Also an accessibility win — screen readers navigate by heading structure.
+- [x] **Title and description were brand-only, containing zero topic keywords** — no "India," no beat names, no language. Given the brand-collision problem above, a brand-only title was close to the worst option: competing on an unwinnable term while signalling nothing about winnable ones. Rewrote to `"PeopleLens — Independent Ground Reporting from India"` with a description naming India, specific beats (education, corruption, infrastructure, protests), and both languages. Added a `keywords` meta array. OG/Twitter tags updated to match.
+
+### Validated
+
+Both files confirmed deployed byte-for-byte via diff. Live homepage fetch confirmed: `<h1>` and `<h2>` present and correctly ordered, title/description/keywords/OG/Twitter all showing the new copy, full video feed and all 21 category pills rendering normally — no regression from the markup change.
+
+### Not fixed here — deliberately out of scope for a code change
+
+- [ ] **Backlinks** — still the largest actual lever, and entirely non-technical. PARI and the channels already featured on the site are the most natural starting points.
+- [ ] **Individual video pages / real category routes** — unchanged from prior assessment; still the structural ceiling on ranking depth.
+
+---
+
+*Last updated: 2026-08-25*
