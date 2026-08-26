@@ -155,10 +155,22 @@ export default async function FeedPage({ searchParams }) {
   // removed), but is still honoured so older bookmarked/shared links keep
   // working. Length-capped since it comes straight from the URL.
   const language = (params?.language || "").slice(0, 20);
-  const category = params?.category || "";
-  const noFilters = !language && !category;
 
   const categories = await getCategories();
+
+  // Validate the requested category against the real list rather than
+  // passing the raw value through. getVideos() is unstable_cache-wrapped and
+  // keyed on its arguments, so an unvalidated param would let anyone mint
+  // unlimited distinct cache entries (and a fresh DB query each) by sending
+  // /?category=<random>. Whitelisting bounds the key space to the categories
+  // that actually exist; anything else falls back to the unfiltered feed.
+  const requestedCategory = params?.category || "";
+  const category = categories.some((c) => c.slug === requestedCategory)
+    ? requestedCategory
+    : "";
+
+  const noFilters = !language && !category;
+
   const hero = noFilters ? await getHero() : null;
   const videos = await getVideos(language, category, hero?.id || null);
 
@@ -185,9 +197,9 @@ export default async function FeedPage({ searchParams }) {
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
           {today}
         </p>
-        <p style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
-          Stories that matter & issues that affect ordinary people!
-        </p>
+        <h1 style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
+          Stories that matter &amp; issues that affect ordinary people!
+        </h1>
         <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
@@ -195,9 +207,9 @@ export default async function FeedPage({ searchParams }) {
 
       {categories.length > 0 && (
         <div className="mb-2">
-          <div style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+          <h2 style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", fontWeight: 400 }}>
             Category
-          </div>
+          </h2>
           <div className="filter-strip">
             <Link
               href={hrefFor(language, "")}

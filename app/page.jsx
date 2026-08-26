@@ -81,7 +81,7 @@ function FeaturedCard({ video }) {
           src={heroThumbnail}
           alt=""
           className="w-full object-cover"
-          style={{ aspectRatio: "16/9" }}
+          style={{ aspectRatio: "2/1" }}
         />
         <span style={{
           position: "absolute",
