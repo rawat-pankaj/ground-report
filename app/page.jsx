@@ -81,7 +81,7 @@ function FeaturedCard({ video }) {
           src={heroThumbnail}
           alt=""
           className="w-full object-cover"
-          style={{ aspectRatio: "2/1" }}
+          style={{ aspectRatio: "16/9" }}
         />
         <span style={{
           position: "absolute",
@@ -100,7 +100,17 @@ function FeaturedCard({ video }) {
       </div>
       <div className="p-4 flex-1 flex flex-col gap-3 w-full">
         <div>
-          <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
+          <p
+            className="story-headline text-[18px] leading-snug mb-2"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {video.title}
+          </p>
           <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
         </div>
 
@@ -130,7 +140,7 @@ function StoryCard({ video }) {
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col"
+      className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -138,7 +148,17 @@ function StoryCard({ video }) {
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
-          <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
+          <p
+            className="story-headline text-[14px] leading-snug mb-1"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {video.title}
+          </p>
           <p className="story-meta" style={{ fontSize: "10px" }}>
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
