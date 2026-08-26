@@ -73,7 +73,7 @@ function FeaturedCard({ video }) {
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col col-span-2"
+      className="story-card overflow-hidden flex flex-col col-span-2 lg:row-span-2"
     >
       <div style={{ position: "relative", width: "100%" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -260,7 +260,7 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-flow-dense gap-3">
         {hero && <FeaturedCard video={hero} />}
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />
