@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { unstable_cache } from "next/cache";
-import Link from "next/link";
+import CategoryPills from "./CategoryPills";
 
 // The three Prisma queries below are wrapped in unstable_cache and tagged
 // "videos". Admin routes call revalidateTag("videos") after any write that
@@ -194,15 +194,6 @@ export default async function FeedPage({ searchParams }) {
   const hero = noFilters ? await getHero() : null;
   const videos = await getVideos(language, category, hero?.id || null);
 
-
-  function hrefFor(nextLanguage, nextCategory) {
-    const p = new URLSearchParams();
-    if (nextLanguage) p.set("language", nextLanguage);
-    if (nextCategory) p.set("category", nextCategory);
-    const qs = p.toString();
-    return qs ? "/" + "?" + qs : "/";
-  }
-
   const today = new Date().toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
     weekday: "long",
@@ -230,23 +221,11 @@ export default async function FeedPage({ searchParams }) {
           <h2 style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", fontWeight: 400 }}>
             Category
           </h2>
-          <div className="filter-strip">
-            <Link
-              href={hrefFor(language, "")}
-              className={"tag " + (category === "" ? "tag-active" : "")}
-            >
-              All
-            </Link>
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                href={hrefFor(language, c.slug)}
-                className={"tag " + (category === c.slug ? "tag-active" : "")}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
+          <CategoryPills
+            categories={categories}
+            language={language}
+            category={category}
+          />
         </div>
       )}
 
