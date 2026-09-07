@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 const RANGE_OPTIONS = [
   { label: "30 days", days: 30 },
+  { label: "60 days", days: 60 },
   { label: "90 days", days: 90 },
   { label: "1 year", days: 365 },
 ];
