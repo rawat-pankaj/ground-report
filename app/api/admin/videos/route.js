@@ -21,6 +21,15 @@ function normalizeBeatTags(input) {
   return cleaned.length ? [...new Set(cleaned)].join(", ") : null;
 }
 
+const MAX_PLACE_LENGTH = 100;
+
+// Per-video place sent by the add-video / add-channel pages. Optional; empty
+// or non-text values become null so a bad payload can't break publishing.
+function cleanPlace(input) {
+  if (typeof input !== "string") return null;
+  return input.trim().slice(0, MAX_PLACE_LENGTH) || null;
+}
+
 export async function GET() {
   const videos = await prisma.video.findMany({
     include: { channel: true, categories: { include: { category: true } } },
@@ -61,6 +70,7 @@ export async function POST(request) {
         publishedAt: v.publishedAt ? new Date(v.publishedAt) : null,
         language: normalizeLanguage(language),
         beatTags: normalizeBeatTags(beatTags),
+        place: cleanPlace(v.place),
         channelId: channelRow.id,
       },
     });

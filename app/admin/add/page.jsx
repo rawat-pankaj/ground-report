@@ -10,6 +10,9 @@ function AddChannelInner() {
   const [videos, setVideos] = useState([]);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [selected, setSelected] = useState({});
+  // Place per video id. Seeded from each video's suggestion when it is first
+  // loaded; anything the admin types (including clearing it) is kept.
+  const [places, setPlaces] = useState({});
   const [language, setLanguage] = useState("");
   const [beatTags, setBeatTags] = useState("");
   const [status, setStatus] = useState("idle");
@@ -22,6 +25,7 @@ function AddChannelInner() {
     setChannel(null);
     setVideos([]);
     setSelected({});
+    setPlaces({});
 
     const res = await fetch("/api/admin/youtube/lookup-channel", {
       method: "POST",
@@ -51,6 +55,13 @@ function AddChannelInner() {
       return;
     }
     setVideos((prev) => (replace ? data.videos : [...prev, ...data.videos]));
+    setPlaces((prev) => {
+      const next = { ...prev };
+      for (const v of data.videos) {
+        if (next[v.youtubeVideoId] === undefined) next[v.youtubeVideoId] = v.suggestedPlace || "";
+      }
+      return next;
+    });
     setNextPageToken(data.nextPageToken);
   }
 
@@ -65,7 +76,12 @@ function AddChannelInner() {
     const res = await fetch("/api/admin/videos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel, videos: picked, language, beatTags }),
+      body: JSON.stringify({
+        channel,
+        videos: picked.map((v) => ({ ...v, place: places[v.youtubeVideoId] ?? "" })),
+        language,
+        beatTags,
+      }),
     });
     setStatus("idle");
     if (res.ok) {
@@ -146,6 +162,13 @@ function AddChannelInner() {
                   <p className="story-meta">
                     {v.publishedAt ? new Date(v.publishedAt).toLocaleDateString() : ""}
                   </p>
+                  <input
+                    className="input text-[12px] mt-2 w-full sm:w-64"
+                    placeholder="place (suggested from title)"
+                    maxLength={100}
+                    value={places[v.youtubeVideoId] ?? ""}
+                    onChange={(e) => setPlaces((prev) => ({ ...prev, [v.youtubeVideoId]: e.target.value }))}
+                  />
                 </div>
               </label>
             ))}

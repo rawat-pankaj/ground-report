@@ -9,6 +9,7 @@ function AddVideoInner() {
   const [result, setResult] = useState(null);
   const [language, setLanguage] = useState("");
   const [beatTags, setBeatTags] = useState("");
+  const [place, setPlace] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
@@ -30,6 +31,8 @@ function AddVideoInner() {
       return;
     }
     setResult(data);
+    // Pre-fill from the title/description/recording location. Editable.
+    setPlace(data.video.suggestedPlace || "");
   }
 
   async function handlePublish() {
@@ -40,7 +43,7 @@ function AddVideoInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         channel: result.channel,
-        videos: [result.video],
+        videos: [{ ...result.video, place }],
         language,
         beatTags,
       }),
@@ -99,6 +102,22 @@ function AddVideoInner() {
               <label className="field-label">Beat tags</label>
               <input className="input" placeholder="comma separated" value={beatTags} onChange={(e) => setBeatTags(e.target.value)} />
             </div>
+          </div>
+
+          <div className="mb-2">
+            <label className="field-label">Place</label>
+            <input
+              className="input"
+              placeholder="e.g. Gaya, Bihar"
+              maxLength={100}
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+            />
+            <p className="story-meta mt-1" style={{ fontSize: "10px" }}>
+              {result.video.suggestedPlace
+                ? "Suggested from the video details — edit or clear it before publishing."
+                : "No place found in the video details — add one if you know it."}
+            </p>
           </div>
 
           <button className="btn btn-primary w-full justify-center mt-4" disabled={status === "saving"} onClick={handlePublish}>
