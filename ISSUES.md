@@ -106,7 +106,7 @@ Full review of every `/admin` page, `/api/admin/*` route, and the auth layer (`p
 - [ ] **`DELETE` on categories/videos doesn't pre-check existence** — deleting an already-gone `id` throws a Prisma "not found" error instead of a clean 404. Cosmetic only.
 
 **Confirmed safe (checked, not assumed):**
-- No XSS risk anywhere in admin — no `dangerouslySetInnerHTML`, React's auto-escaping covers all rendered user-submitted content (nomination `input`/`reasonText` included).
+- No XSS risk anywhere in admin — no `dangerouslySetInnerHTML`, React's auto-escaping covers all rendered user-submitted content (nomination `input`/`reasonText` included). *(Still true for admin. As of 2026-10-11 the public video page uses one escaped `dangerouslySetInnerHTML` for JSON-LD — see below.)*
 - `proxy.js` correctly covers every `/admin/*` page and `/api/admin/*` route found in the repo.
 - Cookie flags (`httpOnly`, `secure` in production, `sameSite: lax`) are correctly set.
 
@@ -449,7 +449,7 @@ Key evidence it's environmental, not a code or version problem:
 
 ### Verified clean (checked, not assumed)
 
-No raw SQL anywhere (`$queryRaw`/`$queryRawUnsafe` absent — all Prisma parameterized); no XSS surface (`dangerouslySetInnerHTML`/`eval`/`innerHTML` absent, and every `href` built via `URLSearchParams` resolving to relative paths, so no `javascript:` injection); no open redirect (only `window.location` assignment is a hardcoded `"/"`); no mass assignment (no `...body` spreads); no secrets in the client bundle (no `NEXT_PUBLIC_` vars, no `process.env` in any client component); `status: "published"` enforced on all homepage queries, the public API, *and* the sitemap.
+No raw SQL anywhere (`$queryRaw`/`$queryRawUnsafe` absent — all Prisma parameterized); no XSS surface (as of 2026-08-24: `dangerouslySetInnerHTML`/`eval`/`innerHTML` absent — **superseded 2026-10-11: one escaped JSON-LD use now exists on `/video/[id]`, see below** — and every `href` built via `URLSearchParams` resolving to relative paths, so no `javascript:` injection); no open redirect (only `window.location` assignment is a hardcoded `"/"`); no mass assignment (no `...body` spreads); no secrets in the client bundle (no `NEXT_PUBLIC_` vars, no `process.env` in any client component); `status: "published"` enforced on all homepage queries, the public API, *and* the sitemap.
 
 **CSP caveat:** `script-src 'unsafe-inline'` is required by Next's App Router hydration, which means the CSP provides **almost no XSS protection**. Fine today since no XSS vector exists, but it is not a safety net if one is ever introduced.
 
@@ -548,11 +548,11 @@ Context: Indian journalists moving to YouTube report that view revenue doesn't c
 
 ### Tier 1 — Foundations (do first, mostly small)
 
-- [ ] **Per-video pages** (`/video/[id]`): embedded player (`youtube-nocookie.com`, needs CSP `frame-src`), curator's note, category tags, date/place, related stories. Biggest SEO and shareability gain.
+- [x] **Per-video pages** (`/video/[id]`) — *shipped 2026-10-11, see the section below.* Original spec: `/video/[id]`: embedded player (`youtube-nocookie.com`, needs CSP `frame-src`), curator's note, category tags, date/place, related stories. Biggest SEO and shareability gain.
 - [ ] **Channel pages** (`/channel/[slug]`): all curated videos from one journalist, YouTube subscribe link, support links.
 - [ ] **Real category routes** (`/category/[slug]`) replacing `?category=`. Indexable, and sidesteps the open apex→www query-string-stripping issue.
 - [ ] **Search** across title, channel and category (Postgres full-text; no YouTube API quota).
-- [ ] **"Load more" / paging.** Single page with 100+ videos keeps growing.
+- [x] **"Load more" / paging.** Single page with 100+ videos keeps growing.
 - [ ] **Category label + absolute date on cards**; the parked **footer**.
 - [ ] **Hindi / English toggle** (language data already stored).
 - [ ] **RSS feed** (`/feed.xml`).
@@ -563,7 +563,7 @@ Note: video, channel and category pages share the same plumbing (dynamic routes,
 
 - [ ] **"Why this matters" curator's note** (1–2 lines per video) — makes the curation visible.
 - [ ] **"Under-reported" badge/section** for stories mainstream TV skipped (admin flag; PeopleLens's version of Blindspot).
-- [ ] **Browse by place**: state/district tag per video → state filter → later an India map.
+- [~] **Browse by place** — the `place` field now exists and is filled on add (see Place Suggestions, 2026-10-11); a public state filter / map is still to do. Original idea: state/district tag per video → state filter → later an India map.
 - [ ] **Story threads + impact notes**: link follow-ups on the same issue and record outcomes.
 - [ ] **Support this journalist**: UPI / membership / Patreon links on channel pages (money goes to them directly).
 - [ ] **Weekly digest**: email and/or WhatsApp Channel.
@@ -572,7 +572,7 @@ Note: video, channel and category pages share the same plumbing (dynamic routes,
 ### Tier 3 — Admin & curation quality
 
 - [ ] **New-upload review queue**: daily Vercel cron (Hobby allows one) pulls latest uploads from followed channels into a review list; nothing goes live without approval.
-- [ ] **Dead-video checker**: detect deleted/private videos.
+- [x] **Dead-video checker**: detect deleted/private videos. — shipped 2026-10-11 as Admin → Link check; first run: all 233 available. See section below.
 - [ ] **Email alert on new suggestions**; **bulk edit** for categories/tags (both previously in backlog).
 
 ### Tier 4 — Bigger bets (later)
@@ -595,4 +595,89 @@ Sources: Wikipedia (Ground News; People's Archive of Rural India), Newslaundry "
 
 ---
 
+## 🎬 Video Detail Pages & Link Check — 2026-10-11
+
+### Shipped: per-video pages (`/video/[youtubeVideoId]`) — validated live
+
+Roadmap Tier 1 item #1. The biggest structural gap from the competitive review: every card used to leave the site for YouTube, so PeopleLens had almost nothing of its own to rank, share, or show its curation on.
+
+- **Page (Option B, article layout):** title, channel · date · place, category tags, embedded player (`youtube-nocookie.com`), curator's "Why this matters" note (label switches to Hindi for `language = hi`), "Watch on YouTube →" + "Copy link", channel card (links to the channel on YouTube — there are no channel pages yet), four related stories (same-category first, topped up with newest).
+- **Data:** two nullable columns on `Video` — `curatorNote` (≤1000 chars) and `place` (≤100 chars); ~0.2–0.7 KB per video, negligible against the 500 MB free tier. Added in Supabase first (`ALTER TABLE ... ADD COLUMN`), code deployed after, so the live site was never exposed to a missing column. Edited in Admin → Published Videos (saved on blur through the existing PATCH route, which now validates type and length server-side). Published videos get a "View page" button.
+- **Homepage:** layout unchanged. Grid cards now link to `/video/…`; the featured hero deliberately still links straight to YouTube.
+- **SEO:** per-page title/description/canonical/OG/Twitter, `VideoObject` JSON-LD, and every published video in the sitemap (`revalidate = 3600`, so new videos appear without a redeploy). Hidden/unknown/malformed IDs return 404 with `noindex`.
+- **Caching:** `unstable_cache` tagged `videos` (already revalidated by every admin write). A miss **throws inside** the cached function so random `/video/<anything>` URLs can't mint cache entries — same concern as the homepage category whitelist.
+- **CSP:** added `frame-src https://www.youtube-nocookie.com`.
+
+**Validated live:** player embeds and renders; `frame-src` present in the live CSP; canonical/OG image/JSON-LD correct; unknown and malformed IDs → 404; homepage grid cards → `/video/…`; sitemap has 233 video URLs (257 total); all eight files on `main` byte-identical to what was built; admin note/place fields tested by Pankaj. **Not testable live:** hidden-video 404 (all 233 videos are published) — passed in a local build against a stubbed database.
+
+**Security note:** the JSON-LD block is the first `dangerouslySetInnerHTML` in the codebase. It serializes server-side data and escapes `<` as `\u003c`, so a title or note cannot close the script tag, but the earlier "no `dangerouslySetInnerHTML` anywhere" statements are no longer literally true (annotated above).
+
+### Corrected finding: the homepage hides 133 videos
+
+Earlier in this review I assumed ~130 of the 233 videos were hidden because the homepage shows ~100. **Wrong** — all 233 are `published`. The homepage query is capped at `take: 100`, so the 133 oldest videos are reachable only through the sitemap, search engines, and related-story links.
+
+- [ ] **"Load more" / paging on the homepage** (roadmap Tier 1 #5) — now more pressing, since the cap silently drops older stories from the main feed.
+
+### Dead-video checker — shipped and run
+
+Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 quota unit per 50 videos), flags videos that are deleted, private, upload-failed/rejected, or blocked in India, and offers Verify / Hide / Remove per row. Read-only by design — nothing is hidden automatically. If YouTube errors (quota/key), it reports the failure rather than flagging the whole catalogue.
+
+- [x] **`link-check/page.jsx` was pushed to `app/api/admin/link-check/` instead of `app/admin/link-check/`** (nav link 404'd; same class of mistake as the stats page in August). Moved with `git mv`; page now loads from the admin nav.
+- [x] **First run, 2026-10-11 15:41 IST: 233 videos checked, all available.** ~5 quota units used.
+- [ ] Re-run periodically (e.g. monthly) — videos get deleted/privated over time. A scheduled run with an alert would need a destination for the alert (not built).
+
+### Also confirmed on `main` since the last update
+
+- 60-day option in Admin → Stats (`RANGE_OPTIONS`).
+- `lib/youtube.js`: fixed `getChannelVideos` returning `data.nextPageToken` instead of `data2.nextPageToken` (would have thrown a ReferenceError when browsing a channel's videos).
+- Category "More" toggle and hero/grid layout fixes (shipped earlier; logged here for completeness).
+
+### Still open
+
+- [x] **Homepage "load more" / paging (done 2026-10-11, see below)** — the homepage is capped at 100 of 233 videos (see corrected finding above). Highest-value next item.
+- [ ] Next.js 16.2.11 → 16.3.8 (see Tech Upgrade Audit, 2026-10-07) — not yet applied.
+- [ ] Verify Vercel Node version is not 20.
+- [ ] Apex→www redirect appears to strip query strings (unverified).
+- [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
+- [ ] Suggest places for the existing videos (see Place Suggestions below).
+- [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
+- [ ] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused.
+
+---
+
+## 📍 Place Suggestions on Add — 2026-10-11
+
+When adding videos, the **Place** field is now pre-filled with a suggestion the admin can edit or clear before publishing. Motivation: place is useful on the video page and for a future state filter, and typing it by hand for every new video is friction.
+
+- **What it uses (no AI, no network, no extra quota):** a creator-set YouTube recording location if present, else a keyword match on the title, else on the first 300 characters of the description. The match list is all Indian states/UTs plus ~75 major cities, in English and Hindi, in `lib/places.js`. A city yields "City, State"; otherwise the state. Earliest mention wins.
+- **Hindi words deliberately NOT matched** because they are ordinary words in headlines: "गया" (went), "पुरी" (whole), "सूरत" (face), "कोटा" (quota); Latin "Puri" likewise. Latin "UP" is case-sensitive so "up" never matches.
+- **Add video:** Place box under the video with a note ("Suggested from the video details — edit or clear it…" / "No place found…"). **Add channel:** a per-video place box on every row, seeded from the suggestion; typed edits survive "Load more".
+- **Saved through** `POST /api/admin/videos` (per-video `place`, trimmed, capped at 100 chars, non-text → null). `lookupVideo` now also requests `recordingDetails` (same single quota unit).
+- **Safe by design:** it only suggests — nothing is saved that the admin has not seen.
+
+**Validated:** unit-tested on 19 sample titles (Hindi and English, including the false-positive traps above); helpers tested against a mocked YouTube API; compiled in a scratch Next build; all five files on `main` byte-identical to what was built. **Live test by Pankaj (2026-10-11):** the newest video added got "Delhi" — saved correctly (confirmed in the database).
+
+**Known limits:** a village/district not in the list gets no suggestion; with two places in one title the first wins; description matching can pick up a channel's home city (hence review before publishing).
+
+- [ ] **Optional: "suggest places for existing videos"** — a one-off admin action that fills only *empty* places and shows a list to approve before saving anything. Two older videos (e.g. one titled "Delhi में 10 October को हुए Protests…") have no place because they were added before this shipped.
+- [ ] Add more cities/districts if suggestions miss often (send misses and the expected place).
+
+---
+
 *Last updated: 2026-10-11*
+
+## ➕ Homepage "Load more" — 2026-10-11
+
+**Problem:** the homepage was capped at `take: 100`, so the 133 oldest of 233 videos were reachable only via sitemap, search engines and related links.
+
+**Built:** the page now renders the first 50 cards (hero excluded) and a full-width "Load more stories" button; each click fetches the next 50 from a public `GET /api/feed?offset=N` and appends them. Language and category filters carry through.
+
+- **Files:** `lib/feed.js` (cached `getFeedPage`, `getCategories`, `getHero`), `app/api/feed/route.js`, `app/StoryCard.jsx` (shared card), `app/LoadMore.jsx` (client button), `app/page.jsx`.
+- **Cache safety:** cache keys are the function arguments, so every argument comes from a small validated set: offset must be an integer, a multiple of 50 and ≤ 2000 (otherwise 400 `invalid offset`); category is checked against existing slugs; language must be two letters. Cached with tag `"videos"`, so admin writes invalidate it. Response header `s-maxage=60, stale-while-revalidate=300`.
+- **Ordering:** `addedAt desc, id desc` (stable tie-break) and the client de-duplicates by id, so a video added mid-session can't appear twice.
+- **Errors:** a failed fetch shows "Could not load more stories — please try again." and the button stays usable.
+- **Hero** still links straight to YouTube (unchanged).
+
+**Testing:** local browser test 50 → 100 → 130 unique cards on desktop and mobile; API pages 50/50/30; bad offsets return 400. **Live (after deploy):** homepage shows 50 cards + button; clicking appended further cards; `/api/feed?offset=7` and `offset=50` confirmed by the owner in a browser.
+
+**Follow-ups (optional):** infinite scroll instead of a button; hero is not de-duplicated when a filter is active (by design — filtered views show every match).

@@ -413,4 +413,186 @@ File structure confirmed correct via direct fetch (route.js present alone, page.
 
 ---
 
-*Last updated: 2026-08-23*
+## 🔒 Public-Surface Security Review & Dependency Upgrade — 2026-08-24
+
+An adversarial review of the public homepage ("how would someone actually compromise this?"), plus the resulting fixes.
+
+### Fixed
+
+- [x] **`?category=` was unvalidated, allowing unbounded cache-key growth.** `getVideos()` is `unstable_cache`-wrapped and keyed on its arguments, so every distinct `?category=` value minted a new cache entry *and* a fresh DB query. Anyone could script `/?category=<random>` to force unlimited entries — the homepage has no rate limiting (deliberately, to avoid throttling real visitors). **Fixed by whitelisting** against the real category list (`getCategories()` already runs first), bounding the key space to the ~21 categories that actually exist. Invalid values now fall back to the unfiltered feed rather than an empty grid.
+  - **This was a repeat of the `beat` amplification issue** solved earlier by deleting `beat`. When `category` was assessed at that time it was waved through as "a cheap indexed lookup" — which addressed *query cost* but missed *cache-key growth*, the actual core of the problem. Same flaw, second occurrence.
+- [x] **Next.js 16.2.10 → 16.2.11** — closes 9 published CVEs (4 high, 5 medium) from the July 2026 release. Pinned with `--save-exact` (no caret) so `npm audit fix` can't silently drift the version again.
+
+### Assessed and deliberately accepted
+
+- **3 remaining npm advisories** (`postcss` ×2, `nanoid`, `sharp`): `postcss`/`nanoid` are build-time only and never run at request time; `sharp`'s image-parsing CVEs are gated behind `next.config.mjs`'s `remotePatterns` allowlist (three YouTube domains), so an attacker can't feed it their own image. **Do not run `npm audit fix --force`** — it resolves these only by jumping to 16.3, which is unvalidated here.
+- **Which July CVEs actually applied:** checked each against real feature usage. The most dangerous — a *middleware/proxy bypass that would defeat `proxy.js` and expose `/admin` unauthenticated* — requires an `i18n.locales` config this app doesn't have. SSRF and Server Action issues also didn't apply (no `rewrites()`, no `"use server"`, Vercel-hosted). That was luck, not design.
+
+### ⚠️ Local Windows builds fail — this is expected, do not chase it
+
+`npm run build` fails locally with `Error [InvariantError]: Invariant: Expected workStore to be initialized. This is a bug in Next.js.` — **on every version tested: 16.2.10, 16.2.11, and 16.3.2.**
+
+Key evidence it's environmental, not a code or version problem:
+- **16.2.10 — the exact version then running fine in production — also fails locally.** This was the decisive test.
+- Each run fails on a *different* page (`/admin/add-video`, `/_global-error`, `/_not-found`), i.e. non-deterministic — pointing at the parallel prerender workers, not any page's code.
+- Two of those three are Next.js's own internal error boundaries, not app code.
+- Next.js labels it "a bug in Next.js" in the error text itself.
+- Vercel's Linux builds succeed consistently.
+
+**Lesson:** when a build breaks right after a version bump, establish a baseline on the *known-good* version before assuming the bump caused it. Attributing the first failure to the 16.3 upgrade cost several rounds of unnecessary version-juggling.
+
+### Also noted
+
+- **16.3.2 was reached accidentally** via `npm audit fix` (a *minor* bump, not the patch-level change expected). Reverted. Worth knowing `audit fix` can move minors.
+- **August 26 release targets 16.3 and 15.5, not 16.2** — so a deliberate 16.3 migration will be needed to receive it, ideally re-testing the prerender behaviour at that point.
+- [ ] **Apex→www 308 redirect appears to strip query strings** — `peoplelens.in/?category=poetry` may lose the filter while `www.peoplelens.in/?category=poetry` works. Only affects manually typed/shared apex URLs (every link the site generates already uses `www`). Not yet investigated.
+
+### Verified clean (checked, not assumed)
+
+No raw SQL anywhere (`$queryRaw`/`$queryRawUnsafe` absent — all Prisma parameterized); no XSS surface (`dangerouslySetInnerHTML`/`eval`/`innerHTML` absent, and every `href` built via `URLSearchParams` resolving to relative paths, so no `javascript:` injection); no open redirect (only `window.location` assignment is a hardcoded `"/"`); no mass assignment (no `...body` spreads); no secrets in the client bundle (no `NEXT_PUBLIC_` vars, no `process.env` in any client component); `status: "published"` enforced on all homepage queries, the public API, *and* the sitemap.
+
+**CSP caveat:** `script-src 'unsafe-inline'` is required by Next's App Router hydration, which means the CSP provides **almost no XSS protection**. Fine today since no XSS vector exists, but it is not a safety net if one is ever introduced.
+
+---
+
+## 🔎 Discoverability Review & On-Page Fixes — 2026-08-25
+
+A search-results reality check ("what actually shows up if someone searches for this"), which surfaced a real strategic problem alongside two small, genuinely useful technical gaps.
+
+### The big finding — not fixable with code
+
+- **Searching "PeopleLens" returns none of this site.** It returns **Microsoft Research's own "PeopleLens"** (an AI accessibility project, covered by TechCrunch/WinBuzzer/ACM) and **peoplelens.ai**, an established sales-intelligence SaaS company with LinkedIn/Crunchbase/podcast presence. Both have far more domain authority than a new site can realistically out-rank for that exact term, likely ever.
+- **Implication:** stop optimizing for the brand name — nobody searching "PeopleLens" is looking for this site anyway — and optimize for what the site actually covers (India, ground reporting, specific beats). This directly shaped the title/description rewrite below.
+- **PARI (People's Archive of Rural India)** surfaced as a directly comparable, established Indian independent-journalism site with a Wikipedia page — a plausible benchmark and backlink/community target, not previously identified.
+
+### Fixed
+
+- [x] **Homepage had zero heading tags.** No `<h1>`, `<h2>`, or `<h3>` anywhere — the tagline and the "Category" label were both plain styled `<p>`/`<div>`. This is one of the strongest on-page signals Google uses to determine page topic, and it was entirely absent. Fixed: tagline → `<h1>`, "Category" label → `<h2>` (with `fontWeight: 400` added to counter the browser's default heading bold, so the visual result is unchanged). Also an accessibility win — screen readers navigate by heading structure.
+- [x] **Title and description were brand-only, containing zero topic keywords** — no "India," no beat names, no language. Given the brand-collision problem above, a brand-only title was close to the worst option: competing on an unwinnable term while signalling nothing about winnable ones. Rewrote to `"PeopleLens — Independent Ground Reporting from India"` with a description naming India, specific beats (education, corruption, infrastructure, protests), and both languages. Added a `keywords` meta array. OG/Twitter tags updated to match.
+
+### Validated
+
+Both files confirmed deployed byte-for-byte via diff. Live homepage fetch confirmed: `<h1>` and `<h2>` present and correctly ordered, title/description/keywords/OG/Twitter all showing the new copy, full video feed and all 21 category pills rendering normally — no regression from the markup change.
+
+### Not fixed here — deliberately out of scope for a code change
+
+- [ ] **Backlinks** — still the largest actual lever, and entirely non-technical. PARI and the channels already featured on the site are the most natural starting points.
+- [ ] **Individual video pages / real category routes** — unchanged from prior assessment; still the structural ceiling on ranking depth.
+
+---
+
+## ⬆️ Tech Upgrade Audit — 2026-10-07
+
+A dependency/runtime check against what is current as of October 2026. Conclusion: **one upgrade is worth doing soon (Next.js), one platform setting to verify (Node), everything else deliberately deferred.**
+
+### Current state (from `main`)
+
+| Package | Pinned / resolved | Latest | Verdict |
+|---|---|---|---|
+| next | 16.2.11 (exact) | 16.4.0 (16.3.8 = patched LTS) | **Upgrade soon** |
+| react / react-dom | ^18.3.1 | 19.3.0 | Defer (optional) |
+| @prisma/client / prisma | ^5.20.0 → 5.22.0 | 7.10.0 (8.0 RC out) | Defer (major migration) |
+| tailwindcss | ^3.4.13 → 3.4.19 | 4.3.3 | Defer (rewrite, no user-visible gain) |
+| @vercel/analytics | 2.0.1 | 2.0.1 | Current |
+| @vercel/speed-insights | 2.0.0 | 2.0.0 | Current |
+| postcss / autoprefixer / sharp | 8.5.23 / 10.5.4 / 0.34.5 | — | Fine (earlier accepted advisories stand) |
+
+### Next.js — why 16.2.11 is now behind
+
+- **Sept 22 out-of-band (16.3.6):** critical RCE in Node `ImageResponse` (`next/og`), GHSA-vcvr-r3jv-pc5j, affects `>=16.2.0 <16.3.6`. **Not applicable here** — the app has no `ImageResponse` / OG-image route (`app/opengraph-image.jsx` is 404; OG tags are static metadata). Re-verify if an OG-image route is ever added.
+- **Sept 30 release (16.3.8 / 15.5.27):** seven fixes — image-optimizer SSRF (high, 16.x), two cache-poisoning bugs (medium, 15.x/16.x), metadata-image `dynamicParams` bypass (medium, 16.x), Draft Mode / `use cache` leak (16.3.x only), dev-only MCP disclosure (low). **Relevant to us:** the SSRF and cache-poisoning items touch 16.x; the app uses `images.remotePatterns` (YouTube hosts only), which limits but doesn't remove exposure.
+- **Still open upstream:** two further issues (one critical, one high) were deferred pending upstream coordination — expect another bump when they ship.
+- **Target: `next@16.3.8` pinned exactly** (Active LTS). 16.4.0 is one day old; wait for a patch release unless a reason emerges.
+- Past lessons apply: 16.3.2 "failed" locally only because the Windows local build is environmentally broken (16.2.10 fails identically). **Validate on a Vercel preview, not locally.** Do not use `npm audit fix --force`.
+
+### Node.js on Vercel
+
+- Vercel **disabled Node 20 on 2026-10-01**. Existing deployments keep running; **new deployments fail** if the project is still on 20.
+- [ ] Verify Project Settings → Node.js Version is 22.x or 24.x (or set `engines` in `package.json`).
+
+### Deferred, with reasons
+
+- **React 18 → 19:** Next 16 supports both; nothing forces it.
+- **Prisma 5.22 → 7.x:** major migration; current pooling/RLS/direct-connection setup works and no security driver identified. Revisit alongside schema work.
+- **Tailwind 3 → 4:** config + CSS rewrite for no visible benefit.
+
+### Action list
+
+- [ ] Verify Vercel Node version is not 20
+- [ ] Bump `next` to exactly `16.3.8` (`npm install next@16.3.8 --save-exact`), push, validate on the Vercel preview, then on live
+- [ ] Re-check for the next Next.js security release (two issues still pending upstream)
+
+Sources: nextjs.org/blog (upcoming-nextjs-security-release-september-2026; nextjs-security-update-september-22-2026), Netlify changelog 2026-09-30, Vercel changelog "Node.js 20 is being deprecated".
+
+---
+
+## 🧭 Feature Roadmap — Competitive Review — 2026-10-11
+
+A review of the live site against comparable products to find upgrade opportunities. **Core finding:** every card sends the visitor straight to YouTube, so PeopleLens has almost no pages of its own to rank, share or show its curation on. Most of the high-value work below fixes that.
+
+### Current public surface (as audited)
+
+Homepage only: featured story, grid of ~100 videos, 22 category pills (top 8 + "More"), About page, "Suggest a video" form (`/suggest`). Cards show title, channel and relative age, and link out to YouTube. **Absent:** search, paging/"load more", footer, channel pages, category labels on cards, absolute dates, public language filter, per-video pages.
+
+### Comparable products
+
+| Product | Notable features | Takeaway for PeopleLens |
+|---|---|---|
+| Ground News | Multi-outlet story view, weekly "Blindspot" report, bias/factuality ratings, freemium | Borrow the "stories ignored by one side / by TV" angle; **skip** bias ratings |
+| PARI | ~26 categories, FACES project by place, translations in 12+ languages, education resources, library | Borrow place-based browsing and bilingual pages |
+| Newslaundry (NL Sena) | Readers fund specific stories with budgets shown | Borrow as "support this journalist" links that pay them directly |
+| Dailyhunt / Inshorts | Many Indian languages; very short summaries | Partly: a short curator's note per video |
+| YouTube | Recommendation algorithm, subscriptions | The thing PeopleLens is the alternative to |
+
+Context: Indian journalists moving to YouTube report that view revenue doesn't cover reporting costs and crowdfunding culture is weak. Their reporting does have real-world impact (e.g. a no-water village got state tankers within a day).
+
+### Tier 1 — Foundations (do first, mostly small)
+
+- [ ] **Per-video pages** (`/video/[id]`): embedded player (`youtube-nocookie.com`, needs CSP `frame-src`), curator's note, category tags, date/place, related stories. Biggest SEO and shareability gain.
+- [ ] **Channel pages** (`/channel/[slug]`): all curated videos from one journalist, YouTube subscribe link, support links.
+- [ ] **Real category routes** (`/category/[slug]`) replacing `?category=`. Indexable, and sidesteps the open apex→www query-string-stripping issue.
+- [ ] **Search** across title, channel and category (Postgres full-text; no YouTube API quota).
+- [ ] **"Load more" / paging.** Single page with 100+ videos keeps growing.
+- [ ] **Category label + absolute date on cards**; the parked **footer**.
+- [ ] **Hindi / English toggle** (language data already stored).
+- [ ] **RSS feed** (`/feed.xml`).
+
+Note: video, channel and category pages share the same plumbing (dynamic routes, metadata, sitemap entries) — build them together.
+
+### Tier 2 — Differentiators
+
+- [ ] **"Why this matters" curator's note** (1–2 lines per video) — makes the curation visible.
+- [ ] **"Under-reported" badge/section** for stories mainstream TV skipped (admin flag; PeopleLens's version of Blindspot).
+- [ ] **Browse by place**: state/district tag per video → state filter → later an India map.
+- [ ] **Story threads + impact notes**: link follow-ups on the same issue and record outcomes.
+- [ ] **Support this journalist**: UPI / membership / Patreon links on channel pages (money goes to them directly).
+- [ ] **Weekly digest**: email and/or WhatsApp Channel.
+- [ ] **Public suggestion credit + status**: "Suggested by a reader"; let suggesters see if theirs was accepted.
+
+### Tier 3 — Admin & curation quality
+
+- [ ] **New-upload review queue**: daily Vercel cron (Hobby allows one) pulls latest uploads from followed channels into a review list; nothing goes live without approval.
+- [ ] **Dead-video checker**: detect deleted/private videos.
+- [ ] **Email alert on new suggestions**; **bulk edit** for categories/tags (both previously in backlog).
+
+### Tier 4 — Bigger bets (later)
+
+- [ ] Bookmarks via browser local storage (small); follow channels/categories needs accounts (large).
+- [ ] Installable PWA with push for new featured stories.
+- [ ] AI-drafted summaries from YouTube captions (incl. Hindi↔English), curator-approved.
+- [ ] Public transparency page (most-covered issues this month, share of reader-suggested videos).
+
+### Deliberately not recommended
+
+- **Bias / factuality scores** — needs a ratings system one person can't defend.
+- **Comments** — ongoing moderation burden.
+
+### Suggested order
+
+1. Video + channel + category pages → 2. Search + paging → 3. Curator's note + under-reported badge.
+
+Sources: Wikipedia (Ground News; People's Archive of Rural India), Newslaundry "NL Sena: For the Love of Independent Media", CS Monitor "Why some Indian journalists are trading newsrooms for YouTube".
+
+---
+
+*Last updated: 2026-10-11*
