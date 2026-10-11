@@ -20,6 +20,8 @@ function normalizeBeatTags(input) {
 }
 
 const VALID_VIDEO_STATUSES = ["published", "hidden"];
+const MAX_NOTE_LENGTH = 1000;
+const MAX_PLACE_LENGTH = 100;
 
 export async function PATCH(request, { params }) {
   const { id } = await params;
@@ -38,6 +40,20 @@ export async function PATCH(request, { params }) {
 
   if (body.language !== undefined) data.language = normalizeLanguage(body.language);
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
+
+  // Free-text fields shown on the public video page. Empty/whitespace -> null.
+  // Length-capped server-side so the admin UI limit isn't the only guard.
+  for (const [field, max] of [["curatorNote", MAX_NOTE_LENGTH], ["place", MAX_PLACE_LENGTH]]) {
+    if (body[field] === undefined) continue;
+    if (body[field] !== null && typeof body[field] !== "string") {
+      return NextResponse.json({ error: `${field} must be text` }, { status: 400 });
+    }
+    const value = (body[field] || "").trim();
+    if (value.length > max) {
+      return NextResponse.json({ error: `${field} must be ${max} characters or fewer` }, { status: 400 });
+    }
+    data[field] = value || null;
+  }
 
   if (body.featured !== undefined) {
     if (body.featured) {

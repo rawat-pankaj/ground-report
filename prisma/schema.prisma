@@ -26,6 +26,8 @@ model Video {
   publishedAt    DateTime?
   language       String?
   beatTags       String?
+  curatorNote    String?   // short "why this matters" note shown on /video/[id]
+  place          String?   // e.g. "Gaya, Bihar"
   status         String    @default("published") // published | hidden
   featured       Boolean   @default(false)
   addedAt        DateTime  @default(now())

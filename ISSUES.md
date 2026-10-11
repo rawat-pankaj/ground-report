@@ -481,4 +481,118 @@ Both files confirmed deployed byte-for-byte via diff. Live homepage fetch confir
 
 ---
 
-*Last updated: 2026-08-25*
+## ⬆️ Tech Upgrade Audit — 2026-10-07
+
+A dependency/runtime check against what is current as of October 2026. Conclusion: **one upgrade is worth doing soon (Next.js), one platform setting to verify (Node), everything else deliberately deferred.**
+
+### Current state (from `main`)
+
+| Package | Pinned / resolved | Latest | Verdict |
+|---|---|---|---|
+| next | 16.2.11 (exact) | 16.4.0 (16.3.8 = patched LTS) | **Upgrade soon** |
+| react / react-dom | ^18.3.1 | 19.3.0 | Defer (optional) |
+| @prisma/client / prisma | ^5.20.0 → 5.22.0 | 7.10.0 (8.0 RC out) | Defer (major migration) |
+| tailwindcss | ^3.4.13 → 3.4.19 | 4.3.3 | Defer (rewrite, no user-visible gain) |
+| @vercel/analytics | 2.0.1 | 2.0.1 | Current |
+| @vercel/speed-insights | 2.0.0 | 2.0.0 | Current |
+| postcss / autoprefixer / sharp | 8.5.23 / 10.5.4 / 0.34.5 | — | Fine (earlier accepted advisories stand) |
+
+### Next.js — why 16.2.11 is now behind
+
+- **Sept 22 out-of-band (16.3.6):** critical RCE in Node `ImageResponse` (`next/og`), GHSA-vcvr-r3jv-pc5j, affects `>=16.2.0 <16.3.6`. **Not applicable here** — the app has no `ImageResponse` / OG-image route (`app/opengraph-image.jsx` is 404; OG tags are static metadata). Re-verify if an OG-image route is ever added.
+- **Sept 30 release (16.3.8 / 15.5.27):** seven fixes — image-optimizer SSRF (high, 16.x), two cache-poisoning bugs (medium, 15.x/16.x), metadata-image `dynamicParams` bypass (medium, 16.x), Draft Mode / `use cache` leak (16.3.x only), dev-only MCP disclosure (low). **Relevant to us:** the SSRF and cache-poisoning items touch 16.x; the app uses `images.remotePatterns` (YouTube hosts only), which limits but doesn't remove exposure.
+- **Still open upstream:** two further issues (one critical, one high) were deferred pending upstream coordination — expect another bump when they ship.
+- **Target: `next@16.3.8` pinned exactly** (Active LTS). 16.4.0 is one day old; wait for a patch release unless a reason emerges.
+- Past lessons apply: 16.3.2 "failed" locally only because the Windows local build is environmentally broken (16.2.10 fails identically). **Validate on a Vercel preview, not locally.** Do not use `npm audit fix --force`.
+
+### Node.js on Vercel
+
+- Vercel **disabled Node 20 on 2026-10-01**. Existing deployments keep running; **new deployments fail** if the project is still on 20.
+- [ ] Verify Project Settings → Node.js Version is 22.x or 24.x (or set `engines` in `package.json`).
+
+### Deferred, with reasons
+
+- **React 18 → 19:** Next 16 supports both; nothing forces it.
+- **Prisma 5.22 → 7.x:** major migration; current pooling/RLS/direct-connection setup works and no security driver identified. Revisit alongside schema work.
+- **Tailwind 3 → 4:** config + CSS rewrite for no visible benefit.
+
+### Action list
+
+- [ ] Verify Vercel Node version is not 20
+- [ ] Bump `next` to exactly `16.3.8` (`npm install next@16.3.8 --save-exact`), push, validate on the Vercel preview, then on live
+- [ ] Re-check for the next Next.js security release (two issues still pending upstream)
+
+Sources: nextjs.org/blog (upcoming-nextjs-security-release-september-2026; nextjs-security-update-september-22-2026), Netlify changelog 2026-09-30, Vercel changelog "Node.js 20 is being deprecated".
+
+---
+
+## 🧭 Feature Roadmap — Competitive Review — 2026-10-11
+
+A review of the live site against comparable products to find upgrade opportunities. **Core finding:** every card sends the visitor straight to YouTube, so PeopleLens has almost no pages of its own to rank, share or show its curation on. Most of the high-value work below fixes that.
+
+### Current public surface (as audited)
+
+Homepage only: featured story, grid of ~100 videos, 22 category pills (top 8 + "More"), About page, "Suggest a video" form (`/suggest`). Cards show title, channel and relative age, and link out to YouTube. **Absent:** search, paging/"load more", footer, channel pages, category labels on cards, absolute dates, public language filter, per-video pages.
+
+### Comparable products
+
+| Product | Notable features | Takeaway for PeopleLens |
+|---|---|---|
+| Ground News | Multi-outlet story view, weekly "Blindspot" report, bias/factuality ratings, freemium | Borrow the "stories ignored by one side / by TV" angle; **skip** bias ratings |
+| PARI | ~26 categories, FACES project by place, translations in 12+ languages, education resources, library | Borrow place-based browsing and bilingual pages |
+| Newslaundry (NL Sena) | Readers fund specific stories with budgets shown | Borrow as "support this journalist" links that pay them directly |
+| Dailyhunt / Inshorts | Many Indian languages; very short summaries | Partly: a short curator's note per video |
+| YouTube | Recommendation algorithm, subscriptions | The thing PeopleLens is the alternative to |
+
+Context: Indian journalists moving to YouTube report that view revenue doesn't cover reporting costs and crowdfunding culture is weak. Their reporting does have real-world impact (e.g. a no-water village got state tankers within a day).
+
+### Tier 1 — Foundations (do first, mostly small)
+
+- [ ] **Per-video pages** (`/video/[id]`): embedded player (`youtube-nocookie.com`, needs CSP `frame-src`), curator's note, category tags, date/place, related stories. Biggest SEO and shareability gain.
+- [ ] **Channel pages** (`/channel/[slug]`): all curated videos from one journalist, YouTube subscribe link, support links.
+- [ ] **Real category routes** (`/category/[slug]`) replacing `?category=`. Indexable, and sidesteps the open apex→www query-string-stripping issue.
+- [ ] **Search** across title, channel and category (Postgres full-text; no YouTube API quota).
+- [ ] **"Load more" / paging.** Single page with 100+ videos keeps growing.
+- [ ] **Category label + absolute date on cards**; the parked **footer**.
+- [ ] **Hindi / English toggle** (language data already stored).
+- [ ] **RSS feed** (`/feed.xml`).
+
+Note: video, channel and category pages share the same plumbing (dynamic routes, metadata, sitemap entries) — build them together.
+
+### Tier 2 — Differentiators
+
+- [ ] **"Why this matters" curator's note** (1–2 lines per video) — makes the curation visible.
+- [ ] **"Under-reported" badge/section** for stories mainstream TV skipped (admin flag; PeopleLens's version of Blindspot).
+- [ ] **Browse by place**: state/district tag per video → state filter → later an India map.
+- [ ] **Story threads + impact notes**: link follow-ups on the same issue and record outcomes.
+- [ ] **Support this journalist**: UPI / membership / Patreon links on channel pages (money goes to them directly).
+- [ ] **Weekly digest**: email and/or WhatsApp Channel.
+- [ ] **Public suggestion credit + status**: "Suggested by a reader"; let suggesters see if theirs was accepted.
+
+### Tier 3 — Admin & curation quality
+
+- [ ] **New-upload review queue**: daily Vercel cron (Hobby allows one) pulls latest uploads from followed channels into a review list; nothing goes live without approval.
+- [ ] **Dead-video checker**: detect deleted/private videos.
+- [ ] **Email alert on new suggestions**; **bulk edit** for categories/tags (both previously in backlog).
+
+### Tier 4 — Bigger bets (later)
+
+- [ ] Bookmarks via browser local storage (small); follow channels/categories needs accounts (large).
+- [ ] Installable PWA with push for new featured stories.
+- [ ] AI-drafted summaries from YouTube captions (incl. Hindi↔English), curator-approved.
+- [ ] Public transparency page (most-covered issues this month, share of reader-suggested videos).
+
+### Deliberately not recommended
+
+- **Bias / factuality scores** — needs a ratings system one person can't defend.
+- **Comments** — ongoing moderation burden.
+
+### Suggested order
+
+1. Video + channel + category pages → 2. Search + paging → 3. Curator's note + under-reported badge.
+
+Sources: Wikipedia (Ground News; People's Archive of Rural India), Newslaundry "NL Sena: For the Love of Independent Media", CS Monitor "Why some Indian journalists are trading newsrooms for YouTube".
+
+---
+
+*Last updated: 2026-10-11*

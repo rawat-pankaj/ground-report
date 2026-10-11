@@ -2,6 +2,9 @@ import { prisma } from "../lib/prisma";
 
 const BASE_URL = "https://www.peoplelens.in";
 
+// Regenerate hourly so newly curated videos reach the sitemap without a redeploy.
+export const revalidate = 3600;
+
 export default async function sitemap() {
   const staticRoutes = [
     { url: BASE_URL, changeFrequency: "hourly", priority: 1 },
@@ -23,5 +26,18 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...categoryRoutes];
+  const videos = await prisma.video.findMany({
+    where: { status: "published" },
+    select: { youtubeVideoId: true, addedAt: true },
+    orderBy: { addedAt: "desc" },
+  });
+
+  const videoRoutes = videos.map((v) => ({
+    url: `${BASE_URL}/video/${v.youtubeVideoId}`,
+    lastModified: v.addedAt,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes, ...videoRoutes];
 }

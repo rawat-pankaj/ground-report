@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { unstable_cache } from "next/cache";
+import Link from "next/link";
 import CategoryPills from "./CategoryPills";
 
 // The three Prisma queries below are wrapped in unstable_cache and tagged
@@ -136,10 +137,8 @@ function FeaturedCard({ video }) {
 
 function StoryCard({ video }) {
   return (
-    <a
-      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      href={"/video/" + video.youtubeVideoId}
       className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
@@ -165,7 +164,7 @@ function StoryCard({ video }) {
         </div>
 
       </div>
-    </a>
+    </Link>
   );
 }
 

@@ -167,6 +167,23 @@ export default function AdminDashboard() {
                   onBlur={(e) => updateTags(video, "beatTags", e.target.value)}
                 />
               </div>
+              <div className="flex flex-wrap gap-2 mb-1 items-start">
+                <input
+                  className="input text-[12px] w-full sm:w-48"
+                  placeholder="place, e.g. Gaya, Bihar"
+                  maxLength={100}
+                  defaultValue={video.place || ""}
+                  onBlur={(e) => updateTags(video, "place", e.target.value)}
+                />
+                <textarea
+                  className="input text-[12px] flex-1 min-w-[200px]"
+                  rows={2}
+                  maxLength={1000}
+                  placeholder="Why this matters — 1-2 lines shown on the video page"
+                  defaultValue={video.curatorNote || ""}
+                  onBlur={(e) => updateTags(video, "curatorNote", e.target.value)}
+                />
+              </div>
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {categories.map((category) => {
@@ -187,7 +204,7 @@ export default function AdminDashboard() {
                 </div>
               )}
               <div className="mb-2 h-[16px]">
-                {["language", "beatTags"].map((field) => {
+                {["language", "beatTags", "place", "curatorNote"].map((field) => {
                   const state = saveState[`${video.id}:${field}`];
                   if (state === "saving") return <span key={field} className="story-meta">Saving…</span>;
                   if (state === "saved") return <span key={field} className="story-meta" style={{ color: "#2f8f4e" }}>Saved</span>;
@@ -205,6 +222,16 @@ export default function AdminDashboard() {
                 >
                   {video.featured ? "Featured" : "Set as featured"}
                 </button>
+                {video.status === "published" && (
+                  <a
+                    className="btn btn-outline text-[12px] py-1"
+                    href={"/video/" + video.youtubeVideoId}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View page
+                  </a>
+                )}
                 <button className="btn btn-danger-outline text-[12px] py-1" onClick={() => remove(video)}>
                   Remove
                 </button>
