@@ -635,11 +635,11 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 ### Still open
 
 - [x] **Homepage "load more" / paging (done 2026-10-11, see below)** — the homepage is capped at 100 of 233 videos (see corrected finding above). Highest-value next item.
-- [ ] Next.js 16.2.11 → 16.3.8 (see Tech Upgrade Audit, 2026-10-07) — not yet applied.
+- [ ] Next.js 16.2.11 → 16.3.8 — **parked by owner 2026-10-11.** Checked: the Windows RCE (CVE-2026-75604) does not apply (Vercel = Linux, App Router only); the image-optimization SSRF (CVE-2026-94483) applies in principle but `remotePatterns` only allows Google-owned hosts (i.ytimg.com, yt3.ggpht.com, yt3.googleusercontent.com), so practical risk is low. Latest stable is 16.3.8; newer builds are 16.5 canaries only.
 - [ ] Verify Vercel Node version is not 20.
 - [ ] Apex→www redirect appears to strip query strings (unverified).
 - [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
-- [ ] Suggest places for the existing videos (see Place Suggestions below).
+- [ ] Suggest places for the existing videos — **built, parked by owner 2026-10-11, not pushed.** Package `place-backfill.zip` (Admin → Places: scan, review/edit, save; never overwrites an existing place; no SQL needed). See "Place Suggestions on Add" below.
 - [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
 - [ ] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused.
 
@@ -681,3 +681,39 @@ When adding videos, the **Place** field is now pre-filled with a suggestion the 
 **Testing:** local browser test 50 → 100 → 130 unique cards on desktop and mobile; API pages 50/50/30; bad offsets return 400. **Live (after deploy):** homepage shows 50 cards + button; clicking appended further cards; `/api/feed?offset=7` and `offset=50` confirmed by the owner in a browser.
 
 **Follow-ups (optional):** infinite scroll instead of a button; hero is not de-duplicated when a filter is active (by design — filtered views show every match).
+
+### Place backfill for existing videos — built, parked (2026-10-11)
+
+New Admin → **Places** page. "Find places" scans videos with a blank Place (up to 500), asks YouTube for each one's recording location, title and description (~5 quota units total at 50 ids per call), and lists suggestions from the same `suggestPlace` logic used when adding a video. The admin edits or unticks rows and clicks Save; nothing is written during the scan.
+
+- **Files:** `lib/youtube.js` (adds `suggestPlacesForVideos`), `app/admin/AdminNav.jsx` ("Places" link), `app/admin/place-suggestions/page.jsx`, `app/api/admin/suggest-places/route.js` (scan, read-only), `app/api/admin/suggest-places/apply/route.js` (save).
+- **Safety:** save only fills videos whose Place is still empty (so a hand-typed place is never overwritten), trims, skips blanks, caps at 100 chars and 500 items, then `revalidateTag("videos")`. A YouTube error aborts the scan instead of looking like "no places found".
+- **Caveat:** the first place mentioned in the title wins, so titles naming two places can suggest the wrong one; videos with no place in the text are left for manual entry. Not yet tested against the live database. No schema change.
+- **Status:** not pushed. To resume, copy the zip's files into the repo and push.
+
+## 🌐 SEO & Discoverability Review — 2026-10-11
+
+A second look at how the site gets found, after video pages shipped. Checked live: `robots.txt`, `sitemap.xml`, one video page, the About page, and what a web search returns. **Not checked:** Google Search Console / Bing Webmaster data (indexed-page counts, queries, errors) — I have no access to it.
+
+### Current state
+
+- [x] **Crawling:** `robots.txt` allows `/`, blocks `/admin` and `/api/`, and links the sitemap.
+- [x] **Sitemap:** 258 URLs — homepage, `/about`, `/suggest`, 21 `?category=` URLs, 234 video pages (with `lastmod`).
+- [x] **Video pages:** unique title, description, canonical, OG/Twitter tags, H1, related stories, category links. JSON-LD `VideoObject` is in the code but could not be confirmed by the page reader (it strips scripts) — verify one page in Google's Rich Results Test.
+- [x] **About page:** states editorial standards and a contact address (`contact@peoplelens.in`).
+- Web search for `site:peoplelens.in` and for the site with "independent journalism India" returned nothing from the site. Inconclusive (the search tool does not support `site:`), but consistent with a very young site with almost no inbound links.
+
+### Gaps, in priority order
+
+- [ ] **Backlinks / off-site presence — the biggest lever, not a code task.** Tell the featured channels, PARI-style independent-journalism sites, media-watch accounts and newsletters; post in relevant communities; set up X/Instagram/YouTube profiles for PeopleLens and link them from the site; share new stories tagging the original channels.
+- [ ] **Search Console checks (no code):** Pages report to see how many of the 258 URLs are indexed and why others are not; resubmit the sitemap; do the same in Bing Webmaster Tools.
+- [ ] **Thin video pages.** A page with only title, byline, embed and related links (no curator note) is weak content. Fill "Why this matters" (2–3 sentences) starting with the newest and most topical videos.
+- [ ] **Channel pages** (e.g. a page for "Sharad Sharma on Ground") and real `/category/[slug]` routes replacing `?category=`. People search by channel and topic; these pages also give internal links and richer sitemap entries. Recommended next code item.
+- [ ] **Larger social preview image** for video pages — currently YouTube's 480×360 `hqdefault`; use `maxresdefault` where available or a branded 1200×630 card with the headline.
+- [ ] **About page does not name who runs the site.** Add a person or organisation line — a trust signal for a news-adjacent site.
+- [ ] **Hindi site chrome and Hindi About page** (already parked) — currently only titles are Hindi.
+- [ ] **Parked, relevant to discovery:** on-site search, footer, category label and absolute date on cards.
+
+### Context carried over
+
+- The name "PeopleLens" collides with Microsoft Research's project and peoplelens.ai (see Discoverability Review, 2026-08-25), so optimise for topics (India, ground reporting, beats, channels) rather than the brand name.
