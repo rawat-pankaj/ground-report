@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
+import CategoryPills from "./CategoryPills";
 
 // The three Prisma queries below are wrapped in unstable_cache and tagged
 // "videos". Admin routes call revalidateTag("videos") after any write that
@@ -73,7 +74,7 @@ function FeaturedCard({ video }) {
       href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
       target="_blank"
       rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col col-span-2"
+      className="story-card overflow-hidden flex flex-col col-span-2 lg:row-span-2"
     >
       <div style={{ position: "relative", width: "100%" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,7 +82,7 @@ function FeaturedCard({ video }) {
           src={heroThumbnail}
           alt=""
           className="w-full object-cover"
-          style={{ aspectRatio: "2/1" }}
+          style={{ aspectRatio: "16/9" }}
         />
         <span style={{
           position: "absolute",
@@ -100,7 +101,17 @@ function FeaturedCard({ video }) {
       </div>
       <div className="p-4 flex-1 flex flex-col gap-3 w-full">
         <div>
-          <p className="story-headline text-[18px] leading-snug mb-2">{video.title}</p>
+          <p
+            className="story-headline text-[18px] leading-snug mb-2"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {video.title}
+          </p>
           <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
         </div>
 
@@ -126,11 +137,9 @@ function FeaturedCard({ video }) {
 
 function StoryCard({ video }) {
   return (
-    <a
-      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="story-card overflow-hidden flex flex-col"
+    <Link
+      href={"/video/" + video.youtubeVideoId}
+      className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -138,14 +147,24 @@ function StoryCard({ video }) {
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
-          <p className="story-headline text-[14px] leading-snug mb-1">{video.title}</p>
+          <p
+            className="story-headline text-[14px] leading-snug mb-1"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {video.title}
+          </p>
           <p className="story-meta" style={{ fontSize: "10px" }}>
             {video.channel.name} · {timeAgo(video.publishedAt)}
           </p>
         </div>
 
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -174,15 +193,6 @@ export default async function FeedPage({ searchParams }) {
   const hero = noFilters ? await getHero() : null;
   const videos = await getVideos(language, category, hero?.id || null);
 
-
-  function hrefFor(nextLanguage, nextCategory) {
-    const p = new URLSearchParams();
-    if (nextLanguage) p.set("language", nextLanguage);
-    if (nextCategory) p.set("category", nextCategory);
-    const qs = p.toString();
-    return qs ? "/" + "?" + qs : "/";
-  }
-
   const today = new Date().toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
     weekday: "long",
@@ -210,23 +220,11 @@ export default async function FeedPage({ searchParams }) {
           <h2 style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", fontWeight: 400 }}>
             Category
           </h2>
-          <div className="filter-strip">
-            <Link
-              href={hrefFor(language, "")}
-              className={"tag " + (category === "" ? "tag-active" : "")}
-            >
-              All
-            </Link>
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                href={hrefFor(language, c.slug)}
-                className={"tag " + (category === c.slug ? "tag-active" : "")}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
+          <CategoryPills
+            categories={categories}
+            language={language}
+            category={category}
+          />
         </div>
       )}
 
@@ -240,7 +238,7 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-flow-dense gap-3">
         {hero && <FeaturedCard video={hero} />}
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />

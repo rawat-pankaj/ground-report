@@ -1,70 +1,18 @@
-import { prisma } from "../lib/prisma";
-import { unstable_cache } from "next/cache";
-import Link from "next/link";
 import CategoryPills from "./CategoryPills";
+import StoryCard, { timeAgo } from "./StoryCard";
+import LoadMore from "./LoadMore";
+import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
 
-// The three Prisma queries below are wrapped in unstable_cache and tagged
-// "videos". Admin routes call revalidateTag("videos") after any write that
-// changes what's shown here (publish/hide/feature/categorize/add/delete a
-// video, or create/rename/delete a category) — see
-// app/api/admin/videos/[id]/route.js etc. That's what keeps this fresh;
-// there is no time-based revalidation. Reading searchParams below does NOT
-// defeat this caching, because the cache lives around the data fetch, keyed
-// by the actual filter values, not around the page render itself.
-
-const getCategories = unstable_cache(
-  async () => {
-    const categoriesRaw = await prisma.category.findMany({
-      where: { videos: { some: { video: { status: "published" } } } },
-      include: { _count: { select: { videos: { where: { video: { status: "published" } } } } } },
-    });
-    return categoriesRaw.sort((a, b) => b._count.videos - a._count.videos);
-  },
-  ["homepage-categories"],
-  { tags: ["videos"] }
-);
-
-const getHero = unstable_cache(
-  async () => {
-    return prisma.video.findFirst({
-      where: { status: "published", featured: true },
-      include: { channel: true },
-    });
-  },
-  ["homepage-hero"],
-  { tags: ["videos"] }
-);
-
-const getVideos = unstable_cache(
-  async (language, category, excludeId) => {
-    const where = { status: "published" };
-    if (language) where.language = language;
-    if (category) where.categories = { some: { category: { slug: category } } };
-    if (excludeId) where.id = { not: excludeId };
-
-    return prisma.video.findMany({
-      where,
-      include: { channel: true },
-      orderBy: { addedAt: "desc" },
-      take: 100,
-    });
-  },
-  ["homepage-videos"],
-  { tags: ["videos"] }
-);
-
-function timeAgo(date) {
-  if (!date) return "";
-  const diffMs = Date.now() - new Date(date).getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (days <= 0) return "today";
-  if (days === 1) return "1 day ago";
-  if (days < 7) return `${days} days ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-  const months = Math.floor(days / 30);
-  return `${months} month${months > 1 ? "s" : ""} ago`;
-}
+// Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
+// Admin routes call revalidateTag("videos") after any write that changes what
+// is shown here (publish/hide/feature/categorize/add/delete a video, or
+// create/rename/delete a category) -- that is what keeps this fresh; there is no
+// time-based revalidation. Reading searchParams below does NOT defeat this
+// caching, because the cache lives around the data fetch, keyed by the actual
+// filter values, not around the page render itself.
+//
+// The first PAGE_SIZE stories render here; the "Load more" button fetches the
+// rest in batches from /api/feed.
 
 function FeaturedCard({ video }) {
   const heroThumbnail = `https://i.ytimg.com/vi/${video.youtubeVideoId}/maxresdefault.jpg`;
@@ -135,50 +83,17 @@ function FeaturedCard({ video }) {
   );
 }
 
-function StoryCard({ video }) {
-  return (
-    <Link
-      href={"/video/" + video.youtubeVideoId}
-      className="story-card overflow-hidden flex flex-col h-full"
-    >
-      {video.thumbnailUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={video.thumbnailUrl} alt="" className="w-full aspect-video object-cover shrink-0" />
-      )}
-      <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
-        <div>
-          <p
-            className="story-headline text-[14px] leading-snug mb-1"
-            style={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {video.title}
-          </p>
-          <p className="story-meta" style={{ fontSize: "10px" }}>
-            {video.channel.name} · {timeAgo(video.publishedAt)}
-          </p>
-        </div>
-
-      </div>
-    </Link>
-  );
-}
-
 export default async function FeedPage({ searchParams }) {
   const params = await searchParams;
   // `language` is no longer surfaced in the UI (the language pills were
   // removed), but is still honoured so older bookmarked/shared links keep
   // working. Length-capped since it comes straight from the URL.
-  const language = (params?.language || "").slice(0, 20);
+  const language = cleanLanguage(params?.language);
 
   const categories = await getCategories();
 
   // Validate the requested category against the real list rather than
-  // passing the raw value through. getVideos() is unstable_cache-wrapped and
+  // passing the raw value through. getFeedPage() is unstable_cache-wrapped and
   // keyed on its arguments, so an unvalidated param would let anyone mint
   // unlimited distinct cache entries (and a fresh DB query each) by sending
   // /?category=<random>. Whitelisting bounds the key space to the categories
@@ -191,7 +106,7 @@ export default async function FeedPage({ searchParams }) {
   const noFilters = !language && !category;
 
   const hero = noFilters ? await getHero() : null;
-  const videos = await getVideos(language, category, hero?.id || null);
+  const { videos, hasMore } = await getFeedPage(language, category, 0, hero?.id || null);
 
   const today = new Date().toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
@@ -243,6 +158,13 @@ export default async function FeedPage({ searchParams }) {
         {videos.map((video) => (
           <StoryCard key={video.id} video={video} />
         ))}
+        <LoadMore
+          initialHasMore={hasMore}
+          initialIds={videos.map((v) => v.id)}
+          pageSize={PAGE_SIZE}
+          language={language}
+          category={category}
+        />
       </div>
     </div>
   );
