@@ -717,3 +717,21 @@ A second look at how the site gets found, after video pages shipped. Checked liv
 ### Context carried over
 
 - The name "PeopleLens" collides with Microsoft Research's project and peoplelens.ai (see Discoverability Review, 2026-08-25), so optimise for topics (India, ground reporting, beats, channels) rather than the brand name.
+
+## 🔗 Hero Card Opened YouTube Directly — 2026-10-22
+
+**Found by the owner while using the app.** The featured (hero) card on the homepage still linked straight to `youtube.com/watch?v=…` (new tab), while every other card opened `/video/<id>`. Cause: when video pages and Load more were built, the grid cards were switched to the video page but the hero was left unchanged and only noted as such — an oversight. Effect: the most prominent story skipped the curator's note, related stories and the on-site page.
+
+**Fix:** `FeaturedCard` in `app/page.jsx` is now a `next/link` `Link` to `/video/<youtubeVideoId>` (same tab); the button label changed from "Watch on YouTube →" to "Read & watch →". No other change.
+
+**Verified:** owner confirmed on the live portal that the hero now opens the video page.
+
+## ▦ Blank Cells in the Last Row of the Homepage Grid — 2026-10-22
+
+**Found by the owner (screenshot):** after the first page of stories the last row was half empty on desktop.
+
+**Cause:** the page size was 50. The desktop grid has 4 columns and the featured card occupies a 2×2 block (4 cells), so 50 cards + hero = 54 cells = 13 full rows + 2 empty cells. Later pages of 50 would have left the same gap at the end.
+
+**Fix:** `PAGE_SIZE` in `lib/feed.js` changed from 50 to **48** (a multiple of 4 and even, for the 2-column mobile grid). With the hero: 48 + 4 = 52 cells = 13 rows; without it (category views) and for every later page: 48 = 12 rows. The page, `LoadMore` and `/api/feed` all read the constant, so nothing else changed; offsets are now multiples of 48. (This supersedes the "50 first, +50 per click" wording in the Load more section above.) The final, partial batch of the catalogue can still end mid-row — unavoidable.
+
+**Verified:** owner confirmed on the live portal that the last row now fills correctly.
