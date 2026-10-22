@@ -635,7 +635,7 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 ### Still open
 
 - [x] **Homepage "load more" / paging (done 2026-10-11, see below)** — the homepage is capped at 100 of 233 videos (see corrected finding above). Highest-value next item.
-- [ ] Next.js 16.2.11 → 16.3.8 — **parked by owner 2026-10-11.** Checked: the Windows RCE (CVE-2026-75604) does not apply (Vercel = Linux, App Router only); the image-optimization SSRF (CVE-2026-94483) applies in principle but `remotePatterns` only allows Google-owned hosts (i.ytimg.com, yt3.ggpht.com, yt3.googleusercontent.com), so practical risk is low. Latest stable is 16.3.8; newer builds are 16.5 canaries only.
+- [ ] Next.js 16.2.11 → **16.4.1** (target changed 2026-10-22; was 16.3.8) — parked by owner, not urgent but do within a week or two. A 14 Oct out-of-band release (16.4.1) fixes three further issues that 16.3.8 does not include; none appears to apply to this app (see "Next.js Security Re-check" below). Test with a local build before pushing.
 - [ ] Verify Vercel Node version is not 20.
 - [ ] Apex→www redirect appears to strip query strings (unverified).
 - [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
@@ -735,3 +735,18 @@ A second look at how the site gets found, after video pages shipped. Checked liv
 **Fix:** `PAGE_SIZE` in `lib/feed.js` changed from 50 to **48** (a multiple of 4 and even, for the 2-column mobile grid). With the hero: 48 + 4 = 52 cells = 13 rows; without it (category views) and for every later page: 48 = 12 rows. The page, `LoadMore` and `/api/feed` all read the constant, so nothing else changed; offsets are now multiples of 48. (This supersedes the "50 first, +50 per click" wording in the Load more section above.) The final, partial batch of the catalogue can still end mid-row — unavoidable.
 
 **Verified:** owner confirmed on the live portal that the last row now fills correctly.
+
+## 🛡️ Next.js Security Re-check — 2026-10-22
+
+Re-checked the advisories after the owner asked whether the upgrade is really important. A new **out-of-band release on 14 Oct 2026 (Next.js 16.4.1 / 15.5.28)** fixes three issues; 16.3.8 (the earlier target) does **not** include them, so the upgrade target is now **16.4.1**.
+
+| Issue | Severity | Applies here? |
+|---|---|---|
+| RCE in `use cache` functions returning typed arrays (GHSA-673q-mjm6-r5xr) | Critical | **No** — needs Cache Components; `next.config.mjs` does not enable it (this app uses `unstable_cache`). |
+| RCE via `sharp` processing untrusted SVGs (CVE-2026-96889) | Critical | **Very unlikely** — needs untrusted SVGs on glibc Linux; no `dangerouslyAllowSVG`; images are YouTube JPEGs; the share image is a static PNG (no `ImageResponse`). |
+| DoS in App Router apps with a Server Action (GHSA-p3m5-59mp-jv5r) | High | **Believed no** — the admin uses API routes, not Server Actions (not confirmed by a full-codebase search). |
+
+- No public exploitation of these three as of 15 Oct per the sources read. The sources do not state whether Vercel-hosted apps are affected, so the assessment rests on this app's own configuration.
+- `next.config.mjs` top-level options are only `images` (with `remotePatterns` for i.ytimg.com, yt3.ggpht.com, yt3.googleusercontent.com) and `headers`.
+- Recommendation: upgrade to 16.4.1 within a week or two after a local build test (it is a bigger jump than 16.3.8); not an emergency.
+- Sources: Netlify changelog 2026-10-14; The Hacker News (Oct 2026); vercel/next.js security advisories.
