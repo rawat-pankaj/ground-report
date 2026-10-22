@@ -1,3 +1,4 @@
+import Link from "next/link";
 import CategoryPills from "./CategoryPills";
 import StoryCard, { timeAgo } from "./StoryCard";
 import LoadMore from "./LoadMore";
@@ -18,10 +19,8 @@ function FeaturedCard({ video }) {
   const heroThumbnail = `https://i.ytimg.com/vi/${video.youtubeVideoId}/maxresdefault.jpg`;
 
   return (
-    <a
-      href={"https://www.youtube.com/watch?v=" + video.youtubeVideoId}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      href={`/video/${video.youtubeVideoId}`}
       className="story-card overflow-hidden flex flex-col col-span-2 lg:row-span-2"
     >
       <div style={{ position: "relative", width: "100%" }}>
@@ -76,10 +75,10 @@ function FeaturedCard({ video }) {
           padding: "8px 14px",
           alignSelf: "flex-start",
         }}>
-          Watch on YouTube →
+          Read &amp; watch →
         </span>
       </div>
-    </a>
+    </Link>
   );
 }
 
