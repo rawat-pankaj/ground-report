@@ -750,3 +750,23 @@ Re-checked the advisories after the owner asked whether the upgrade is really im
 - `next.config.mjs` top-level options are only `images` (with `remotePatterns` for i.ytimg.com, yt3.ggpht.com, yt3.googleusercontent.com) and `headers`.
 - Recommendation: upgrade to 16.4.1 within a week or two after a local build test (it is a bigger jump than 16.3.8); not an emergency.
 - Sources: Netlify changelog 2026-10-14; The Hacker News (Oct 2026); vercel/next.js security advisories.
+
+## 🧰 Development Moved to Claude Code — 2026-10-27
+
+Development now continues in Claude Code (desktop app, Code tab, Local environment) opened on `D:\Projects\ground-report`, replacing the earlier flow of zipped files copied by hand. A `CLAUDE.md` at the repo root carries the stack, architecture rules, working agreements and the parked list, so each session starts with that context.
+
+**Setup findings**
+- The first local `npm run build` failed while prerendering `/sitemap.xml`: `POSTGRES_PRISMA_URL` was not defined in the local `.env`. The code reads **`POSTGRES_PRISMA_URL`** (pooled connection, port 6543, `?pgbouncer=true`) and **`POSTGRES_URL_NON_POOLING`** (direct connection, port 5432), plus `YOUTUBE_API_KEY` and `ADMIN_PASSWORD` (`prisma/schema.prisma`, `lib/youtube.js`, `proxy.js`). These match the names Vercel's Supabase integration creates.
+- **`.env.example` and the README still say `DATABASE_URL` — outdated.** Update them to the four names above (names only, no values).
+- The pooled user must be `postgres.<project-ref>`; the live project is `ground-report` (Mumbai, `ap-south-1`). The paused Tokyo project "GroundReport" is a different, unused project.
+- The next error was "authentication failed": the local password was not the live database password. The database password was **reset in Supabase**, the new connection strings were set in Vercel for `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING`, the site was redeployed, and the same values were put in the local `.env`.
+- Vercel hides "sensitive" variable values after saving, so they cannot be read back; copy connection strings from Supabase (Connect) instead.
+- The database password and `ADMIN_PASSWORD` are separate values.
+
+**Verified:** live homepage and a previously unopened video page load on the new credentials; admin works (owner-tested); the local `npm run build` now passes (23 pages, sitemap included).
+
+**Follow-ups**
+- [ ] Fix `.env.example` and README variable names.
+- [ ] Remove or ignore the old backup files in the repo root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) if they are committed.
+- [ ] Push `CLAUDE.md` (corrected variable names) to `main` if not already done.
+- [ ] Keep the database password in a password manager.
