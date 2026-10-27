@@ -33,7 +33,7 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - `/admin/*` pages are behind the password cookie and cannot be fetched anonymously.
 
 ## Repo housekeeping
-- Untracked or leftover files in the root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) are old backups; do not edit them. Ask before deleting.
+- All `*_old*` backup files were removed on 2026-10-27 (27 files, nothing referenced them). Git history keeps them. Do not create new `_old` copies; use git for history.
 
 ## Parked items (see `ISSUES.md` for detail)
 - Upgrade Next.js to **16.4.1** (a 14 Oct 2026 security release; none of the three fixes appears to apply to this app, so it is not urgent). Pin it exactly, run a local build, then push.
