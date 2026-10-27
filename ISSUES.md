@@ -787,5 +787,29 @@ Quick check of the live site after the credentials fix.
 **Build:** local `npm run build` passes (23 pages).
 
 **Open observation:** the first request to an uncached page took about 6 seconds (homepage, `/api/feed`, a video page) and about 0.2–0.5 s afterwards. Probably cache misses after invalidation or a cold function on Hobby; not investigated.
-- [ ] Look into the ~6 s cold-cache first load if it turns out to affect real visitors.
+- [x] Look into the ~6 s cold-cache first load (investigated and partly fixed 2026-10-27, see "Homepage Speed" below).
 - [ ] Optionally add `"engines": { "node": ">=22" }` to `package.json` so the Node version is pinned in the repo (not done).
+
+## ⚡ Homepage Speed — 2026-10-27
+
+Investigated the ~6 s first load of uncached pages. Pushed as `b3d3b61`.
+
+**Findings**
+- Response header `X-Vercel-Id` showed `bom1::iad1`: edge in Mumbai, but the page function ran in Virginia (`iad1`, Vercel's default) while the Supabase database is in Mumbai (`ap-south-1`). Every cache-miss query and each new database connection crossed continents.
+- The homepage is dynamic (it reads `searchParams` for `?category=`), so it runs a function on every visit and is served `Cache-Control: private, no-store`; the edge can never cache it.
+- `getCategories()`, `getHero()` and `getFeedPage()` were awaited one after another.
+- All 49 `<img>` tags loaded eagerly (none lazy); the hero uses `maxresdefault.jpg` with no priority hint.
+- Four Google font families are pulled in via CSS `@import` (`app/globals.css`), a render-blocking chain.
+
+**Shipped**
+- `vercel.json` pins functions to `bom1` (Hobby allows one region).
+- `app/page.jsx`: `getCategories()` and `getHero()` now run in parallel (`getHero` takes no arguments, so the cache key set stays bounded).
+- `app/StoryCard.jsx`: `loading="lazy"` and `decoding="async"` on grid thumbnails; hero image gets `fetchPriority="high"`.
+
+**Result (live):** `X-Vercel-Id` is now `bom1::bom1`. First request to the homepage 1.5 s (one sample; was about 6 s). Repeat requests still about 0.43 s to first byte, so the warm cost is the dynamic render, not the region. Local build passed (23 pages).
+
+**Next steps**
+- [ ] Make the homepage static by moving filtering to real `/category/[slug]` routes (already parked as roadmap Tier 1); it could then be served from the edge in roughly 50 ms. Biggest remaining win.
+- [ ] Self-host the fonts with `next/font/google` and drop `fonts.googleapis.com` from the CSP.
+- [ ] Consider a smaller hero image than `maxresdefault.jpg`.
+- [ ] Take a few more cold-load samples to confirm the 6 s to about 1.5 s improvement; Vercel runtime logs would help (the Claude Code connector gets 403 on this project).
