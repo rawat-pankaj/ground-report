@@ -813,3 +813,10 @@ Investigated the ~6 s first load of uncached pages. Pushed as `b3d3b61`.
 - [ ] Self-host the fonts with `next/font/google` and drop `fonts.googleapis.com` from the CSP.
 - [ ] Consider a smaller hero image than `maxresdefault.jpg`.
 - [x] Take a few more cold-load samples (done 2026-10-27, see Result above). Optional: re-test after a much longer idle gap; Vercel runtime logs would help (the Claude Code connector gets 403 on this project).
+
+## 🧹 Clean-up — outside the repo, parked (2026-10-28)
+
+Repo clean-up is done (27 `_old` backups, two unused icons and `/api/videos` removed; env var names fixed in README and `.env.example`). These items sit outside the repo and are **parked by the owner for later review**:
+- [ ] Review the paused duplicate Supabase project "GroundReport" (Tokyo) and delete it if unused (also listed under "Still open").
+- [ ] In the Vercel dashboard (Settings → Environment Variables), check for a leftover `DATABASE_URL`; the code reads only `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `YOUTUBE_API_KEY` and `ADMIN_PASSWORD`. The Claude Code connector cannot see this project, so this needs a manual check.
+- [ ] Optional: add a `.gitattributes` (for example `* text=auto`) to silence Git's "LF will be replaced by CRLF" warnings on Windows.
