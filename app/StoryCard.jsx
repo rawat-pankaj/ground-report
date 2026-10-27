@@ -24,7 +24,7 @@ export default function StoryCard({ video }) {
     >
       {video.thumbnailUrl && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={video.thumbnailUrl} alt="" className="w-full aspect-video object-cover shrink-0" />
+        <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover shrink-0" />
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>

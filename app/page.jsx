@@ -30,6 +30,8 @@ function FeaturedCard({ video }) {
           alt=""
           className="w-full object-cover"
           style={{ aspectRatio: "16/9" }}
+          fetchPriority="high"
+          decoding="async"
         />
         <span style={{
           position: "absolute",
@@ -89,7 +91,13 @@ export default async function FeedPage({ searchParams }) {
   // working. Length-capped since it comes straight from the URL.
   const language = cleanLanguage(params?.language);
 
-  const categories = await getCategories();
+  // getHero() takes no arguments (one bounded cache entry), so it can start
+  // alongside getCategories() instead of waiting for it; it is only used below
+  // when no filter ends up applying.
+  const [categories, heroCandidate] = await Promise.all([
+    getCategories(),
+    language ? null : getHero(),
+  ]);
 
   // Validate the requested category against the real list rather than
   // passing the raw value through. getFeedPage() is unstable_cache-wrapped and
@@ -104,7 +112,7 @@ export default async function FeedPage({ searchParams }) {
 
   const noFilters = !language && !category;
 
-  const hero = noFilters ? await getHero() : null;
+  const hero = noFilters ? heroCandidate : null;
   const { videos, hasMore } = await getFeedPage(language, category, 0, hero?.id || null);
 
   const today = new Date().toLocaleDateString("en-IN", {
