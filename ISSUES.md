@@ -272,7 +272,7 @@ The four-file package was reduced to three and shipped:
 - [ ] Consolidate rate limiting onto Vercel WAF/BotID or Upstash; retire the duplicated Postgres tables and `getClientIp` copies.
 - [ ] Plan the `unstable_cache` → `use cache` migration.
 - [ ] Add basic alerting, so the next threat is observed rather than theorized.
-- [ ] Decide whether `/api/videos` should exist at all — the site itself doesn't consume it (the homepage queries Prisma directly). The most secure endpoint is one that doesn't exist.
+- [x] Decide whether `/api/videos` should exist at all — the site itself doesn't consume it (the homepage queries Prisma directly). The most secure endpoint is one that doesn't exist. **Removed 2026-10-27** at the owner's request (also deleted the two unused `public/icon-*.png` files); recoverable from git history.
 
 ---
 
@@ -766,7 +766,7 @@ Development now continues in Claude Code (desktop app, Code tab, Local environme
 **Verified:** live homepage and a previously unopened video page load on the new credentials; admin works (owner-tested); the local `npm run build` now passes (23 pages, sitemap included).
 
 **Follow-ups**
-- [ ] Fix `.env.example` and README variable names.
+- [x] Fix `.env.example` and README variable names (done 2026-10-27).
 - [ ] Remove or ignore the old backup files in the repo root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) if they are committed.
 - [ ] Push `CLAUDE.md` (corrected variable names) to `main` if not already done.
 - [ ] Keep the database password in a password manager.

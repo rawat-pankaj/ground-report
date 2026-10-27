@@ -5,7 +5,7 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 ## Stack and coordinates
 - Next.js **16.2.11, exact pin** (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
 - Repo: github.com/rawat-pankaj/ground-report. Local path: `D:\Projects\ground-report` (Windows, PowerShell).
-- Env vars (never commit `.env`, never print its values): `POSTGRES_PRISMA_URL` (pooled connection, used by `prisma/schema.prisma` as `url`), `POSTGRES_URL_NON_POOLING` (direct connection, used as `directUrl`), `YOUTUBE_API_KEY`, `ADMIN_PASSWORD`. These are the names the code actually reads (they match Vercel's Supabase integration). `.env.example` and the README still say `DATABASE_URL`, which is outdated.
+- Env vars (never commit `.env`, never print its values): `POSTGRES_PRISMA_URL` (pooled connection, used by `prisma/schema.prisma` as `url`), `POSTGRES_URL_NON_POOLING` (direct connection, used as `directUrl`), `YOUTUBE_API_KEY`, `ADMIN_PASSWORD`. These are the names the code actually reads (they match Vercel's Supabase integration). `.env.example` and the README list the same four names.
 - Commands: `npm run dev`, `npm run build` (runs `prisma generate` first). There are no tests; verify with a local build and by checking the running site.
 
 ## Architecture rules that matter

@@ -28,17 +28,21 @@ day-to-day curation.
 ## 2. Get a free database (Supabase)
 
 1. Go to [supabase.com](https://supabase.com) → New project (free tier is enough)
-2. Once created, go to **Project settings → Database → Connection string**
-   and copy the URI (choose "Connection pooling" if offered, port 6543,
-   and add `?pgbouncer=true` to the end)
-3. That's your `DATABASE_URL`
+2. Once created, click **Connect** (or go to **Project settings → Database →
+   Connection string**) and copy two URIs:
+   - the pooled connection (port 6543, with `?pgbouncer=true` on the end) is
+     your `POSTGRES_PRISMA_URL`
+   - the direct connection (port 5432) is your `POSTGRES_URL_NON_POOLING`
+3. Copy them from Supabase rather than from Vercel: Vercel hides stored
+   values after you save them.
 
 ## 3. Configure environment variables
 
-Copy `.env.example` to `.env` and fill in the three values:
+Copy `.env.example` to `.env` and fill in the four values:
 
 ```
-DATABASE_URL="postgresql://..."
+POSTGRES_PRISMA_URL="postgresql://..."
+POSTGRES_URL_NON_POOLING="postgresql://..."
 YOUTUBE_API_KEY="..."
 ADMIN_PASSWORD="choose-a-strong-password"
 ```
@@ -58,14 +62,14 @@ Visit `http://localhost:3000` for the public feed and
 
 1. Push this folder to a new GitHub repository
 2. Go to [vercel.com](https://vercel.com) → New Project → import that repo
-3. In the project's **Settings → Environment Variables**, add the same three
+3. In the project's **Settings → Environment Variables**, add the same four
    variables from your `.env` file
 4. Deploy
 
 The very first deploy needs the database tables created once:
 
 ```bash
-# from your own machine, with .env pointing at the same DATABASE_URL
+# from your own machine, with .env pointing at the same database
 npx prisma migrate deploy
 ```
 
