@@ -445,7 +445,7 @@ Key evidence it's environmental, not a code or version problem:
 
 - **16.3.2 was reached accidentally** via `npm audit fix` (a *minor* bump, not the patch-level change expected). Reverted. Worth knowing `audit fix` can move minors.
 - **August 26 release targets 16.3 and 15.5, not 16.2** — so a deliberate 16.3 migration will be needed to receive it, ideally re-testing the prerender behaviour at that point.
-- [ ] **Apex→www 308 redirect appears to strip query strings** — `peoplelens.in/?category=poetry` may lose the filter while `www.peoplelens.in/?category=poetry` works. Only affects manually typed/shared apex URLs (every link the site generates already uses `www`). Not yet investigated.
+- [x] **Apex→www 308 redirect appears to strip query strings** — checked 2026-10-27: `peoplelens.in/about?x=1` → 308 to `www.peoplelens.in/about?x=1`, query string kept. Not reproduced (tested on `/about`; `/?category=` not tried). Original note: `peoplelens.in/?category=poetry` may lose the filter while `www.peoplelens.in/?category=poetry` works.
 
 ### Verified clean (checked, not assumed)
 
@@ -518,7 +518,7 @@ A dependency/runtime check against what is current as of October 2026. Conclusio
 
 ### Action list
 
-- [ ] Verify Vercel Node version is not 20
+- [x] Verify Vercel Node version is not 20 (done 2026-10-27: 24.x)
 - [ ] Bump `next` to exactly `16.3.8` (`npm install next@16.3.8 --save-exact`), push, validate on the Vercel preview, then on live
 - [ ] Re-check for the next Next.js security release (two issues still pending upstream)
 
@@ -636,8 +636,8 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 
 - [x] **Homepage "load more" / paging (done 2026-10-11, see below)** — the homepage is capped at 100 of 233 videos (see corrected finding above). Highest-value next item.
 - [ ] Next.js 16.2.11 → **16.4.1** (target changed 2026-10-22; was 16.3.8) — parked by owner, not urgent but do within a week or two. A 14 Oct out-of-band release (16.4.1) fixes three further issues that 16.3.8 does not include; none appears to apply to this app (see "Next.js Security Re-check" below). Test with a local build before pushing.
-- [ ] Verify Vercel Node version is not 20.
-- [ ] Apex→www redirect appears to strip query strings (unverified).
+- [x] Verify Vercel Node version is not 20 (done 2026-10-27: 24.x).
+- [x] Apex→www redirect appears to strip query strings (checked 2026-10-27: query string kept on `/about?x=1`).
 - [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
 - [ ] Suggest places for the existing videos — **built, parked by owner 2026-10-11, not pushed.** Package `place-backfill.zip` (Admin → Places: scan, review/edit, save; never overwrites an existing place; no SQL needed). See "Place Suggestions on Add" below.
 - [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
@@ -770,3 +770,22 @@ Development now continues in Claude Code (desktop app, Code tab, Local environme
 - [ ] Remove or ignore the old backup files in the repo root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) if they are committed.
 - [ ] Push `CLAUDE.md` (corrected variable names) to `main` if not already done.
 - [ ] Keep the database password in a password manager.
+
+## 🩺 Portal Health Check — 2026-10-27
+
+Quick check of the live site after the credentials fix.
+
+**Live site (www.peoplelens.in)**
+- `/`, `/about`, `/suggest`, `/sitemap.xml`, `/robots.txt`, a video page: 200. `/api/feed?offset=0`: 200 with current data (newest video 2026-10-26).
+- `/api/feed?offset=7` (not a multiple of `PAGE_SIZE`): 400. Unknown video id: 404. Both as intended.
+- `/admin` → 307 to `/admin/login`; `/api/admin/stats` without the cookie: 401.
+- `peoplelens.in/about?x=1` → 308 to `www`, query string kept.
+- CSP, HSTS and `X-Frame-Options: DENY` present.
+
+**Vercel (read from the dashboard by the owner):** Node.js Version is 24.x; Logs filtered to Errors over the last 24 hours were empty. The Vercel connector in Claude Code gets 403 on this project's deployments and logs, so these checks need the dashboard (or a re-authorised connector).
+
+**Build:** local `npm run build` passes (23 pages).
+
+**Open observation:** the first request to an uncached page took about 6 seconds (homepage, `/api/feed`, a video page) and about 0.2–0.5 s afterwards. Probably cache misses after invalidation or a cold function on Hobby; not investigated.
+- [ ] Look into the ~6 s cold-cache first load if it turns out to affect real visitors.
+- [ ] Optionally add `"engines": { "node": ">=22" }` to `package.json` so the Node version is pinned in the repo (not done).

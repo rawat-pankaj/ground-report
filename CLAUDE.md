@@ -40,6 +40,6 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - Place backfill for existing videos (Admin → Places; built earlier, not pushed).
 - AI-drafted "Why this matters" notes (on hold; YouTube's own AI summary is not available through the API).
 - Channel pages and real `/category/[slug]` routes (the next SEO step).
-- Verify the Vercel Node version is not 20; apex to `www` redirect may strip query strings (unverified).
+- Checked 2026-10-27: Vercel Node is 24.x and the apex to `www` redirect keeps query strings, so both are resolved. Open: first load of an uncached page takes ~6 s.
 - Beat tags, footer, on-site search, Instagram, bulk admin edit, rate-limit consolidation, `unstable_cache` to `use cache`, nomination email alerts, Hindi About page.
 - Paused duplicate Supabase project "GroundReport" (Tokyo) can be deleted if unused.
