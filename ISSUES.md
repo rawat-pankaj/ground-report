@@ -806,10 +806,10 @@ Investigated the ~6 s first load of uncached pages. Pushed as `b3d3b61`.
 - `app/page.jsx`: `getCategories()` and `getHero()` now run in parallel (`getHero` takes no arguments, so the cache key set stays bounded).
 - `app/StoryCard.jsx`: `loading="lazy"` and `decoding="async"` on grid thumbnails; hero image gets `fetchPriority="high"`.
 
-**Result (live):** `X-Vercel-Id` is now `bom1::bom1`. First request to the homepage 1.5 s (one sample; was about 6 s). Repeat requests still about 0.43 s to first byte, so the warm cost is the dynamic render, not the region. Local build passed (23 pages).
+**Result (live):** `X-Vercel-Id` is now `bom1::bom1`. First request to the homepage 1.5 s (was about 6 s). Follow-up samples the same day: homepage after ~7 idle minutes 0.32 s, `/?category=x` 0.23 s, eight first-time video pages 0.17–0.24 s each (all `bom1::bom1`), so the 1.5 s looks like an outlier; an idle gap of an hour or more was not tested. Repeat requests still about 0.43 s to first byte, so the warm cost is the dynamic render, not the region. Local build passed (23 pages).
 
 **Next steps**
 - [ ] Make the homepage static by moving filtering to real `/category/[slug]` routes (already parked as roadmap Tier 1); it could then be served from the edge in roughly 50 ms. Biggest remaining win.
 - [ ] Self-host the fonts with `next/font/google` and drop `fonts.googleapis.com` from the CSP.
 - [ ] Consider a smaller hero image than `maxresdefault.jpg`.
-- [ ] Take a few more cold-load samples to confirm the 6 s to about 1.5 s improvement; Vercel runtime logs would help (the Claude Code connector gets 403 on this project).
+- [x] Take a few more cold-load samples (done 2026-10-27, see Result above). Optional: re-test after a much longer idle gap; Vercel runtime logs would help (the Claude Code connector gets 403 on this project).
