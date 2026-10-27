@@ -551,7 +551,7 @@ Context: Indian journalists moving to YouTube report that view revenue doesn't c
 - [x] **Per-video pages** (`/video/[id]`) — *shipped 2026-10-11, see the section below.* Original spec: `/video/[id]`: embedded player (`youtube-nocookie.com`, needs CSP `frame-src`), curator's note, category tags, date/place, related stories. Biggest SEO and shareability gain.
 - [ ] **Channel pages** (`/channel/[slug]`): all curated videos from one journalist, YouTube subscribe link, support links.
 - [ ] **Real category routes** (`/category/[slug]`) replacing `?category=`. Indexable, and sidesteps the open apex→www query-string-stripping issue.
-- [ ] **Search** across title, channel and category (Postgres full-text; no YouTube API quota).
+- [x] **Search** across title, channel and category (Postgres full-text; no YouTube API quota). Shipped 2026-10-28, see "On-site Search" below.
 - [x] **"Load more" / paging.** Single page with 100+ videos keeps growing.
 - [ ] **Category label + absolute date on cards**; the parked **footer**.
 - [ ] **Hindi / English toggle** (language data already stored).
@@ -820,3 +820,21 @@ Repo clean-up is done (27 `_old` backups, two unused icons and `/api/videos` rem
 - [ ] Review the paused duplicate Supabase project "GroundReport" (Tokyo) and delete it if unused (also listed under "Still open").
 - [ ] In the Vercel dashboard (Settings → Environment Variables), check for a leftover `DATABASE_URL`; the code reads only `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `YOUTUBE_API_KEY` and `ADMIN_PASSWORD`. The Claude Code connector cannot see this project, so this needs a manual check.
 - [ ] Optional: add a `.gitattributes` (for example `* text=auto`) to silence Git's "LF will be replaced by CRLF" warnings on Windows.
+
+## 🔎 On-site Search — 2026-10-28
+
+Shipped as `c46a410`. Roadmap Tier 1 search item.
+
+**What it is**
+- A search row above the category pills on the homepage (owner picked mockup option B over a masthead box and a masthead icon), and a `/search?q=` results page that reuses `StoryCard`. Plain GET form: no client JavaScript, no CSP change.
+- `lib/search.js`: Postgres full-text search with the `simple` config (no stemming; keeps whole Devanagari words intact, checked against the live database). Each word is a prefix match. Weights: title, then place and category names, then channel, then curator's note. Published videos only, top 24.
+- No database change: the vectors are computed at query time over about 250 rows. Add a stored `tsvector` column and a GIN index if the library grows past roughly 10,000 videos.
+- Not wrapped in `unstable_cache` on purpose (the key would be free text). Input is cleaned instead: 60 characters, 5 words, only letters, combining marks and digits, passed as one bound parameter. Queries are not stored or logged. The results page is `noindex, follow`.
+
+**Checked live:** `सच` 8 stories, `bihar` 3, `bihar police` 2, `2026` 1, nonsense gives a clean "No stories", empty, `' OR 1=1 --`, and a 300-character query all return a normal page. Function runs in `bom1`; results in 0.2–0.9 s on the first calls.
+
+**Known limits and follow-ups**
+- [ ] Romanized Hindi ("bhrashtachar") does not match Devanagari titles; needs transliteration or an alias list.
+- [ ] Spelling variants (chandrabindu vs anusvara, nukta) and typos do not match; `pg_trgm` (available, not installed) could add typo tolerance.
+- [ ] No live suggestions while typing (would need an API route and client code).
+- [ ] If search abuse ever shows up: edge-cache through a route handler with `s-maxage`, or fold it into the parked rate-limit consolidation.
