@@ -860,12 +860,13 @@ Shipped as `96ad784`. Roadmap Tier 1 item "category label + absolute date on car
 
 Goal: give the stories more room at the top of the landing page (about 285 px of header before the first story row).
 
-**Shipped (in two commits, `6fbc3a2` and `400b14a`)**
-- Strapline "Community suggested | Picked by hand | Not by algorithm" moved under the PEOPLELENS wordmark in the blue bar (desktop, 768 px and up, public pages only). On phones the bar has no room for it, so the homepage body keeps its own copy there (`md:hidden`).
-- Search moved into the bar as a rounded light pill (owner liked it in mockup option M1): magnifier icon, placeholder, a "/" hint chip, and a working "/" keyboard shortcut (`MastheadBar.jsx`, a small client effect). Plain GET form to `/search`, so Enter works without JavaScript. At 1024 px and up only; below that (phones and tablets) the bar shows just a search icon that opens `/search`. The old full-width search row on the homepage is gone. "About" stays in the phone bar (checked at 375 and 360 px).
+**Shipped (commits `6fbc3a2`, `400b14a`, `f4598d1`)**
+- Strapline moved under the PEOPLELENS wordmark in the blue bar on public pages. First as "Community suggested | Picked by hand | Not by algorithm" (`6fbc3a2`). After the owner's feedback that it crowded the search pill, shortened to "Picked by hand · Not by algorithm" (`f4598d1`; "Community suggested" dropped). One line from 768 px up; on phones the two phrases stack on two lines (`.masthead-strap` spans). The old phone-only copy in the homepage body is gone.
+- Search moved into the bar as a rounded light pill (owner liked it in mockup option M1): magnifier icon, placeholder, a "/" hint chip, and a working "/" keyboard shortcut (`MastheadBar.jsx`, a small client effect). Plain GET form to `/search`, so Enter works without JavaScript. At 1024 px and up the bar is a three-column grid (`1fr 400px 1fr`) so the pill sits at the true centre; below that (phones and tablets) the bar shows just a search icon that opens `/search`. The old full-width search row on the homepage is gone. "About" stays in the phone bar (checked at 375 and 360 px).
+- Search (pill, "/" shortcut and phone icon) shows on the home page only, `/` and its `?category=` views (`pathname === "/"`). About, Suggest, video pages and `/search` have none; `/search` keeps its own box.
 - An earlier version (search box with a Search button, About hidden on phones) was built and reverted before it was committed.
 
-**Checked live:** search pill, "/" chip and the icon link are in the page markup, the old row is gone, the production stylesheet has the pill styles, and the usual routes behave (admin pages have no search in the bar).
+**Checked live (`f4598d1`):** pill and icon markup on `/` and `/?category=corruption` only, none on `/about`, `/suggest`, `/search` or a video page, the new strapline spans everywhere, the old copy gone, and the usual routes behave (admin pages have no search or strapline in the bar).
 
 **Parked / open (owner reviewing)**
 - [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
