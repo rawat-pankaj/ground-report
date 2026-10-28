@@ -8,7 +8,7 @@
 ## 🐛 Known Issues
 
 - [ ] **Featured card empty space** — `row-span-2` forces the hero card taller than its content when adjacent cards have short headlines. Workaround: accepted as-is for now. Fix: remove `row-span-2` from `FeaturedCard` in `app/page.jsx`.
-- [ ] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one."
+- [x] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one." Done 2026-10-28, see "Admin Hint When Nothing Is Featured" at the end of this file.
 - [x] ~~**Vercel Speed Insights PR**~~ — merged 2026-08-02, real data now flowing. Turned into a multi-round debugging saga — see "Speed Insights Rollout" below.
 - [ ] **Beat filter is case-sensitive** — `app/api/videos/route.js` uses Prisma `beatTags: { contains: beat }`, which maps to case-sensitive SQL `LIKE` on Postgres. Verified live: `/api/videos?beat=paper leak` → 3 results, `/api/videos?beat=Paper Leak` → 0. Masked today because admin normalizes beat tags to lowercase, so internal links always match. Becomes a real bug if beat URLs are ever exposed/typed by users (relevant to the backlog "clickable beat tags" item). Fix: add `mode: "insensitive"` to the `contains` filter.
 
@@ -879,7 +879,8 @@ Goal: give the stories more room at the top of the landing page (about 285 px of
 **Parked / open (owner reviewing)**
 - [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
 - [ ] Modern header directions M1 (light bar), M2 (search-first blue band), M3 (ribbon plus underline tabs) were mocked up on a design canvas (https://claude.ai/artifact/4ReLzXj9QPE9SHfXqM1yM6, private). Only M1's search pill was taken so far; the rest is parked.
-- [ ] The `/search` results page still shows its own large search box under the bar's pill on wide screens (kept so the box is prefilled with the query). Decide whether to remove it.
+- [x] The `/search` results page showed its own large search box under the bar's pill on wide screens. No longer an issue: since the bar's pill and icon appear on the home page only (`f4598d1`), `/search` has just its own box, which is kept (it is prefilled with the query and is the only way to refine a search from the results page).
+- [ ] **Parked (owner, 2026-10-28):** `/search` with no query shows only the box and a hint, so it looks empty (for example when opened from a typed address). Idea: fill that case with the category chips and the latest stories (mockup option S3 from the phone search options). Small; not started.
 
 ## ⬆️ Next.js 16.4.1 Upgrade — 2026-10-28
 
@@ -897,3 +898,12 @@ Parked item from the 2026-10-22 security re-check, done on request.
 
 **Left alone:** `npm audit` reports 4 findings (2 moderate, 2 high) in other packages (for example `source-map-js`); unrelated to this upgrade. `npm audit fix` can move minor versions (it did once before), so any fix should be reviewed first.
 - [ ] Review the `npm audit` findings and fix them deliberately (not with a blind `audit fix`).
+
+## 📌 Admin Hint When Nothing Is Featured — 2026-10-28
+
+Closes the old "No featured video — silent empty state" known issue.
+
+- `app/page.jsx`: when no published video is marked featured, a dashed red note ("ADMIN ONLY · No featured story set. Go to Admin to pin one.") appears above the grid, **only for a signed-in admin** (the `admin_session` cookie equals `ADMIN_PASSWORD`, the same check as `proxy.js`) and **only on the unfiltered homepage** (category and language views never show a hero, so no hint there). Visitors see no change.
+- Reading the cookie does not change caching: the page was already dynamic (it reads `searchParams`) and the data still comes from the `unstable_cache` queries.
+- Tested locally with a temporary switch that forced "no featured": visitor sees no hint, a valid admin cookie sees it, a wrong cookie does not, the category view does not; desktop and phone screenshots looked right. The switch was removed before committing, and with the real data (a featured video exists) neither a visitor nor an admin sees the hint.
+- Not testable live without un-featuring the current video (production data; not touched).

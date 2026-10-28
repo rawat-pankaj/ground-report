@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import CategoryPills from "./CategoryPills";
 import StoryCard, { formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
@@ -120,6 +121,13 @@ export default async function FeedPage({ searchParams }) {
   const hero = noFilters ? heroCandidate : null;
   const { videos, hasMore } = await getFeedPage(language, category, 0, hero?.id || null);
 
+  // Admin-only nudge: with no video marked featured the hero just disappears, which
+  // looks like a bug to the person who curates the page. Same cookie check as
+  // proxy.js; visitors never see this.
+  const session = (await cookies()).get("admin_session")?.value;
+  const isAdmin = Boolean(session && session === process.env.ADMIN_PASSWORD);
+  const showFeaturedHint = isAdmin && noFilters && !hero;
+
   const today = new Date().toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
     weekday: "long",
@@ -151,6 +159,21 @@ export default async function FeedPage({ searchParams }) {
         </div>
       )}
 
+
+      {showFeaturedHint && (
+        <div
+          role="note"
+          className="mb-3 text-sm"
+          style={{ border: "1px dashed var(--signal)", background: "var(--signal-tint)", padding: "10px 14px", color: "var(--ink)" }}
+        >
+          <span className="story-meta" style={{ color: "var(--signal)", marginRight: "8px" }}>Admin only</span>
+          No featured story set.{" "}
+          <Link href="/admin" style={{ textDecoration: "underline" }}>
+            Go to Admin
+          </Link>{" "}
+          to pin one.
+        </div>
+      )}
 
       {videos.length === 0 && !hero && (
         <div className="panel text-center py-12">
