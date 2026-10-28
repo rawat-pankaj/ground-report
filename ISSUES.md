@@ -868,6 +868,11 @@ Goal: give the stories more room at the top of the landing page (about 285 px of
 
 **Checked live (`f4598d1`):** pill and icon markup on `/` and `/?category=corruption` only, none on `/about`, `/suggest`, `/search` or a video page, the new strapline spans everywhere, the old copy gone, and the usual routes behave (admin pages have no search or strapline in the bar).
 
+**Phone follow-ups (owner feedback after reviewing on a phone)**
+- Tapping the phone search icon used to open a bare `/search` page, so the stories vanished. Now (`d6f3cc1`, mockup option S1) it opens a search box that drops down under the bar on the home page and pushes the stories down instead of replacing them. Close with the X, Esc, the icon again, or a page change; Enter goes to `/search?q=`. The icon still links to `/search` without JavaScript or on a modified click. 16 px input text so iOS does not zoom.
+- The strapline was on two lines on phones. Now (`e21e230`, mockup option P3) it is one line (10 px) in its own row under the top row of the bar; the logo, search icon, About and "+ Suggest" stay together in the top row. Phone bar padding trimmed (`py-3 md:py-4`); the bar is about 81 px at 375 px, down from about 90 px. Considered and not chosen: About leaving the phone bar (P1), a menu icon (P2), Suggest as a red plus (P4).
+- Checked live (`e21e230`): the strapline markup (desktop and phone row) is on every public page, and the production stylesheet has the row and drop-down styles. The layout and the drop-down were verified locally at 375 and 360 px, and the owner checked the earlier phone versions on a real phone. Not yet seen on a phone for `e21e230`.
+
 **Parked / open (owner reviewing)**
 - [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
 - [ ] Modern header directions M1 (light bar), M2 (search-first blue band), M3 (ribbon plus underline tabs) were mocked up on a design canvas (https://claude.ai/artifact/4ReLzXj9QPE9SHfXqM1yM6, private). Only M1's search pill was taken so far; the rest is parked.
