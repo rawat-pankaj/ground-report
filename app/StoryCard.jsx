@@ -40,14 +40,12 @@ export default function StoryCard({ video }) {
       className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
-        <div style={{ position: "relative" }} className="shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover" />
-          {video.categoryName && <span className="card-chip">{video.categoryName}</span>}
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover shrink-0" />
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
+          {video.categoryName && <p className="card-eyebrow">{video.categoryName}</p>}
           <p
             className="story-headline text-[14px] leading-snug mb-1"
             style={{

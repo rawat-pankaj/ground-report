@@ -553,7 +553,7 @@ Context: Indian journalists moving to YouTube report that view revenue doesn't c
 - [ ] **Real category routes** (`/category/[slug]`) replacing `?category=`. Indexable, and sidesteps the open apex→www query-string-stripping issue.
 - [x] **Search** across title, channel and category (Postgres full-text; no YouTube API quota). Shipped 2026-10-28, see "On-site Search" below.
 - [x] **"Load more" / paging.** Single page with 100+ videos keeps growing.
-- [ ] **Category label + absolute date on cards**; the parked **footer**.
+- [x] **Category label + absolute date on cards**; the parked **footer**. Shipped 2026-10-28, see "Card Labels, Dates and Footer" below.
 - [ ] **Hindi / English toggle** (language data already stored).
 - [ ] **RSS feed** (`/feed.xml`).
 
@@ -838,3 +838,20 @@ Shipped as `c46a410`. Roadmap Tier 1 search item.
 - [ ] Spelling variants (chandrabindu vs anusvara, nukta) and typos do not match; `pg_trgm` (available, not installed) could add typo tolerance.
 - [ ] No live suggestions while typing (would need an API route and client code).
 - [ ] If search abuse ever shows up: edge-cache through a route handler with `s-maxage`, or fold it into the parked rate-limit consolidation.
+
+## 🏷️ Card Labels, Dates and Footer — 2026-10-28
+
+Shipped as `96ad784`. Roadmap Tier 1 item "category label + absolute date on cards, and the footer".
+
+**Cards (owner first picked mockup option 2, a thumbnail chip, which shipped as `96ad784`, then switched to option 1 the same day: a red category label above the title)**
+- A small red mono category label sits above the title (`.card-eyebrow`); the meta line now shows the channel and an absolute date (`26 Oct 2026`, fixed to India time so server and "Load more" renders agree). Applies to the homepage grid, "Load more" and search results. The featured card is unchanged (it keeps "3 days ago" and its "Featured" badge).
+- Label rule: the video's category with the most videos overall (`lib/feed.js` orders the relation by category video count and takes 1; `lib/search.js` does the same in SQL). No database change. `getFeedPage` returns a flat `categoryName` instead of the relation.
+- Observation: this rule gives "Corruption" on 19 of the first 48 cards and "Protest & Rights" on 15, so the labels are lopsided. Option if it bothers readers: use the video's least common category, at the cost of the label varying more.
+
+**Footer (owner picked F3, centered)**
+- `app/Footer.jsx` in the shared layout: About and Suggest a video links, "Every video belongs to its creator and plays from YouTube. PeopleLens only links to it and adds context.", and "© <year> PeopleLens". The page body is now a full-height flex column, so the footer sits at the bottom on short pages.
+- It also appears on admin pages (shared layout); hide it there if it bothers.
+
+**Checked live (for the chip version, before the switch):** chips and dates on the homepage, "Load more" (`/api/feed?offset=48`: 48 of 48 videos have a label), search results, footer on `/`, `/about`, `/suggest`, `/search` and a video page. `/admin` 307, `/api/admin/stats` 401, bad offset 400. Phone footer not seen in a screenshot.
+- [ ] Decide whether the featured card should get a category label and an absolute date too.
+- [ ] Decide whether the label rule (most-used category) should change.
