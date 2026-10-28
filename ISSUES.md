@@ -635,7 +635,7 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 ### Still open
 
 - [x] **Homepage "load more" / paging (done 2026-10-11, see below)** — the homepage is capped at 100 of 233 videos (see corrected finding above). Highest-value next item.
-- [ ] Next.js 16.2.11 → **16.4.1** (target changed 2026-10-22; was 16.3.8) — parked by owner, not urgent but do within a week or two. A 14 Oct out-of-band release (16.4.1) fixes three further issues that 16.3.8 does not include; none appears to apply to this app (see "Next.js Security Re-check" below). Test with a local build before pushing.
+- [x] Next.js 16.2.11 → **16.4.1** — done 2026-10-28, see "Next.js 16.4.1 Upgrade" at the end of this file. (Target changed 2026-10-22; was 16.3.8.) Original note: parked by owner, not urgent but do within a week or two. A 14 Oct out-of-band release (16.4.1) fixes three further issues that 16.3.8 does not include; none appears to apply to this app (see "Next.js Security Re-check" below). Test with a local build before pushing.
 - [x] Verify Vercel Node version is not 20 (done 2026-10-27: 24.x).
 - [x] Apex→www redirect appears to strip query strings (checked 2026-10-27: query string kept on `/about?x=1`).
 - [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
@@ -880,3 +880,20 @@ Goal: give the stories more room at the top of the landing page (about 285 px of
 - [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
 - [ ] Modern header directions M1 (light bar), M2 (search-first blue band), M3 (ribbon plus underline tabs) were mocked up on a design canvas (https://claude.ai/artifact/4ReLzXj9QPE9SHfXqM1yM6, private). Only M1's search pill was taken so far; the rest is parked.
 - [ ] The `/search` results page still shows its own large search box under the bar's pill on wide screens (kept so the box is prefilled with the query). Decide whether to remove it.
+
+## ⬆️ Next.js 16.4.1 Upgrade — 2026-10-28
+
+Parked item from the 2026-10-22 security re-check, done on request.
+
+**Changes:** `next` pinned exactly to `16.4.1` (`npm install next@16.4.1 --save-exact`); `package-lock.json` updated (Next's own platform packages, two optional `sharp` wasm packages added, a nested `postcss` removed). React stays on 18 (16.4.1 still accepts `^18.2.0`). Nothing in the app code changed.
+
+**Verified locally on 16.4.1 (before pushing):**
+- `npm run build` passes, 24 pages.
+- Smoke test against `next start`: `/`, `?category=` views (a bad category falls back to the full feed), `/about`, `/suggest`, `/search` (English and Hindi queries), a video page (an unknown id is 404), sitemap, robots, OG image, `/admin` 307, `/admin/login`, `/api/admin/stats` 401, `/api/feed` (offset 0 and 48; a bad offset is 400). Security headers (CSP, X-Frame-Options, nosniff) intact.
+- Browser check: desktop home page renders; at phone width the search icon opens and closes the drop-down box (focus lands in the input), no horizontal overflow, no console errors, all images load.
+
+**New warning:** the build now prints "React 18 support is deprecated in Next.js 16 and will be removed in Next.js 17. Please upgrade to React 19." Nothing breaks on 16.x.
+- [ ] Plan a React 19 upgrade before moving to Next.js 17 (check `react`, `react-dom` and anything depending on them; run a local build and the same smoke test).
+
+**Left alone:** `npm audit` reports 4 findings (2 moderate, 2 high) in other packages (for example `source-map-js`); unrelated to this upgrade. `npm audit fix` can move minor versions (it did once before), so any fix should be reviewed first.
+- [ ] Review the `npm audit` findings and fix them deliberately (not with a blind `audit fix`).
