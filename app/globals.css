@@ -554,3 +554,48 @@ body {
     display: none;
   }
 }
+
+/* Phone/tablet search box that drops down under the masthead */
+.masthead-drop {
+  background: #fff;
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 0;
+}
+
+.masthead-drop-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 6px 0 16px;
+  background: #eeece6;
+  border-radius: 999px;
+}
+
+.masthead-drop-field:focus-within {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* 16px stops iOS from zooming the page when the box takes focus */
+.masthead-drop-field .masthead-search-input {
+  font-size: 16px;
+}
+
+.masthead-drop-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.masthead-drop-close:hover {
+  background: #fff;
+  color: var(--ink);
+}
