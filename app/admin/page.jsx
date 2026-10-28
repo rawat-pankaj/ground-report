@@ -103,6 +103,11 @@ export default function AdminDashboard() {
 
   if (!videos) return <p className="story-meta">Loading…</p>;
 
+  // The homepage hero needs a video that is both featured and published. When
+  // there is none the hero silently disappears, so say so here, where it is fixed.
+  const hasHero = videos.some((v) => v.featured && v.status === "published");
+  const hasHiddenFeatured = videos.some((v) => v.featured && v.status !== "published");
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -114,6 +119,19 @@ export default function AdminDashboard() {
           <a href="/admin/add" className="btn btn-primary">+ Channel</a>
         </div>
       </div>
+
+      {videos.length > 0 && !hasHero && (
+        <div
+          role="note"
+          className="mb-4 text-sm"
+          style={{ border: "1px dashed var(--signal)", background: "var(--signal-tint)", padding: "10px 14px", color: "var(--ink)" }}
+        >
+          <strong>No featured story set.</strong>{" "}
+          {hasHiddenFeatured
+            ? "The featured video is hidden, so the homepage has no hero. Publish it, or set another video as featured."
+            : "The homepage has no hero. Use “Set as featured” on a video below to pin one."}
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {videos.map((video) => (
