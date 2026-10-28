@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-// Shared by the server-rendered first batch (app/page.jsx) and the client-side
-// "Load more" batches (app/LoadMore.jsx). Pure and prop-driven so it works in both.
+// Shared by the server-rendered first batch (app/page.jsx), the client-side
+// "Load more" batches (app/LoadMore.jsx) and the search results. Pure and
+// prop-driven so it works in both.
 
 export function timeAgo(date) {
   if (!date) return "";
@@ -16,15 +17,34 @@ export function timeAgo(date) {
   return `${months} month${months > 1 ? "s" : ""} ago`;
 }
 
+// "26 Oct 2026". Fixed to India time so the server render and the client-side
+// "Load more" render always agree on the day.
+const dateFormat = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Asia/Kolkata",
+});
+
+export function formatDate(date) {
+  if (!date) return "";
+  return dateFormat.format(new Date(date));
+}
+
 export default function StoryCard({ video }) {
+  const date = formatDate(video.publishedAt);
+
   return (
     <Link
       href={"/video/" + video.youtubeVideoId}
       className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover shrink-0" />
+        <div style={{ position: "relative" }} className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover" />
+          {video.categoryName && <span className="card-chip">{video.categoryName}</span>}
+        </div>
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
@@ -40,7 +60,7 @@ export default function StoryCard({ video }) {
             {video.title}
           </p>
           <p className="story-meta" style={{ fontSize: "10px" }}>
-            {video.channel.name} · {timeAgo(video.publishedAt)}
+            {video.channel.name}{date ? ` · ${date}` : ""}
           </p>
         </div>
       </div>

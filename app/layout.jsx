@@ -2,6 +2,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import MastheadBar from "./MastheadBar";
+import Footer from "./Footer";
 
 export const metadata = {
   metadataBase: new URL("https://www.peoplelens.in"),
@@ -38,11 +39,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen flex flex-col">
         <header className="masthead">
           <MastheadBar />
         </header>
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">{children}</main>
+        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">{children}</main>
+        <Footer />
         <Analytics />
         <SpeedInsights />
       </body>
