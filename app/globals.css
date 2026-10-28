@@ -463,3 +463,85 @@ body {
     color: rgba(255, 255, 255, 0.82);
   }
 }
+
+/* Search pill in the masthead (lg and up) and its icon link (below lg) */
+.masthead-search {
+  flex: 1;
+  min-width: 0;
+  max-width: 440px;
+  height: 38px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 16px;
+  background: #eeece6;
+  border-radius: 999px;
+}
+
+.masthead-search:focus-within {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.masthead-search-glyph {
+  display: flex;
+  align-items: center;
+  color: var(--ink-soft);
+}
+
+.masthead-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "IBM Plex Sans Devanagari", sans-serif;
+  font-size: 14px;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.masthead-search-input::placeholder {
+  color: var(--ink-soft);
+}
+
+.masthead-search-input:focus-visible {
+  outline: none;
+}
+
+/* Shortcut hint; hidden once the box has focus */
+.masthead-search-kbd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.masthead-search:focus-within .masthead-search-kbd {
+  display: none;
+}
+
+.masthead-nav a.masthead-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-bottom: none;
+  color: #fff;
+}
+
+@media (min-width: 1024px) {
+  .masthead-nav a.masthead-search-icon {
+    display: none;
+  }
+}

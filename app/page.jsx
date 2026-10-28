@@ -2,7 +2,6 @@ import Link from "next/link";
 import CategoryPills from "./CategoryPills";
 import StoryCard, { formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
-import SearchBox from "./SearchBox";
 import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
 
 // Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
@@ -141,10 +140,6 @@ export default async function FeedPage({ searchParams }) {
         <p className="md:hidden" style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Community suggested &nbsp;&nbsp;|&nbsp;&nbsp; Picked by hand &nbsp;&nbsp;|&nbsp;&nbsp; Not by algorithm
         </p>
-      </div>
-
-      <div className="mb-4">
-        <SearchBox />
       </div>
 
       {categories.length > 0 && (
