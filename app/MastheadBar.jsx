@@ -9,22 +9,29 @@ export default function MastheadBar() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
-      <div className="flex items-baseline gap-2">
-        <a href="/" className="masthead-mark">
-          PeopleLens
-        </a>
-        {isAdmin && (
-          <span
-            style={{
-              color: "rgba(255,255,255,0.65)",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "11px",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            / Admin
-          </span>
+      <div>
+        <div className="flex items-baseline gap-2">
+          <a href="/" className="masthead-mark">
+            PeopleLens
+          </a>
+          {isAdmin && (
+            <span
+              style={{
+                color: "rgba(255,255,255,0.65)",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              / Admin
+            </span>
+          )}
+        </div>
+        {!isAdmin && (
+          <p className="masthead-strap">
+            Community suggested &nbsp;|&nbsp; Picked by hand &nbsp;|&nbsp; Not by algorithm
+          </p>
         )}
       </div>
 

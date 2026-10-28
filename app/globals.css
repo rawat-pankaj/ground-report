@@ -445,3 +445,21 @@ body {
   text-transform: uppercase;
   color: var(--signal);
 }
+
+/* Strapline under the wordmark. Desktop only: at phone width it would not fit
+   next to About and Suggest, so the homepage body keeps its own copy there. */
+.masthead-strap {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .masthead-strap {
+    display: block;
+    margin: 2px 0 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+  }
+}
