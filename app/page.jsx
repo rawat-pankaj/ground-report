@@ -1,6 +1,6 @@
 import Link from "next/link";
 import CategoryPills from "./CategoryPills";
-import StoryCard, { timeAgo } from "./StoryCard";
+import StoryCard, { formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
 import SearchBox from "./SearchBox";
 import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
@@ -51,6 +51,11 @@ function FeaturedCard({ video }) {
       </div>
       <div className="p-4 flex-1 flex flex-col gap-3 w-full">
         <div>
+          {video.categoryName && (
+            <p className="card-eyebrow" style={{ fontSize: "11px", marginBottom: "5px" }}>
+              {video.categoryName}
+            </p>
+          )}
           <p
             className="story-headline text-[18px] leading-snug mb-2"
             style={{
@@ -62,7 +67,7 @@ function FeaturedCard({ video }) {
           >
             {video.title}
           </p>
-          <p className="story-meta">{video.channel.name} · {timeAgo(video.publishedAt)}</p>
+          <p className="story-meta">{video.channel.name} · {formatDate(video.publishedAt)}</p>
         </div>
 
         <span style={{

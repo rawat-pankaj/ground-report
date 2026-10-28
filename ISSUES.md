@@ -844,7 +844,7 @@ Shipped as `c46a410`. Roadmap Tier 1 search item.
 Shipped as `96ad784`. Roadmap Tier 1 item "category label + absolute date on cards, and the footer".
 
 **Cards (owner first picked mockup option 2, a thumbnail chip, which shipped as `96ad784`, then switched to option 1 the same day: a red category label above the title)**
-- A small red mono category label sits above the title (`.card-eyebrow`); the meta line now shows the channel and an absolute date (`26 Oct 2026`, fixed to India time so server and "Load more" renders agree). Applies to the homepage grid, "Load more" and search results. The featured card is unchanged (it keeps "3 days ago" and its "Featured" badge).
+- A small red mono category label sits above the title (`.card-eyebrow`); the meta line now shows the channel and an absolute date (`26 Oct 2026`, fixed to India time so server and "Load more" renders agree). Applies to the homepage grid, "Load more" and search results. The featured card was left unchanged at first (it kept "3 days ago"); it was brought in line afterwards, see the last list below.
 - Label rule: the video's category with the most videos overall (`lib/feed.js` orders the relation by category video count and takes 1; `lib/search.js` does the same in SQL). No database change. `getFeedPage` returns a flat `categoryName` instead of the relation.
 - Observation: this rule gives "Corruption" on 19 of the first 48 cards and "Protest & Rights" on 15, so the labels are lopsided. Option if it bothers readers: use the video's least common category, at the cost of the label varying more.
 
@@ -853,5 +853,5 @@ Shipped as `96ad784`. Roadmap Tier 1 item "category label + absolute date on car
 - It also appears on admin pages (shared layout); hide it there if it bothers.
 
 **Checked live (for the chip version, before the switch):** chips and dates on the homepage, "Load more" (`/api/feed?offset=48`: 48 of 48 videos have a label), search results, footer on `/`, `/about`, `/suggest`, `/search` and a video page. `/admin` 307, `/api/admin/stats` 401, bad offset 400. Phone footer not seen in a screenshot.
-- [ ] Decide whether the featured card should get a category label and an absolute date too.
+- [x] Featured card now gets the category label above the title and the absolute date too (owner picked mockup H1, 2026-10-28). `getHero` in `lib/feed.js` fetches the same most-used category and returns a flat `categoryName`; `FeaturedCard` in `app/page.jsx` shows it with `formatDate`. Note: the featured video's label comes from the same rule as the grid, so it can look off for a hand-picked story (the current one reads "Protest & Rights" for an E20 fuel story).
 - [ ] Decide whether the label rule (most-used category) should change.
