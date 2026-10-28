@@ -73,7 +73,8 @@ export default function MastheadBar() {
     <>
       <div
         className={
-          "max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3" +
+          // Shorter on phones, where the strapline gets its own row below.
+          "max-w-6xl mx-auto px-4 sm:px-6 py-3 md:py-4 flex items-center justify-between gap-3" +
           // With the search pill: three columns so the pill sits at the true centre.
           (showSearch ? " lg:grid lg:grid-cols-[1fr_400px_1fr] lg:gap-6" : "")
         }
@@ -98,11 +99,7 @@ export default function MastheadBar() {
             )}
           </div>
           {!isAdmin && (
-            <p className="masthead-strap">
-              <span>Picked by hand</span>
-              <span className="strap-dot">&nbsp;·&nbsp;</span>
-              <span>Not by algorithm</span>
-            </p>
+            <p className="masthead-strap hidden md:block">Picked by hand &nbsp;·&nbsp; Not by algorithm</p>
           )}
         </div>
 
@@ -175,6 +172,12 @@ export default function MastheadBar() {
           </nav>
         )}
       </div>
+
+      {!isAdmin && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:hidden">
+          <p className="masthead-strap masthead-strap-row">Picked by hand &nbsp;·&nbsp; Not by algorithm</p>
+        </div>
+      )}
 
       {showSearch && dropOpen && (
         // Phone/tablet search box: sits under the blue bar and pushes the page

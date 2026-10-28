@@ -446,9 +446,8 @@ body {
   color: var(--signal);
 }
 
-/* Strapline under the wordmark. One line from 768px up; on phones the two
-   phrases stack on two short lines so the bar still fits the icon, About and
-   Suggest beside the wordmark. */
+/* Strapline: always one line. From 768px up it sits under the wordmark; on
+   phones it gets its own row under the bar (see MastheadBar). */
 .masthead-strap {
   margin: 2px 0 0;
   font-family: "IBM Plex Mono", monospace;
@@ -456,22 +455,13 @@ body {
   line-height: 13px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: rgba(255, 255, 255, 0.82);
 }
 
-.masthead-strap span {
-  display: block;
-}
-
-.masthead-strap .strap-dot {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .masthead-strap span,
-  .masthead-strap .strap-dot {
-    display: inline;
-  }
+.masthead-strap-row {
+  margin: 0;
+  padding-bottom: 8px;
 }
 
 /* Search pill in the masthead (lg and up) and its icon link (below lg) */
