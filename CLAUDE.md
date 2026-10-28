@@ -3,7 +3,7 @@
 Hand-curated portal of independent Indian YouTube journalism. Nothing appears on the public site unless the owner (Pankaj, sole developer/admin/curator) chose it. Live at https://www.peoplelens.in (canonical host is `www`). Formerly called "Ground Report"; the repo and DB keep that name.
 
 ## Stack and coordinates
-- Next.js **16.2.11, exact pin** (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
+- Next.js **16.4.1, exact pin** (the build warns that React 18 support is deprecated and goes away in Next 17) (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
 - Repo: github.com/rawat-pankaj/ground-report. Local path: `D:\Projects\ground-report` (Windows, PowerShell).
 - Env vars (never commit `.env`, never print its values): `POSTGRES_PRISMA_URL` (pooled connection, used by `prisma/schema.prisma` as `url`), `POSTGRES_URL_NON_POOLING` (direct connection, used as `directUrl`), `YOUTUBE_API_KEY`, `ADMIN_PASSWORD`. These are the names the code actually reads (they match Vercel's Supabase integration). `.env.example` and the README list the same four names.
 - Commands: `npm run dev`, `npm run build` (runs `prisma generate` first). There are no tests; verify with a local build and by checking the running site.
@@ -36,10 +36,10 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - All `*_old*` backup files were removed on 2026-10-27 (27 files, nothing referenced them). Git history keeps them. Do not create new `_old` copies; use git for history.
 
 ## Parked items (see `ISSUES.md` for detail)
-- Upgrade Next.js to **16.4.1** (a 14 Oct 2026 security release; none of the three fixes appears to apply to this app, so it is not urgent). Pin it exactly, run a local build, then push.
+- Plan a React 19 upgrade before Next 17, and review the `npm audit` findings deliberately (not with a blind `audit fix`).
 - Place backfill for existing videos (Admin → Places; built earlier, not pushed).
 - AI-drafted "Why this matters" notes (on hold; YouTube's own AI summary is not available through the API).
 - Channel pages and real `/category/[slug]` routes (the next SEO step).
-- Checked 2026-10-27: Vercel Node is 24.x and the apex to `www` redirect keeps query strings, so both are resolved. Open: first load of an uncached page takes ~6 s.
-- Beat tags, footer, on-site search, Instagram, bulk admin edit, rate-limit consolidation, `unstable_cache` to `use cache`, nomination email alerts, Hindi About page.
+- Done 2026-10-27/28 and no longer parked: Vercel Node 24.x, the apex redirect, the cold-load speed fix (functions pinned to `bom1`), on-site search (home-page pill plus `/search`), footer, card labels and dates, the Next.js 16.4.1 upgrade, and the admin "no featured story" hints.
+- Beat tags, Instagram, bulk admin edit and admin sort/filter, rate-limit consolidation, `unstable_cache` to `use cache`, nomination email alerts, Hindi About page, RSS feed, self-hosted fonts, the date/headline line options, the modern header directions, the empty `/search` page.
 - Paused duplicate Supabase project "GroundReport" (Tokyo) can be deleted if unused.

@@ -10,7 +10,7 @@
 - [ ] **Featured card empty space** — `row-span-2` forces the hero card taller than its content when adjacent cards have short headlines. Workaround: accepted as-is for now. Fix: remove `row-span-2` from `FeaturedCard` in `app/page.jsx`.
 - [x] **No featured video — silent empty state** — If no video is marked "featured" in admin, the hero section disappears with no message. Should show an admin-only hint like "No featured story set — go to Admin to pin one." Done 2026-10-28, see "Admin Hint When Nothing Is Featured" at the end of this file.
 - [x] ~~**Vercel Speed Insights PR**~~ — merged 2026-08-02, real data now flowing. Turned into a multi-round debugging saga — see "Speed Insights Rollout" below.
-- [ ] **Beat filter is case-sensitive** — `app/api/videos/route.js` uses Prisma `beatTags: { contains: beat }`, which maps to case-sensitive SQL `LIKE` on Postgres. Verified live: `/api/videos?beat=paper leak` → 3 results, `/api/videos?beat=Paper Leak` → 0. Masked today because admin normalizes beat tags to lowercase, so internal links always match. Becomes a real bug if beat URLs are ever exposed/typed by users (relevant to the backlog "clickable beat tags" item). Fix: add `mode: "insensitive"` to the `contains` filter.
+- [x] **Beat filter is case-sensitive** — OBSOLETE (2026-10-28): the `/api/videos` route was removed on 2026-10-27 and beat is no longer a public filter. Original note: `app/api/videos/route.js` uses Prisma `beatTags: { contains: beat }`, which maps to case-sensitive SQL `LIKE` on Postgres. Verified live: `/api/videos?beat=paper leak` → 3 results, `/api/videos?beat=Paper Leak` → 0. Masked today because admin normalizes beat tags to lowercase, so internal links always match. Becomes a real bug if beat URLs are ever exposed/typed by users (relevant to the backlog "clickable beat tags" item). Fix: add `mode: "insensitive"` to the `contains` filter.
 
 
 ---
@@ -27,13 +27,13 @@
 ## 💡 Ideas / Backlog
 
 - [ ] **Filter by channel** — Allow users to see all videos from a specific channel by clicking the channel name on a card.
-- [ ] **Search** — Basic keyword search across video titles.
+- [x] **Search** — Basic keyword search across video titles. Done 2026-10-28, see "On-site Search" at the end of this file.
 - [ ] **"More like this" beat links** — On the featured card, clicking a beat tag could filter the grid to that beat.
 - [ ] **Admin: bulk language/tag edit** — Currently tags are edited one video at a time. A bulk-select-and-tag flow would speed up curation.
 - [ ] **Admin: sort/filter dashboard** — Admin video list grows long. Filtering by language, beat, or status would help.
 - [ ] **Nomination email alert** — When a new suggestion comes in via the public form, send a notification email to the admin.
 - [ ] **About section on home page - Translate to Hindi
-- [ ] **Page footer
+- [x] **Page footer** — done 2026-10-28 (see "Card Labels, Dates and Footer").
 
 ---
 
@@ -85,7 +85,7 @@
 - [x] **`/api/videos?beat=paper leak`** — 200, 3 results, all match. URL-encoded space handled.
 - [x] **Filtered page `/?language=en`** — 200, "English" tag active, 8 cards, featured hero correctly suppressed under filter, dateline renders. Confirms Option-1 date change works on filtered views.
 - [x] **404 handling** — bad route (`/nonexistent-xyz`) returns proper 404 with masthead intact, no crash.
-- [ ] **FINDING: beat filter case-sensitive** — logged under Known Issues above.
+- [x] **FINDING: beat filter case-sensitive** — obsolete, see Known Issues above.
 
 ---
 
@@ -312,7 +312,7 @@ Columns were dropped **only after** the code deploy, never before. The live Pris
 
 ### Still outstanding
 
-- [ ] **~40 `*_old*.jsx` / `*_old*.js` backup files** still in the repo. Next.js ignores them entirely (they don't match its routing filenames) so they can't affect the running site, but they make it materially harder to tell what's current — which matters now that dead-code audits are a recurring activity. Deliberately held back as a separate commit: largest diff, least consequence.
+- [x] **~40 `*_old*.jsx` / `*_old*.js` backup files** — removed 2026-10-27 (27 tracked files, nothing referenced them). Original note: still in the repo. Next.js ignores them entirely (they don't match its routing filenames) so they can't affect the running site, but they make it materially harder to tell what's current — which matters now that dead-code audits are a recurring activity. Deliberately held back as a separate commit: largest diff, least consequence.
 
 ---
 
@@ -346,7 +346,7 @@ Every item above confirmed live via direct fetch/diff against what was written, 
 
 ### Parked — deliberate, not forgotten
 
-- [ ] **Individual video pages (`/video/[id]`) and real category routes (`/category/[slug]`).** The actual structural fix for the sitemap's query-string limitation, and a prerequisite for `VideoObject` structured data / rich results. Genuine multi-file feature: new routes with `generateMetadata()`, a content decision (embed-only is "thin content" per Google's own guidance — likely needs at least a short curator note per video), sitemap rework, and a change to how homepage cards link out (currently straight to YouTube). Deliberately not backed into as a side effect of this pass.
+- [ ] **Real category routes (`/category/[slug]`).** (Individual video pages shipped 2026-10-11; category routes are still open.) The actual structural fix for the sitemap's query-string limitation, and a prerequisite for `VideoObject` structured data / rich results. Genuine multi-file feature: new routes with `generateMetadata()`, a content decision (embed-only is "thin content" per Google's own guidance — likely needs at least a short curator note per video), sitemap rework, and a change to how homepage cards link out (currently straight to YouTube). Deliberately not backed into as a side effect of this pass.
 - [ ] **Beat tags → structured, searchable entities.** The feature idea that started this whole audit. Current `beatTags` is a single free-text `String?` column, admin-only, unused everywhere else in the app — confirmed by full code trace. Real decision needed: own table (mirroring `Category`), fold into `Category` itself, or a native Postgres array. Deliberately kept (not deleted) specifically because this discussion named a plausible future use for it — unlike `region`/`viewCount`, which had none.
 
 ---
@@ -477,7 +477,7 @@ Both files confirmed deployed byte-for-byte via diff. Live homepage fetch confir
 ### Not fixed here — deliberately out of scope for a code change
 
 - [ ] **Backlinks** — still the largest actual lever, and entirely non-technical. PARI and the channels already featured on the site are the most natural starting points.
-- [ ] **Individual video pages / real category routes** — unchanged from prior assessment; still the structural ceiling on ranking depth.
+- [ ] **Real category routes** (video pages shipped 2026-10-11) — unchanged from prior assessment; still the structural ceiling on ranking depth.
 
 ---
 
@@ -508,7 +508,7 @@ A dependency/runtime check against what is current as of October 2026. Conclusio
 ### Node.js on Vercel
 
 - Vercel **disabled Node 20 on 2026-10-01**. Existing deployments keep running; **new deployments fail** if the project is still on 20.
-- [ ] Verify Project Settings → Node.js Version is 22.x or 24.x (or set `engines` in `package.json`).
+- [x] Verify Project Settings → Node.js Version is 22.x or 24.x (done 2026-10-27: 24.x). Setting `engines` in `package.json` is still optional and open.
 
 ### Deferred, with reasons
 
@@ -519,7 +519,7 @@ A dependency/runtime check against what is current as of October 2026. Conclusio
 ### Action list
 
 - [x] Verify Vercel Node version is not 20 (done 2026-10-27: 24.x)
-- [ ] Bump `next` to exactly `16.3.8` (`npm install next@16.3.8 --save-exact`), push, validate on the Vercel preview, then on live
+- [x] ~~Bump `next` to exactly `16.3.8`~~ — superseded: upgraded to 16.4.1 on 2026-10-28 (see "Next.js 16.4.1 Upgrade" at the end of this file).
 - [ ] Re-check for the next Next.js security release (two issues still pending upstream)
 
 Sources: nextjs.org/blog (upcoming-nextjs-security-release-september-2026; nextjs-security-update-september-22-2026), Netlify changelog 2026-09-30, Vercel changelog "Node.js 20 is being deprecated".
@@ -616,7 +616,7 @@ Roadmap Tier 1 item #1. The biggest structural gap from the competitive review: 
 
 Earlier in this review I assumed ~130 of the 233 videos were hidden because the homepage shows ~100. **Wrong** — all 233 are `published`. The homepage query is capped at `take: 100`, so the 133 oldest videos are reachable only through the sitemap, search engines, and related-story links.
 
-- [ ] **"Load more" / paging on the homepage** (roadmap Tier 1 #5) — now more pressing, since the cap silently drops older stories from the main feed.
+- [x] **"Load more" / paging on the homepage** (roadmap Tier 1 #5, done 2026-10-11) — now more pressing, since the cap silently drops older stories from the main feed.
 
 ### Dead-video checker — shipped and run
 
@@ -712,7 +712,7 @@ A second look at how the site gets found, after video pages shipped. Checked liv
 - [ ] **Larger social preview image** for video pages — currently YouTube's 480×360 `hqdefault`; use `maxresdefault` where available or a branded 1200×630 card with the headline.
 - [ ] **About page does not name who runs the site.** Add a person or organisation line — a trust signal for a news-adjacent site.
 - [ ] **Hindi site chrome and Hindi About page** (already parked) — currently only titles are Hindi.
-- [ ] **Parked, relevant to discovery:** on-site search, footer, category label and absolute date on cards.
+- [x] **Parked, relevant to discovery:** on-site search, footer, category label and absolute date on cards. All done 2026-10-28.
 
 ### Context carried over
 
@@ -767,8 +767,8 @@ Development now continues in Claude Code (desktop app, Code tab, Local environme
 
 **Follow-ups**
 - [x] Fix `.env.example` and README variable names (done 2026-10-27).
-- [ ] Remove or ignore the old backup files in the repo root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) if they are committed.
-- [ ] Push `CLAUDE.md` (corrected variable names) to `main` if not already done.
+- [x] (done 2026-10-27, all `_old` files removed) Remove or ignore the old backup files in the repo root (`ISSUES_old2.md`, `ISSUES_old3.md`, `next.config.mjs_old`, `package_old.json`) if they are committed.
+- [x] Push `CLAUDE.md` (corrected variable names) to `main` (done).
 - [ ] Keep the database password in a password manager.
 
 ## 🩺 Portal Health Check — 2026-10-27
