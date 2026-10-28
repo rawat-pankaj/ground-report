@@ -141,9 +141,8 @@ export default async function FeedPage({ searchParams }) {
 
       {categories.length > 0 && (
         <div className="mb-2">
-          <h2 style={{ fontSize: "10px", color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", fontWeight: 400 }}>
-            Category
-          </h2>
+          {/* Visually hidden: the chips explain themselves, but screen readers keep the heading. */}
+          <h2 className="sr-only">Category</h2>
           <CategoryPills
             categories={categories}
             language={language}
