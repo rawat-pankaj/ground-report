@@ -28,6 +28,9 @@ export default function MastheadBar() {
   const isAdmin = pathname?.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
   const searchRef = useRef(null);
+  // Search lives in the bar on the home page only (including its ?category= views,
+  // since pathname ignores the query). Other pages, e.g. /search, have their own box.
+  const showSearch = !isAdmin && pathname === "/";
 
   // "/" focuses the search box, the same shortcut the hint chip shows. Ignored
   // while typing in a field, with a modifier held, or when the box is hidden
@@ -47,7 +50,13 @@ export default function MastheadBar() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+    <div
+      className={
+        "max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3" +
+        // With the search pill: three columns so the pill sits at the true centre.
+        (showSearch ? " lg:grid lg:grid-cols-[1fr_400px_1fr] lg:gap-6" : "")
+      }
+    >
       <div className="shrink-0">
         <div className="flex items-baseline gap-2">
           <a href="/" className="masthead-mark">
@@ -69,12 +78,14 @@ export default function MastheadBar() {
         </div>
         {!isAdmin && (
           <p className="masthead-strap">
-            Community suggested &nbsp;|&nbsp; Picked by hand &nbsp;|&nbsp; Not by algorithm
+            <span>Picked by hand</span>
+            <span className="strap-dot">&nbsp;·&nbsp;</span>
+            <span>Not by algorithm</span>
           </p>
         )}
       </div>
 
-      {!isAdmin && (
+      {showSearch && (
         // Plain GET form to /search, so it works without JavaScript (Enter submits).
         // Wide screens get the pill; below lg the nav shows a search icon that
         // opens /search instead.
@@ -123,10 +134,12 @@ export default function MastheadBar() {
           </a>
         )
       ) : (
-        <nav className="masthead-nav flex items-center gap-5 shrink-0">
-          <a href="/search" className="masthead-search-icon">
-            <SearchIcon size={22} label="Search" />
-          </a>
+        <nav className="masthead-nav flex items-center gap-5 shrink-0 lg:justify-self-end">
+          {showSearch && (
+            <a href="/search" className="masthead-search-icon">
+              <SearchIcon size={22} label="Search" />
+            </a>
+          )}
           <a href="/about">About</a>
           <a href="/suggest" className="masthead-cta">
             <span className="cta-full">+ Suggest a video</span>

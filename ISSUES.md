@@ -855,3 +855,19 @@ Shipped as `96ad784`. Roadmap Tier 1 item "category label + absolute date on car
 **Checked live (for the chip version, before the switch):** chips and dates on the homepage, "Load more" (`/api/feed?offset=48`: 48 of 48 videos have a label), search results, footer on `/`, `/about`, `/suggest`, `/search` and a video page. `/admin` 307, `/api/admin/stats` 401, bad offset 400. Tested on a real phone by the owner on 2026-10-28 (footer, card labels and dates, featured card, search): all looked good.
 - [x] Featured card now gets the category label above the title and the absolute date too (owner picked mockup H1, 2026-10-28). `getHero` in `lib/feed.js` fetches the same most-used category and returns a flat `categoryName`; `FeaturedCard` in `app/page.jsx` shows it with `formatDate`. Note: the featured video's label comes from the same rule as the grid, so it can look off for a hand-picked story (the current one reads "Protest & Rights" for an E20 fuel story).
 - [ ] Decide whether the label rule (most-used category) should change.
+
+## 🧭 Header: Strapline and Search Pill — 2026-10-28
+
+Goal: give the stories more room at the top of the landing page (about 285 px of header before the first story row).
+
+**Shipped (in two commits, `6fbc3a2` and `400b14a`)**
+- Strapline "Community suggested | Picked by hand | Not by algorithm" moved under the PEOPLELENS wordmark in the blue bar (desktop, 768 px and up, public pages only). On phones the bar has no room for it, so the homepage body keeps its own copy there (`md:hidden`).
+- Search moved into the bar as a rounded light pill (owner liked it in mockup option M1): magnifier icon, placeholder, a "/" hint chip, and a working "/" keyboard shortcut (`MastheadBar.jsx`, a small client effect). Plain GET form to `/search`, so Enter works without JavaScript. At 1024 px and up only; below that (phones and tablets) the bar shows just a search icon that opens `/search`. The old full-width search row on the homepage is gone. "About" stays in the phone bar (checked at 375 and 360 px).
+- An earlier version (search box with a Search button, About hidden on phones) was built and reverted before it was committed.
+
+**Checked live:** search pill, "/" chip and the icon link are in the page markup, the old row is gone, the production stylesheet has the pill styles, and the usual routes behave (admin pages have no search in the bar).
+
+**Parked / open (owner reviewing)**
+- [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
+- [ ] Modern header directions M1 (light bar), M2 (search-first blue band), M3 (ribbon plus underline tabs) were mocked up on a design canvas (https://claude.ai/artifact/4ReLzXj9QPE9SHfXqM1yM6, private). Only M1's search pill was taken so far; the rest is parked.
+- [ ] The `/search` results page still shows its own large search box under the bar's pill on wide screens (kept so the box is prefilled with the query). Decide whether to remove it.
