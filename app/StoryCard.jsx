@@ -31,6 +31,26 @@ export function formatDate(date) {
   return dateFormat.format(new Date(date));
 }
 
+const LANGUAGE_NAMES = { hi: "Hindi", en: "English" };
+
+// Category label with a small language tag at the right ("HI" or "EN"). Shared by
+// the grid cards and the featured card so they stay identical.
+export function CardLabel({ category, language }) {
+  if (!category && !language) return null;
+  const code = language ? String(language).toLowerCase() : "";
+  return (
+    <div className="card-label-row">
+      <p className="card-eyebrow" title={category || undefined}>{category}</p>
+      {code && (
+        <span className="card-lang" title={LANGUAGE_NAMES[code] || code.toUpperCase()}>
+          <span aria-hidden="true">{code.toUpperCase()}</span>
+          <span className="sr-only">Language: {LANGUAGE_NAMES[code] || code.toUpperCase()}</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function StoryCard({ video }) {
   const date = formatDate(video.publishedAt);
 
@@ -45,7 +65,7 @@ export default function StoryCard({ video }) {
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
-          {video.categoryName && <p className="card-eyebrow">{video.categoryName}</p>}
+          <CardLabel category={video.categoryName} language={video.language} />
           <p
             className="story-headline text-[14px] leading-snug mb-1"
             style={{
@@ -57,7 +77,7 @@ export default function StoryCard({ video }) {
           >
             {video.title}
           </p>
-          <p className="story-meta" style={{ fontSize: "10px" }}>
+          <p className="story-meta">
             {video.channel.name}{date ? ` · ${date}` : ""}
           </p>
         </div>

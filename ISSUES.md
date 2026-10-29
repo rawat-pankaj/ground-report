@@ -911,3 +911,34 @@ Closes the old "No featured video — silent empty state" known issue.
 **Follow-up (2026-10-28, same day)**
 - Owner confirmed the homepage hint live on `www.peoplelens.in`. Gotcha learned while testing: the admin login cookie is **per hostname**. Logging in at `ground-report-sable.vercel.app` does not log you in at `www.peoplelens.in`, so the hint (and every admin page) only works on the host where you signed in. If the hint seems missing, open `/admin` on that same host; if it redirects to the login page, sign in there.
 - The same hint was added to the Admin page (`app/admin/page.jsx`, a client component): a dashed red note above the video list when no video is both featured and published, with a second wording when the featured video exists but is hidden ("Publish it, or set another video as featured"). A hidden featured video also leaves the homepage without a hero, which the first version of the check did not distinguish. Previewed by mockup; the Admin page is behind the login cookie, so it was verified by build only, not by browsing it locally.
+
+## ♿ Design Critique: Suggest Form and Accessibility Fixes — 2026-10-29
+
+From a design critique of the live site (home on desktop and phone, a video page, the Suggest form). Priorities 1 and 2 were done; the rest is listed below.
+
+**Done**
+- Suggest form (`app/suggest/page.jsx`): each visible label is now linked to its field (`htmlFor`/`id`), so screen readers get a name instead of only the placeholder; the "A channel / A specific video" buttons carry `aria-pressed`; the contact field gets `inputMode="email"` and `autoComplete="email"` (email keyboard on phones) but stays `type="text"` on purpose, since it has always accepted any contact (a phone number, a handle) and `type="email"` would reject those.
+- Phones: `.input` is 16 px below 768 px (14 px made iPhones zoom the page when a field took focus). Desktop stays 14 px. Admin forms share `.input`, so they get 16 px on phones too.
+- Header contrast: the strapline and the About link were partly transparent white (about 4.2:1 on the blue bar at 10 px, under 4.5:1); both are now full white.
+- Keyboard focus: the site's red focus ring was almost invisible on the blue bar (about 1.2:1); inside `.masthead` the ring is now white.
+- New "Skip to content" link (first Tab stop, visible only when focused) to `<main id="main">`.
+- Phone tap targets: About (20 px tall), "+ Suggest" (28 px) and the search icon (36 px) now have invisible extended tap areas of at least 44 px (an `::after` box; the 12 px gap between them keeps the areas from overlapping). The header looks the same and is still 81 px tall.
+
+**Verified locally:** build passes; on a phone-width view the fields are 16 px, labelled and the email keyboard hint is set; Tab shows the skip link first, then white rings on the search box and the Suggest button; tap areas measured 46×44 (About), 98×52 (Suggest), 46×60 (search icon); no horizontal overflow.
+
+**Still open from the critique**
+- [ ] Channel pages and category routes: the video page's "Channel →" leaves for YouTube while the card beside it says "N stories on PeopleLens".
+- [ ] Video pages are thin without a "why this matters" note; strip trailing hashtags from displayed titles (keep the original in the data); use absolute dates in "Related stories" like the grid (it shows "Today", "1 day ago").
+- [x] Raise the 10–11 px mono text: done 2026-10-29 for the card category label and the channel/date line (now 11 px; the strapline stays 10 px). See "Card Text Size and Language Tag" below.
+- [x] Language cue on cards: done 2026-10-29 (owner picked mockup B: a small outlined "HI"/"EN" tag at the right of the category row).
+- [ ] The parked Hindi site chrome (the interface text is still English only).
+
+## 🏷️ Card Text Size and Language Tag — 2026-10-29
+
+From the design critique, owner picked mockup B.
+
+- Category label and the channel/date line on cards are now 11 px (were 10 px). The strapline stays 10 px.
+- A small outlined language tag ("HI" or "EN", from the stored `language` field, which is `hi` for 206 videos, `en` for 47 and empty for 1) sits at the right of the category row on grid cards, search results and the featured card. A video with no language shows no tag. The tag has a hidden "Language: Hindi/English" label for screen readers and a hover title.
+- Code: `CardLabel` (exported from `app/StoryCard.jsx`) is shared by the grid and the featured card; `language` is now selected in `getFeedPage` (`lib/feed.js`) and in the search SQL (`lib/search.js`); `getHero` already returned the whole row. Styles: `.card-label-row`, `.card-eyebrow`, `.card-lang` in `app/globals.css`.
+- Phones: the two-column cards have only about 150 px for text, so below 768 px the label row uses tighter letter-spacing and gap; with that, none of the 7 category labels in the first 48 cards is truncated (a longer category name still would be, with the full name in the hover title).
+- Checked locally on desktop and at 375 px (no overflow, 11 px label and date, the tag on every card). The featured card was not visible locally because no video is featured right now; it uses the same `CardLabel`.

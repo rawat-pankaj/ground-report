@@ -81,6 +81,7 @@ export default function SuggestPage() {
         <button
           type="button"
           onClick={() => setType("channel")}
+          aria-pressed={type === "channel"}
           className={`tag ${type === "channel" ? "tag-active" : ""}`}
         >
           A channel
@@ -88,6 +89,7 @@ export default function SuggestPage() {
         <button
           type="button"
           onClick={() => setType("video")}
+          aria-pressed={type === "video"}
           className={`tag ${type === "video" ? "tag-active" : ""}`}
         >
           A specific video
@@ -96,8 +98,9 @@ export default function SuggestPage() {
 
       <form onSubmit={handleSubmit} className="panel flex flex-col gap-4">
         <div>
-          <label className="field-label">{type === "channel" ? "Channel link or name" : "Video link"}</label>
+          <label className="field-label" htmlFor="suggest-input">{type === "channel" ? "Channel link or name" : "Video link"}</label>
           <input
+            id="suggest-input"
             className="input"
             required
             placeholder={
@@ -108,8 +111,9 @@ export default function SuggestPage() {
           />
         </div>
         <div>
-          <label className="field-label">Why you're suggesting {type === "channel" ? "them" : "it"}</label>
+          <label className="field-label" htmlFor="suggest-reason">Why you're suggesting {type === "channel" ? "them" : "it"}</label>
           <textarea
+            id="suggest-reason"
             className="input"
             rows={3}
             placeholder={type === "channel" ? "What kind of stories do they cover?" : "What does this report cover?"}
@@ -118,9 +122,15 @@ export default function SuggestPage() {
           />
         </div>
         <div>
-          <label className="field-label">Your contact (optional)</label>
+          <label className="field-label" htmlFor="suggest-contact">Your contact (optional)</label>
           <input
+            id="suggest-contact"
             className="input"
+            // Email keyboard on phones, but no email validation: the field has
+            // always accepted any contact (a phone number, a handle).
+            type="text"
+            inputMode="email"
+            autoComplete="email"
             placeholder="Email, in case we have questions"
             value={submitterContact}
             onChange={(e) => setSubmitterContact(e.target.value)}

@@ -59,7 +59,7 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.85);
+  color: #fff;
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
 }
@@ -434,16 +434,39 @@ body {
 }
 
 /* Category label above the card title */
-.card-eyebrow {
+.card-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 0 0 4px;
+}
+
+.card-eyebrow {
+  margin: 0;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--signal);
+}
+
+/* Small outlined language tag at the right of the label row ("HI" / "EN") */
+.card-lang {
+  flex: none;
+  margin-left: auto;
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 /* Strapline: always one line. From 768px up it sits under the wordmark; on
@@ -456,7 +479,7 @@ body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.82);
+  color: #fff;
 }
 
 .masthead-strap-row {
@@ -588,4 +611,69 @@ body {
 .masthead-drop-close:hover {
   background: #fff;
   color: var(--ink);
+}
+
+/* Accessibility: keyboard focus, skip link, tap targets */
+
+/* The red focus ring (--signal) is almost invisible on the blue masthead, so use white there. */
+.masthead :focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  padding: 10px 14px;
+  background: #fff;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 2px solid var(--ink);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+/* 16px stops iOS from zooming the page when a field takes focus. */
+@media (max-width: 767px) {
+  .input {
+    font-size: 16px;
+  }
+
+  /* About, Suggest and the search icon are smaller than 44px. Extend the tap
+     area invisibly (the gap between them is 12px, so the areas do not overlap). */
+  .masthead-nav a {
+    position: relative;
+  }
+
+  .masthead-nav a::after {
+    content: "";
+    position: absolute;
+    top: -12px;
+    bottom: -12px;
+    left: -5px;
+    right: -5px;
+  }
+}
+
+/* Two-column phone cards are about 150px of text wide: tighten the label row so
+   "Protest & Rights" fits next to the language tag. */
+@media (max-width: 767px) {
+  .card-label-row {
+    gap: 6px;
+  }
+
+  .card-eyebrow {
+    letter-spacing: 0.02em;
+  }
+
+  .card-lang {
+    padding: 0 4px;
+  }
 }

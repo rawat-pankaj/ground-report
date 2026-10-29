@@ -40,10 +40,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <header className="masthead">
           <MastheadBar />
         </header>
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">{children}</main>
+        <main id="main" className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">{children}</main>
         <Footer />
         <Analytics />
         <SpeedInsights />
