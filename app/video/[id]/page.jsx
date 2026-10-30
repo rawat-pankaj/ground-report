@@ -23,6 +23,28 @@ const VIDEO_ID_RE = /^[\w-]{11}$/;
 const NOT_FOUND = "VIDEO_NOT_FOUND";
 const RELATED_COUNT = 4;
 
+// Not every video has a full-size (maxresdefault, 1280x720) thumbnail on YouTube:
+// older or low-resolution uploads answer 404. A share image needs to exist, so
+// check once and remember the answer in the cached page data. Any failure (a
+// timeout, an outage) counts as "no", which just means the smaller image is used.
+async function hasMaxresThumbnail(youtubeVideoId) {
+  try {
+    const res = await fetch(`https://i.ytimg.com/vi/${youtubeVideoId}/maxresdefault.jpg`, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(3000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function shareImage(youtubeVideoId, maxres) {
+  return maxres
+    ? { url: `https://i.ytimg.com/vi/${youtubeVideoId}/maxresdefault.jpg`, width: 1280, height: 720 }
+    : { url: `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`, width: 480, height: 360 };
+}
+
 const getVideoPage = unstable_cache(
   async (youtubeVideoId) => {
     const video = await prisma.video.findFirst({
@@ -30,6 +52,8 @@ const getVideoPage = unstable_cache(
       include: { channel: true, categories: { include: { category: true } } },
     });
     if (!video) throw new Error(NOT_FOUND);
+
+    const maxres = await hasMaxresThumbnail(video.youtubeVideoId);
 
     const categoryIds = video.categories.map((vc) => vc.categoryId);
     const base = { status: "published", id: { not: video.id } };
@@ -62,7 +86,7 @@ const getVideoPage = unstable_cache(
       where: { channelId: video.channelId, status: "published" },
     });
 
-    return { video, related, channelCount };
+    return { video, related, channelCount, maxres };
   },
   ["video-page"],
   { tags: ["videos"] }
@@ -83,12 +107,14 @@ export async function generateMetadata({ params }) {
   const data = await load(id);
   if (!data) return { title: "Story not found — PeopleLens", robots: { index: false } };
 
-  const { video } = data;
+  const { video, maxres } = data;
   const description = (
     video.curatorNote ||
     `Ground report by ${video.channel.name}${video.place ? ` from ${video.place}` : ""}. Hand-picked on PeopleLens.`
   ).slice(0, 200);
-  const image = `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`;
+  // Share image: the full-size 16:9 thumbnail when YouTube has one (large card on
+  // every platform; Facebook needs 600 px or more), else the 480x360 one.
+  const image = shareImage(video.youtubeVideoId, maxres);
 
   return {
     title: `${displayTitle(video.title)} — PeopleLens`,
@@ -100,9 +126,9 @@ export async function generateMetadata({ params }) {
       url: `/video/${video.youtubeVideoId}`,
       siteName: "PeopleLens",
       type: "article",
-      images: [{ url: image, width: 480, height: 360 }],
+      images: [{ url: image.url, width: image.width, height: image.height }],
     },
-    twitter: { card: "summary_large_image", title: displayTitle(video.title), description, images: [image] },
+    twitter: { card: "summary_large_image", title: displayTitle(video.title), description, images: [image.url] },
   };
 }
 
@@ -111,10 +137,10 @@ export default async function VideoPage({ params }) {
   const data = await load(id);
   if (!data) notFound();
 
-  const { video, related, channelCount } = data;
+  const { video, related, channelCount, maxres } = data;
   const categories = video.categories.map((vc) => vc.category);
   const isHindi = video.language === "hi";
-  const thumb = `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`;
+  const thumb = shareImage(video.youtubeVideoId, maxres).url;
 
   // VideoObject structured data (eligible for video rich results). "<" is
   // escaped so a title or note can never close the script tag.
