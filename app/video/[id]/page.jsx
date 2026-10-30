@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { prisma } from "../../../lib/prisma";
+import { CARD_SELECT, toCardVideo } from "../../../lib/feed";
+import { displayTitle } from "../../../lib/title";
+import StoryCard, { formatDate } from "../../StoryCard";
 import CopyLinkButton from "./CopyLinkButton";
 
 // Public page for one curated video: embedded player, the curator's note,
@@ -32,11 +35,12 @@ const getVideoPage = unstable_cache(
     const base = { status: "published", id: { not: video.id } };
 
     // Same-category stories first; top up with the newest others so the
-    // section is never empty on a small catalogue.
+    // section is never empty on a small catalogue. Rows carry what a story card
+    // needs (category label, language, channel name), the same as the home grid.
     const sameCategory = categoryIds.length
       ? await prisma.video.findMany({
           where: { ...base, categories: { some: { categoryId: { in: categoryIds } } } },
-          include: { channel: true },
+          select: CARD_SELECT,
           orderBy: { addedAt: "desc" },
           take: RELATED_COUNT,
         })
@@ -46,12 +50,13 @@ const getVideoPage = unstable_cache(
     if (related.length < RELATED_COUNT) {
       const filler = await prisma.video.findMany({
         where: { ...base, id: { notIn: [video.id, ...related.map((r) => r.id)] } },
-        include: { channel: true },
+        select: CARD_SELECT,
         orderBy: { addedAt: "desc" },
         take: RELATED_COUNT - related.length,
       });
       related = [...related, ...filler];
     }
+    related = related.map(toCardVideo);
 
     const channelCount = await prisma.video.count({
       where: { channelId: video.channelId, status: "published" },
@@ -73,28 +78,6 @@ async function load(id) {
   }
 }
 
-function formatDate(date) {
-  if (!date) return "";
-  return new Date(date).toLocaleDateString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function timeAgo(date) {
-  if (!date) return "";
-  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
-  if (days <= 0) return "today";
-  if (days === 1) return "1 day ago";
-  if (days < 7) return `${days} days ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-  const months = Math.floor(days / 30);
-  return `${months} month${months > 1 ? "s" : ""} ago`;
-}
-
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const data = await load(id);
@@ -108,18 +91,18 @@ export async function generateMetadata({ params }) {
   const image = `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`;
 
   return {
-    title: `${video.title} — PeopleLens`,
+    title: `${displayTitle(video.title)} — PeopleLens`,
     description,
     alternates: { canonical: `/video/${video.youtubeVideoId}` },
     openGraph: {
-      title: video.title,
+      title: displayTitle(video.title),
       description,
       url: `/video/${video.youtubeVideoId}`,
       siteName: "PeopleLens",
       type: "article",
       images: [{ url: image, width: 480, height: 360 }],
     },
-    twitter: { card: "summary_large_image", title: video.title, description, images: [image] },
+    twitter: { card: "summary_large_image", title: displayTitle(video.title), description, images: [image] },
   };
 }
 
@@ -169,7 +152,7 @@ export default async function VideoPage({ params }) {
           className="story-headline"
           style={{ fontSize: "clamp(22px, 4vw, 28px)", lineHeight: 1.25, letterSpacing: "-0.01em", marginBottom: "10px" }}
         >
-          {video.title}
+          {displayTitle(video.title)}
         </h1>
 
         <div className="flex flex-wrap items-center mb-3" style={{ gap: "6px 14px" }}>
@@ -207,7 +190,7 @@ export default async function VideoPage({ params }) {
         <div style={{ position: "relative", aspectRatio: "16/9", background: "#111", border: "1px solid var(--ink)" }}>
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${video.youtubeVideoId}?rel=0`}
-            title={video.title}
+            title={displayTitle(video.title)}
             loading="lazy"
             allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
@@ -298,27 +281,7 @@ export default async function VideoPage({ params }) {
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {related.map((r) => (
-              <Link
-                key={r.id}
-                href={`/video/${r.youtubeVideoId}`}
-                className="story-card overflow-hidden flex flex-col h-full"
-              >
-                {r.thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={r.thumbnailUrl} alt="" className="w-full aspect-video object-cover shrink-0" />
-                )}
-                <div className="p-3">
-                  <p
-                    className="story-headline text-[14px] leading-snug mb-1"
-                    style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
-                  >
-                    {r.title}
-                  </p>
-                  <p className="story-meta" style={{ fontSize: "10px" }}>
-                    {r.channel.name} · {timeAgo(r.publishedAt)}
-                  </p>
-                </div>
-              </Link>
+              <StoryCard key={r.id} video={r} />
             ))}
           </div>
         </section>

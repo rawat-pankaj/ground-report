@@ -4,6 +4,7 @@ import CategoryPills from "./CategoryPills";
 import StoryCard, { CardLabel, formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
 import HeroImage from "./HeroImage";
+import { displayTitle } from "../lib/title";
 import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
 
 // Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
@@ -52,7 +53,7 @@ function FeaturedCard({ video }) {
               overflow: "hidden",
             }}
           >
-            {video.title}
+            {displayTitle(video.title)}
           </p>
           <p className="story-meta">{video.channel.name} · {formatDate(video.publishedAt)}</p>
         </div>

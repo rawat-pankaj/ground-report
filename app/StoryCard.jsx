@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { displayTitle } from "../lib/title";
 
 // Shared by the server-rendered first batch (app/page.jsx), the client-side
 // "Load more" batches (app/LoadMore.jsx) and the search results. Pure and
@@ -75,7 +76,7 @@ export default function StoryCard({ video }) {
               overflow: "hidden",
             }}
           >
-            {video.title}
+            {displayTitle(video.title)}
           </p>
           <p className="story-meta">
             {video.channel.name}{date ? ` · ${date}` : ""}

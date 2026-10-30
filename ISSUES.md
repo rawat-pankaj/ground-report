@@ -928,7 +928,8 @@ From a design critique of the live site (home on desktop and phone, a video page
 
 **Still open from the critique**
 - [ ] Channel pages and category routes: the video page's "Channel →" leaves for YouTube while the card beside it says "N stories on PeopleLens".
-- [ ] Video pages are thin without a "why this matters" note; strip trailing hashtags from displayed titles (keep the original in the data); use absolute dates in "Related stories" like the grid (it shows "Today", "1 day ago").
+- [x] Strip trailing hashtags from displayed titles, and absolute dates in "Related stories" like the grid: done 2026-10-30 (owner picked mockup option 2), see "Video Page Polish" at the end of this file.
+- [ ] Video pages are thin without a "why this matters" note (content work for the owner; the curator note field already exists in Admin).
 - [x] Raise the 10–11 px mono text: done 2026-10-29 for the card category label and the channel/date line (now 11 px; the strapline stays 10 px). See "Card Text Size and Language Tag" below.
 - [x] Language cue on cards: done 2026-10-29 (owner picked mockup B: a small outlined "HI"/"EN" tag at the right of the category row).
 - [ ] The parked Hindi site chrome (the interface text is still English only).
@@ -981,3 +982,11 @@ Finishes the homepage-speed work. Owner chose: do both, and trim the 500 weights
 - The featured card used YouTube's 1280x720 JPEG (about 217 KB). `app/HeroImage.jsx` (client component) now serves it through the Next.js image optimizer (`next/image`, quality 75, `sizes="(min-width: 1024px) 560px, 100vw"`, eager, high priority): a WebP of about 24 KB on desktop and 31 KB at 375 px, measured locally. Measured sizes at other widths for the same image: 640 px 24 KB, 828 px 35 KB, 1080 px 53 KB, 1200 px 64 KB.
 - Only the hero goes through the optimizer (one source image at a time), so the free plan's limit of 1,000 source images a month is not a concern; the 48 grid thumbnails are untouched. `images.minimumCacheTTL` is 30 days.
 - Fallback: if a video has no `maxresdefault` thumbnail (the optimizer returns 404 for a missing one, checked with a made-up id), the component switches to `hqdefault` (4:3 with black bars, cropped away by `object-cover`). The fallback was reasoned out and the 404 confirmed, but not seen on screen.
+
+## 🎬 Video Page Polish — 2026-10-30
+
+From the design critique; owner picked mockup option 2.
+
+- **Hashtags:** `displayTitle()` in the new `lib/title.js` strips a trailing run of hashtags ("... Explanation! #gyaneshkumar #eci" becomes "... Explanation!"); a title that is only hashtags stays as it is. It is used wherever a title is shown: `StoryCard` (grid, search, related), the featured card, the video page heading, its iframe `title`, the browser tab title and the Open Graph and Twitter titles. The stored title is untouched and the VideoObject JSON-LD keeps the original. Only 4 of 255 published titles end in hashtags (checked in the database), all of them trailing, none mid-title.
+- **Related stories** on the video page now render the same `StoryCard` as the home grid: category label, HI/EN tag, absolute date ("29 Oct 2026") instead of "today" / "1 day ago". Their query uses the new shared `CARD_SELECT` and `toCardVideo` exported from `lib/feed.js` (also used by `getFeedPage`), so the grid, search and related cards read the same fields. The video page's own `timeAgo` and `formatDate` copies were removed; it uses the shared `formatDate` from `StoryCard`.
+- Checked locally: heading and `<title>` and `og:title` have no hashtags, the JSON-LD still has the original; the related cards show label, language tag and absolute dates on desktop and at 375 px (two columns, no truncated labels, no overflow); the other routes still return 200.
