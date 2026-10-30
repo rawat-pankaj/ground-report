@@ -897,7 +897,7 @@ Parked item from the 2026-10-22 security re-check, done on request.
 - [ ] Plan a React 19 upgrade before moving to Next.js 17 (check `react`, `react-dom` and anything depending on them; run a local build and the same smoke test).
 
 **Left alone:** `npm audit` reports 4 findings (2 moderate, 2 high) in other packages (for example `source-map-js`); unrelated to this upgrade. `npm audit fix` can move minor versions (it did once before), so any fix should be reviewed first.
-- [ ] Review the `npm audit` findings and fix them deliberately (not with a blind `audit fix`).
+- [x] Review the `npm audit` findings and fix them deliberately (not with a blind `audit fix`). Done 2026-10-31, see "npm Audit Fix" at the end of this file.
 
 ## 📌 Admin Hint When Nothing Is Featured — 2026-10-28
 
@@ -1002,3 +1002,18 @@ From the earlier review of the admin API (the items under "Security" in the know
 - `categoryIds` on a video PATCH must be a list of text ids (400 otherwise).
 
 **Verified locally** (real requests to `next start`, with a token minted by the same code; nothing was written to the database, checked by counting rows before and after): no cookie 401; valid token 200 on `/api/admin/stats` and `/admin`; tampered, expired, garbage and old plain-password cookies all 401 (and `/admin` redirects 307); bad, empty and `null` bodies 400 on all eleven routes; missing ids 404 on PATCH and DELETE; unauthenticated PATCH 401. **Not exercised:** the real login (it writes a rate-limit row to the live database and counts against the owner's IP), so the login path was checked by reading the code; the owner confirms it live by signing in.
+
+## 🧹 npm Audit Fix — 2026-10-31
+
+Closes the "review the `npm audit` findings" item. `npm audit` now reports **0 vulnerabilities** (it reported 4: 2 high, 2 moderate).
+
+**The four findings (all indirect packages, none reachable by a visitor)**
+- `source-map-js` (high, event-loop DoS from a crafted source map): used by `postcss` (via `next` and `autoprefixer`); it only parses build output. The only one in the production dependency tree, because `next` depends on `postcss`; it does not run per request.
+- `browserslist` (high, unbounded memory use / crash from a hostile `browserslist-stats.json`): from `autoprefixer`, build time only.
+- `baseline-browser-mapping` (moderate, crash on invalid input): from `browserslist` and `next`, a build-time data lookup.
+- `postcss-selector-parser` (moderate, slow parsing of a pathological selector): from `tailwindcss`, build time only.
+
+**What was done**
+- Checked first with `npm audit fix --dry-run`, then ran `npm audit fix` (not `--force`). It changed **8 packages**, all within the version ranges already allowed: `source-map-js` 1.2.1 to 1.2.2, `postcss-selector-parser` 6.1.4 to 6.1.5, `browserslist` 4.28.6 to 4.29.5, `baseline-browser-mapping` 2.10.43 to 2.11.34, `update-browserslist-db` 1.2.3 to 1.3.4, and three data packages (`node-releases`, `electron-to-chromium`, `caniuse-lite`).
+- **Not moved:** `package.json` is unchanged; `next` stays exactly 16.4.1; React 18.3.1, Prisma 5.22.0, Tailwind 3.4.19, PostCSS 8.5.23 and Autoprefixer 10.5.4 are unchanged (the earlier problem, `audit fix` bumping Next's minor, did not happen; the dry run showed it would not).
+- Verified locally: the build passes (only the known React 18 deprecation warning); the compiled stylesheet is **byte-identical to the live one** (19,589 bytes, 267 rules, 0 differences), so the Tailwind and PostCSS updates changed no output; the usual routes, the admin gate and the font files all respond as before.

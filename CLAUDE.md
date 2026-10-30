@@ -37,7 +37,7 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - All `*_old*` backup files were removed on 2026-10-27 (27 files, nothing referenced them). Git history keeps them. Do not create new `_old` copies; use git for history.
 
 ## Parked items (see `ISSUES.md` for detail)
-- Plan a React 19 upgrade before Next 17, and review the `npm audit` findings deliberately (not with a blind `audit fix`).
+- Plan a React 19 upgrade before Next 17. (`npm audit` is clean as of 2026-10-31; before any future `audit fix`, run it with `--dry-run` first and never use `--force`, since it once moved Next's minor version.)
 - Place backfill for existing videos (Admin → Places; built earlier, not pushed).
 - AI-drafted "Why this matters" notes (on hold; YouTube's own AI summary is not available through the API).
 - Channel pages and real `/category/[slug]` routes (the next SEO step).
