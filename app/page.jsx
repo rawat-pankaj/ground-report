@@ -124,23 +124,31 @@ export default async function FeedPage({ searchParams }) {
   const isAdmin = Boolean(session && session === process.env.ADMIN_PASSWORD);
   const showFeaturedHint = isAdmin && noFilters && !hero;
 
-  const today = new Date().toLocaleDateString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  // "Fri, 30 Oct 2026", shown to the right of the headline. Assembled from parts
+  // because en-IN puts an extra comma after the month ("Fri, 30 Oct, 2026").
+  const dateParts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+      .formatToParts(new Date())
+      .map((p) => [p.type, p.value])
+  );
+  const today = `${dateParts.weekday}, ${dateParts.day} ${dateParts.month} ${dateParts.year}`;
 
   return (
     <div>
-      <div className="mb-4">
-        <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
-          {today}
-        </p>
-        <h1 style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", marginBottom: "6px", lineHeight: 1.2 }}>
+      {/* Headline left, short date right on one line; on a phone the date wraps under the headline. */}
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h1 style={{ color: "var(--ink)", fontSize: "22px", fontWeight: 700, fontFamily: "'Archivo Narrow', sans-serif", letterSpacing: "0.01em", lineHeight: 1.2 }}>
           Stories that matter &amp; issues that affect ordinary people!
         </h1>
+        <p style={{ color: "var(--ink-soft)", fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+          {today}
+        </p>
       </div>
 
       {categories.length > 0 && (

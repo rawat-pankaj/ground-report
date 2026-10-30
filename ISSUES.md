@@ -877,7 +877,7 @@ Goal: give the stories more room at the top of the landing page (about 285 px of
 - The small "CATEGORY" caption above the pills was removed from view: the chips explain themselves ("All" highlighted, plain category names, "More (13)") and it cost about 18 px of height. It stays in the markup as a visually hidden `<h2 class="sr-only">Category</h2>` so screen readers keep the section heading. Checked live (the hidden heading is present, the visible one is gone) and tested on a phone by the owner: fine.
 
 **Parked / open (owner reviewing)**
-- [ ] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). Not built; owner has not picked. Dropping the "Category" label above the pills would save about 18 px more.
+- [x] Shorten the date and headline line (mockup options D1 headline left plus short date right, D2 headline only, D3 date inline). **Decided 2026-10-30: D1.** The headline is on the left and the short date ("Fri, 30 Oct 2026", built from `Intl` parts because the en-IN format adds a comma after the month) on the right of one line (`app/page.jsx`); on a phone the date wraps under the headline, which saves little there. About 30 px saved on desktop. (The owner flipped between D1 and "leave as is" while this was being built; the last choice, D1, is what shipped.) The "Category" label above the pills was hidden separately (see "Category label").
 - [ ] Modern header directions M1 (light bar), M2 (search-first blue band), M3 (ribbon plus underline tabs) were mocked up on a design canvas (https://claude.ai/artifact/4ReLzXj9QPE9SHfXqM1yM6, private). Only M1's search pill was taken so far; the rest is parked.
 - [x] The `/search` results page showed its own large search box under the bar's pill on wide screens. No longer an issue: since the bar's pill and icon appear on the home page only (`f4598d1`), `/search` has just its own box, which is kept (it is prefilled with the query and is the only way to refine a search from the results page).
 - [ ] **Parked (owner, 2026-10-28):** `/search` with no query shows only the box and a hint, so it looks empty (for example when opened from a typed address). Idea: fill that case with the category chips and the latest stories (mockup option S3 from the phone search options). Small; not started.
@@ -942,3 +942,24 @@ From the design critique, owner picked mockup B.
 - Code: `CardLabel` (exported from `app/StoryCard.jsx`) is shared by the grid and the featured card; `language` is now selected in `getFeedPage` (`lib/feed.js`) and in the search SQL (`lib/search.js`); `getHero` already returned the whole row. Styles: `.card-label-row`, `.card-eyebrow`, `.card-lang` in `app/globals.css`.
 - Phones: the two-column cards have only about 150 px for text, so below 768 px the label row uses tighter letter-spacing and gap; with that, none of the 7 category labels in the first 48 cards is truncated (a longer category name still would be, with the full name in the hover title).
 - Checked locally on desktop and at 375 px (no overflow, 11 px label and date, the tag on every card). The featured card was not visible locally because no video is featured right now; it uses the same `CardLabel`.
+
+## 🗂️ Channel and Category Pages: plan, parked (2026-10-30)
+
+Owner reviewed the plan and mockups and **parked** it for now. Nothing is built. Resume from here.
+
+**Scope**
+- `/channel/<slug>` page: channel avatar and name, "N stories on PeopleLens", "Watch channel on YouTube", category chips to filter within the channel, story grid and "Load more".
+- `/category/<slug>` page: H1 and story count, the same chips with the current one active, the grid and "Load more" (the existing feed filtered by category).
+- Links: channel name on cards and the video page's "Channel →" go to `/channel/…` (the video page currently sends people to YouTube while saying "N stories on PeopleLens"); category labels, video tags and the home chips go to `/category/…`; old `/?category=<slug>` links get a permanent (308) redirect to `/category/<slug>`.
+- SEO: per-page title, description and canonical; sitemap entries for every channel and category; the pages people search for (by channel and by topic).
+
+**Rules it must follow**
+- Use the cached queries tagged `"videos"` (admin routes already revalidate them). An unknown channel or category must throw inside the cached function so made-up URLs cannot create cache entries. Keep `/api/feed` offsets as multiples of `PAGE_SIZE` (max 2000); add a validated `channel` parameter for "Load more" on channel pages.
+
+**Open decision: how a channel appears in the URL**
+- Readable slug (`/channel/doublecheck-by-sanket-upadhyay`), better for search: needs one owner-run SQL step before the deploy (add a `slug` column to `Channel`, fill it for the 66 channels, add a unique index; fall back to the id when a name has no Latin letters). Recommended.
+- YouTube channel id (`/channel/UC9x…`): no database change; ugly URLs; slugs can be added later with redirects.
+
+**Later, separate step:** the homepage reads the admin cookie (for the "no featured story" hint), so it renders on every visit. Moving that hint into a small client-side piece would let the homepage be static (about 50 ms instead of about 0.4 s).
+
+**Risks:** the slug SQL has to run before the code deploys, otherwise channel pages fail; test locally against real data and show screenshots before pushing.
