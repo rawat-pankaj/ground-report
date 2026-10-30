@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import CategoryPills from "./CategoryPills";
 import StoryCard, { CardLabel, formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
+import HeroImage from "./HeroImage";
 import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
 
 // Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
@@ -17,23 +18,13 @@ import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from ".
 // rest in batches from /api/feed.
 
 function FeaturedCard({ video }) {
-  const heroThumbnail = `https://i.ytimg.com/vi/${video.youtubeVideoId}/maxresdefault.jpg`;
-
   return (
     <Link
       href={`/video/${video.youtubeVideoId}`}
       className="story-card overflow-hidden flex flex-col col-span-2 lg:row-span-2"
     >
       <div style={{ position: "relative", width: "100%" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={heroThumbnail}
-          alt=""
-          className="w-full object-cover"
-          style={{ aspectRatio: "16/9" }}
-          fetchPriority="high"
-          decoding="async"
-        />
+        <HeroImage videoId={video.youtubeVideoId} />
         <span style={{
           position: "absolute",
           top: 10,

@@ -126,7 +126,7 @@ export default function AdminDashboard() {
           className="mb-4 text-sm"
           style={{ border: "1px dashed var(--signal)", background: "var(--signal-tint)", padding: "10px 14px", color: "var(--ink)" }}
         >
-          <strong>No featured story set.</strong>{" "}
+          <span style={{ fontWeight: 600 }}>No featured story set.</span>{" "}
           {hasHiddenFeatured
             ? "The featured video is hidden, so the homepage has no hero. Publish it, or set another video as featured."
             : "The homepage has no hero. Use “Set as featured” on a video below to pin one."}

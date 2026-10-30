@@ -158,7 +158,7 @@ function AddChannelInner() {
                   <img src={v.thumbnailUrl} alt="" className="w-24 aspect-video object-cover rounded" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-[13px] font-medium leading-snug">{v.title}</p>
+                  <p className="text-[13px] font-semibold leading-snug">{v.title}</p>
                   <p className="story-meta">
                     {v.publishedAt ? new Date(v.publishedAt).toLocaleDateString() : ""}
                   </p>

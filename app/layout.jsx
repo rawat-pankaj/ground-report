@@ -1,3 +1,4 @@
+import "./fonts.css";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -39,6 +40,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        {/* Fetch the fonts every page needs early (the Devanagari one is preloaded because most titles are Hindi). */}
+        {[
+          "ibm-plex-sans-latin",
+          "archivo-narrow-latin",
+          "ibm-plex-mono-latin",
+          "ibm-plex-sans-devanagari-devanagari-600",
+        ].map((name) => (
+          <link key={name} rel="preload" href={`/fonts/${name}.woff2`} as="font" type="font/woff2" crossOrigin="anonymous" />
+        ))}
+      </head>
       <body className="min-h-screen flex flex-col">
         <a href="#main" className="skip-link">
           Skip to content

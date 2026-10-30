@@ -810,8 +810,8 @@ Investigated the ~6 s first load of uncached pages. Pushed as `b3d3b61`.
 
 **Next steps**
 - [ ] Make the homepage static by moving filtering to real `/category/[slug]` routes (already parked as roadmap Tier 1); it could then be served from the edge in roughly 50 ms. Biggest remaining win.
-- [ ] Self-host the fonts with `next/font/google` and drop `fonts.googleapis.com` from the CSP.
-- [ ] Consider a smaller hero image than `maxresdefault.jpg`.
+- [x] Self-host the fonts and drop `fonts.googleapis.com` from the CSP. Done 2026-10-30 (self-hosted `@font-face` files rather than `next/font`, see "Fonts and Hero Image" at the end of this file).
+- [x] Consider a smaller hero image than `maxresdefault.jpg`. Done 2026-10-30 (optimized WebP through the Next.js image optimizer).
 - [x] Take a few more cold-load samples (done 2026-10-27, see Result above). Optional: re-test after a much longer idle gap; Vercel runtime logs would help (the Claude Code connector gets 403 on this project).
 
 ## 🧹 Clean-up — outside the repo, parked (2026-10-28)
@@ -963,3 +963,21 @@ Owner reviewed the plan and mockups and **parked** it for now. Nothing is built.
 **Later, separate step:** the homepage reads the admin cookie (for the "no featured story" hint), so it renders on every visit. Moving that hint into a small client-side piece would let the homepage be static (about 50 ms instead of about 0.4 s).
 
 **Risks:** the slug SQL has to run before the code deploys, otherwise channel pages fail; test locally against real data and show screenshots before pushing.
+
+## 🔤 Fonts and Hero Image — 2026-10-30
+
+Finishes the homepage-speed work. Owner chose: do both, and trim the 500 weights.
+
+**Fonts (self-hosted)**
+- Before: `app/globals.css` started with an `@import` of Google Fonts, so every page waited for the CSS from `fonts.googleapis.com`, then the font files from `fonts.gstatic.com`: 46 `@font-face` rules and 31 files in the stylesheet; a Hindi reader downloaded 13 files, about 497 KB.
+- Now: 8 font files (284 KB in total, all unicode ranges) live in `public/fonts/`, fetched once from Google Fonts (IBM Plex and Archivo Narrow are OFL-licensed), with the rules in `app/fonts.css` (imported first in `app/layout.jsx`) and the `@import` removed. I used plain `@font-face` instead of `next/font` on purpose: the CSS and inline styles all name the families literally ("IBM Plex Sans", "Archivo Narrow" ...), and `next/font` renames them to generated names.
+- Weights kept: Archivo Narrow 700; IBM Plex Sans 400 and 600; IBM Plex Sans Devanagari 400 and 600; IBM Plex Mono 400. Dropped: Archivo Narrow 600, Plex Sans 500, Devanagari 500, Mono 500 (nothing used them, except `.btn` and one admin label, which went from 500 to 600; the admin hint's `<strong>` became a 600 span so it does not get a fake bold).
+- The Latin files are variable fonts, so one file serves both Plex Sans weights. `unicode-range` makes the browser fetch only the files a page needs. The four files every page needs are preloaded (Plex Sans Latin, Archivo Narrow Latin, Plex Mono Latin, Devanagari 600, since most titles are Hindi). `Cache-Control: public, max-age=31536000, immutable` on `/fonts/*` in `next.config.mjs`: **a changed font must get a new file name.**
+- CSP: removed `https://fonts.googleapis.com` from `style-src` and `https://fonts.gstatic.com` from `font-src`.
+- Measured locally: the home page requests 4 font files, 151 KB in total, none from another host (about 497 KB before for the same Hindi page).
+- To add a weight or family later: download the woff2 into `public/fonts/`, add an `@font-face` block to `app/fonts.css`, and preload it only if every page needs it.
+
+**Hero image**
+- The featured card used YouTube's 1280x720 JPEG (about 217 KB). `app/HeroImage.jsx` (client component) now serves it through the Next.js image optimizer (`next/image`, quality 75, `sizes="(min-width: 1024px) 560px, 100vw"`, eager, high priority): a WebP of about 24 KB on desktop and 31 KB at 375 px, measured locally. Measured sizes at other widths for the same image: 640 px 24 KB, 828 px 35 KB, 1080 px 53 KB, 1200 px 64 KB.
+- Only the hero goes through the optimizer (one source image at a time), so the free plan's limit of 1,000 source images a month is not a concern; the 48 grid thumbnails are untouched. `images.minimumCacheTTL` is 30 days.
+- Fallback: if a video has no `maxresdefault` thumbnail (the optimizer returns 404 for a missing one, checked with a made-up id), the component switches to `hqdefault` (4:3 with black bars, cropped away by `object-cover`). The fallback was reasoned out and the 404 confirmed, but not seen on screen.
