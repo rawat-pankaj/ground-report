@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
+import { readJson, badBody, isNotFound } from "../../../../../lib/http";
 
 function normalizeLanguage(input) {
   if (!input) return null;
@@ -25,8 +26,16 @@ const MAX_PLACE_LENGTH = 100;
 
 export async function PATCH(request, { params }) {
   const { id } = await params;
-  const body = await request.json();
+  const body = await readJson(request);
+  if (!body || typeof body !== "object") return badBody();
   const data = {};
+
+  // Check the video exists before touching anything: setting `featured` below
+  // un-features every other video first, and a missing id must not do that.
+  const existing = await prisma.video.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) {
+    return NextResponse.json({ error: "Video not found" }, { status: 404 });
+  }
 
   if (body.status !== undefined) {
     if (!VALID_VIDEO_STATUSES.includes(body.status)) {
@@ -66,6 +75,9 @@ export async function PATCH(request, { params }) {
   }
 
   if (body.categoryIds !== undefined) {
+    if (!Array.isArray(body.categoryIds) || !body.categoryIds.every((c) => typeof c === "string")) {
+      return NextResponse.json({ error: "categoryIds must be a list of ids" }, { status: 400 });
+    }
     data.categories = {
       deleteMany: {},
       create: body.categoryIds.map((categoryId) => ({ categoryId })),
@@ -89,7 +101,13 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Video not found" }, { status: 404 });
   }
 
-  await prisma.video.delete({ where: { id } });
+  try {
+    await prisma.video.delete({ where: { id } });
+  } catch (err) {
+    // Deleted by someone else between the check above and here.
+    if (isNotFound(err)) return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    throw err;
+  }
   revalidateTag("videos");
   return NextResponse.json({ ok: true });
 }

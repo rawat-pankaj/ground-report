@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
+import { readJson, badBody, isNotFound } from "../../../../../lib/http";
 
 const VALID_STATUSES = ["pending", "approved", "rejected"];
 
 export async function PATCH(request, { params }) {
   const { id } = await params;
-  const { status } = await request.json();
+  const body = await readJson(request);
+  if (!body || typeof body !== "object") return badBody();
+  const { status } = body;
 
   if (!VALID_STATUSES.includes(status)) {
     return NextResponse.json(
@@ -14,9 +17,14 @@ export async function PATCH(request, { params }) {
     );
   }
 
-  const nomination = await prisma.nomination.update({
-    where: { id },
-    data: { status, reviewedAt: new Date() },
-  });
-  return NextResponse.json({ nomination });
+  try {
+    const nomination = await prisma.nomination.update({
+      where: { id },
+      data: { status, reviewedAt: new Date() },
+    });
+    return NextResponse.json({ nomination });
+  } catch (err) {
+    if (isNotFound(err)) return NextResponse.json({ error: "Nomination not found" }, { status: 404 });
+    throw err;
+  }
 }

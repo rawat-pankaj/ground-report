@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
+import { readJson, badBody } from "../../../../lib/http";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const body = await request.json();
-  const name = (body.name || "").trim();
+  const body = await readJson(request);
+  if (!body || typeof body !== "object") return badBody();
+  const name = (typeof body.name === "string" ? body.name : "").trim();
 
   if (!name) {
     return NextResponse.json({ error: "A category name is required" }, { status: 400 });

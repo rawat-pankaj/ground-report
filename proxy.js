@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 
 // Simple shared-password admin protection. Good enough for a small trusted
 // editorial team; swap for real auth (NextAuth etc.) if the team grows.
-export function proxy(request) {
+// The cookie holds a signed, expiring token (lib/session.js), not the password.
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
-  const session = request.cookies.get("admin_session")?.value;
-  const isAuthed = session && session === process.env.ADMIN_PASSWORD;
+  const isAuthed = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     if (!isAuthed) {

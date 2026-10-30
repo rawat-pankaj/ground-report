@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { readJson, badBody } from "../../../lib/http";
 
 const MAX_INPUT_LENGTH = 500;
 const MAX_REASON_LENGTH = 1000;
@@ -30,16 +31,18 @@ export async function POST(request) {
     );
   }
 
-  const body = await request.json();
-  const input = (body.input || "").trim().slice(0, MAX_INPUT_LENGTH);
+  const body = await readJson(request);
+  if (!body || typeof body !== "object") return badBody();
+  const text = (value) => (typeof value === "string" ? value : "");
+  const input = text(body.input).trim().slice(0, MAX_INPUT_LENGTH);
   const type = body.type === "video" ? "video" : "channel";
 
   if (!input) {
     return NextResponse.json({ error: "A link or name is required" }, { status: 400 });
   }
 
-  const reasonText = (body.reasonText || "").trim().slice(0, MAX_REASON_LENGTH) || null;
-  const submitterContact = (body.submitterContact || "").trim().slice(0, MAX_CONTACT_LENGTH) || null;
+  const reasonText = text(body.reasonText).trim().slice(0, MAX_REASON_LENGTH) || null;
+  const submitterContact = text(body.submitterContact).trim().slice(0, MAX_CONTACT_LENGTH) || null;
 
   const nomination = await prisma.nomination.create({
     data: { type, input, reasonText, submitterContact },

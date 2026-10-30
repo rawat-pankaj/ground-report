@@ -5,6 +5,7 @@ import StoryCard, { CardLabel, formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
 import HeroImage from "./HeroImage";
 import { displayTitle } from "../lib/title";
+import { SESSION_COOKIE, verifySessionToken } from "../lib/session";
 import { PAGE_SIZE, cleanLanguage, getCategories, getHero, getFeedPage } from "../lib/feed";
 
 // Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
@@ -112,8 +113,8 @@ export default async function FeedPage({ searchParams }) {
   // Admin-only nudge: with no video marked featured the hero just disappears, which
   // looks like a bug to the person who curates the page. Same cookie check as
   // proxy.js; visitors never see this.
-  const session = (await cookies()).get("admin_session")?.value;
-  const isAdmin = Boolean(session && session === process.env.ADMIN_PASSWORD);
+  const session = (await cookies()).get(SESSION_COOKIE)?.value;
+  const isAdmin = await verifySessionToken(session);
   const showFeaturedHint = isAdmin && noFilters && !hero;
 
   // "Fri, 30 Oct 2026", shown to the right of the headline. Assembled from parts

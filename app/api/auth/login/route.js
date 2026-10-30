@@ -1,7 +1,20 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { readJson, badBody } from "../../../../lib/http";
+import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "../../../../lib/session";
 
 export const dynamic = "force-dynamic";
+
+// Compare SHA-256 digests with timingSafeEqual so the time taken does not depend
+// on how many leading characters of the password were right.
+function passwordMatches(candidate) {
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected) return false;
+  const a = createHash("sha256").update(candidate).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+}
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -42,10 +55,11 @@ export async function POST(request) {
     .deleteMany({ where: { createdAt: { lt: windowStart } } })
     .catch(() => {});
 
-  const { password } = await request.json();
-  const trimmed = (password || "").trim();
+  const body = await readJson(request);
+  if (!body || typeof body !== "object") return badBody();
+  const trimmed = (typeof body.password === "string" ? body.password : "").trim();
 
-  if (!trimmed || trimmed !== process.env.ADMIN_PASSWORD) {
+  if (!trimmed || !passwordMatches(trimmed)) {
     await delay(FAILED_ATTEMPT_DELAY_MS);
     return NextResponse.json(
       { error: "Incorrect password" },
@@ -54,12 +68,13 @@ export async function POST(request) {
   }
 
   const res = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
-  res.cookies.set("admin_session", process.env.ADMIN_PASSWORD, {
+  // A signed, expiring token (see lib/session.js), not the password itself.
+  res.cookies.set(SESSION_COOKIE, await createSessionToken(), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE_SECONDS,
   });
   return res;
 }
