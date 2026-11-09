@@ -1035,3 +1035,21 @@ From the design critique; owner picked mockup option A (full-size YouTube thumbn
 - **Added:** Node 22+, the login cookie behaviour, a warning that local `.env` may point at the live database, the `bom1` region note, the seven admin pages, the quota notes for search and link check, and pointers to `CLAUDE.md` and `ISSUES.md`.
 - `.env.example`: the direct-connection comment no longer says "migrations".
 - **Not tested:** `prisma db push` was deliberately not run (the only `.env` points at the live database). `prisma validate` and the `migrate diff` SQL output (no database connection) were checked.
+
+## 🔎 Site Review: Text Sizes, Tap Targets and a Real 404 — 2026-11-09
+
+From the 9 Nov site review (must-fix items 2 and 3); owner picked 404 mockup option B.
+
+**Text sizes and tap targets**
+- Nothing public is below 12px any more: strapline 10 to 12px, card category label 11 to 12px, HI/EN tag 10 to 12px (line height 18px), card and page meta (`.story-meta`) 11 to 12px, filter chips 11 to 12px, "Featured" badge and "Read & watch" 10 to 12px, form labels, eyebrows, the search button and footer links 11 to 12px, footer note 12 to 13px, "N stories on PeopleLens" on video pages 10 to 12px, back links on About and Suggest 11 to 12px.
+- Header links: 14px on desktop and tablet (were 12px; the "+ Suggest a video" button 11px); 13px on phones (were 11px) with 44px-high tap areas for the search icon, About and Suggest (About was about 36×20px). The header is about 10px taller.
+- Left at 11px on purpose: the decorative "/" key hint in the search pill and the admin-only header labels.
+
+**404 page (`app/not-found.jsx`, new)**
+- Replaces Next.js's default "This page could not be found." Shows "404 · Page not found", "This story isn't here", a line saying the video may have been removed or the link mistyped, the search box, a "Browse all stories" button and the 4 latest stories as normal grid cards.
+- Title "Page not found — PeopleLens", `noindex`. Unknown video ids keep their own title, "Story not found — PeopleLens".
+- The latest stories come from the same cached `getHero` + `getFeedPage` call as the homepage (same arguments, so the same cache entry; no extra database work). A database error falls back to the page without the stories.
+
+**Checked locally** (`npm run build` passes; `next start` against the live database, read-only): an unknown URL and an unknown video id both return 404 with the new page and 4 cards; phone header links measure 44px high; no sideways scrolling at 375, 768 or 1024px; header links do not wrap at 768 or 1024px.
+
+**Still open from the review:** "Why this matters" notes (content), featured-card empty band, thumbnail loading placeholder, click-to-play video facade, grid date order, phone date wrapping, homepage headline, empty search page, dark mode, chip scroll hint.

@@ -281,7 +281,7 @@ export default async function VideoPage({ params }) {
           )}
           <div className="flex-1 min-w-0">
             <p className="story-headline text-[15px]">{video.channel.name}</p>
-            <p className="story-meta" style={{ fontSize: "10px" }}>
+            <p className="story-meta" style={{ fontSize: "12px" }}>
               {channelCount} {channelCount === 1 ? "story" : "stories"} on PeopleLens
             </p>
           </div>

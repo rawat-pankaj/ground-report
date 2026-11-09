@@ -19,7 +19,7 @@ export default function AboutPage() {
         href="/"
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "11px",
+          fontSize: "12px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
           color: "var(--ink-soft)",
