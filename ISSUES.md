@@ -1077,3 +1077,12 @@ Owner picked mockup option A (plain text under the title, not a boxed "Why this 
 - Each row's grey line under the title now reads "Channel · Published 9 Nov 2026 · Added 10 Nov 2026" (`app/admin/page.jsx`, using `formatDate` from `app/StoryCard.jsx`, same format and India time zone as the public cards). Both dates, because the list is sorted by date added, not by YouTube's publish date. Either part is left out when the date is missing.
 - No new query: `GET /api/admin/videos` already returned `publishedAt` and `addedAt`.
 - `npm run build` passes. Not checked in a browser (the admin page needs a login); the owner checks it live.
+
+## 🗓️ Card Placeholder and Shorter Dates — 2026-11-10
+
+From the 9 Nov review (should-fix 5, 7 and 8). Owner chose to keep the grid ordered by date added (option B), so the order is unchanged.
+
+- **Grey placeholder:** story card thumbnails have a `#eceae3` background, so the grid shows grey boxes, not blank white ones, while lazy images load (`app/StoryCard.jsx`).
+- **Shorter dates on cards:** new `formatCardDate`: "9 Nov" for this year's dates, "24 Jan 2022" for older ones, India time. Used by story cards only (grid, Load more, search, related stories); the featured card, video page and admin keep the full `formatDate`. The date is in a `nowrap` span, so it never splits across lines; long channel names still wrap onto a second line (40 of 48 cards on a 375px phone), with the date kept whole. Known limit: pages are cached until the next admin change, so just after New Year a cached card may show last year's dates without the year until then.
+- **Grid order:** unchanged (date added, newest first), by owner's choice; the cards keep showing the YouTube publish date.
+- **Checked locally** (`npm run build`, `next start`, 375px): 48 cards, no date split across lines, grey placeholder applied, no sideways scrolling; related stories and search use the short dates; the video page keeps "9 Nov 2026".

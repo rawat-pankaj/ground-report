@@ -32,6 +32,24 @@ export function formatDate(date) {
   return dateFormat.format(new Date(date));
 }
 
+// Story cards only: "9 Nov" for this year's dates, so the date fits on one line
+// in the 2-column phone grid; older dates keep the year ("24 Jan 2022"). The
+// video page and admin keep formatDate. Pages are cached until the next admin
+// change, so just after New Year a cached card may briefly show last year's
+// dates without the year.
+const shortDateFormat = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  timeZone: "Asia/Kolkata",
+});
+const yearFormat = new Intl.DateTimeFormat("en-IN", { year: "numeric", timeZone: "Asia/Kolkata" });
+
+export function formatCardDate(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  return yearFormat.format(d) === yearFormat.format(new Date()) ? shortDateFormat.format(d) : dateFormat.format(d);
+}
+
 const LANGUAGE_NAMES = { hi: "Hindi", en: "English" };
 
 // Category label with a small language tag at the right ("HI" or "EN"). Shared by
@@ -53,7 +71,7 @@ export function CardLabel({ category, language }) {
 }
 
 export default function StoryCard({ video }) {
-  const date = formatDate(video.publishedAt);
+  const date = formatCardDate(video.publishedAt);
 
   return (
     <Link
@@ -61,8 +79,9 @@ export default function StoryCard({ video }) {
       className="story-card overflow-hidden flex flex-col h-full"
     >
       {video.thumbnailUrl && (
+        // The grey shows while the lazy-loaded image arrives, instead of a blank white box.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover shrink-0" />
+        <img src={video.thumbnailUrl} alt="" loading="lazy" decoding="async" className="w-full aspect-video object-cover shrink-0" style={{ background: "#eceae3" }} />
       )}
       <div className="p-3 flex-1 flex flex-col justify-between gap-2 w-full">
         <div>
@@ -79,7 +98,9 @@ export default function StoryCard({ video }) {
             {displayTitle(video.title)}
           </p>
           <p className="story-meta">
-            {video.channel.name}{date ? ` · ${date}` : ""}
+            {/* Long channel names still wrap, but the date never splits across lines. */}
+            {video.channel.name}
+            {date && <> · <span style={{ whiteSpace: "nowrap" }}>{date}</span></>}
           </p>
         </div>
       </div>
