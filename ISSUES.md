@@ -642,6 +642,8 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 - [ ] Suggest places for the existing videos — **built, parked by owner 2026-10-11, not pushed.** Package `place-backfill.zip` (Admin → Places: scan, review/edit, save; never overwrites an existing place; no SQL needed). See "Place Suggestions on Add" below.
 - [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
 - [ ] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused.
+- [ ] **Parked 2026-11-10:** click-to-play video on video pages (show the full-size thumbnail with a play button; load the YouTube player only on click; no CSP change needed). From the 9 Nov site review, should-fix 6.
+- [x] **Done 2026-11-10:** "Why this matters" notes started. Checked: 17 of 276 published videos have a note, and all 17 video pages show it on the live site. More get added over time with "Draft from description" on Published Videos (owner content work, no code needed).
 
 ---
 
