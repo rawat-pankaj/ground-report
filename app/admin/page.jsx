@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NoteField from "./NoteField";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
@@ -193,14 +194,7 @@ export default function AdminDashboard() {
                   defaultValue={video.place || ""}
                   onBlur={(e) => updateTags(video, "place", e.target.value)}
                 />
-                <textarea
-                  className="input text-[12px] flex-1 min-w-[200px]"
-                  rows={2}
-                  maxLength={1000}
-                  placeholder="Why this matters — 1-2 lines shown on the video page"
-                  defaultValue={video.curatorNote || ""}
-                  onBlur={(e) => updateTags(video, "curatorNote", e.target.value)}
-                />
+                <NoteField video={video} onSave={(value) => updateTags(video, "curatorNote", value)} />
               </div>
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">

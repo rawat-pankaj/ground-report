@@ -31,6 +31,14 @@ function cleanPlace(input) {
   return input.trim().slice(0, MAX_PLACE_LENGTH) || null;
 }
 
+const MAX_NOTE_LENGTH = 1000;
+
+// Optional "Why this matters" note from the add-video page (same limit as PATCH).
+function cleanNote(input) {
+  if (typeof input !== "string") return null;
+  return input.trim().slice(0, MAX_NOTE_LENGTH) || null;
+}
+
 export async function GET() {
   const videos = await prisma.video.findMany({
     include: { channel: true, categories: { include: { category: true } } },
@@ -73,6 +81,7 @@ export async function POST(request) {
         language: normalizeLanguage(language),
         beatTags: normalizeBeatTags(beatTags),
         place: cleanPlace(v.place),
+        curatorNote: cleanNote(v.curatorNote),
         channelId: channelRow.id,
       },
     });

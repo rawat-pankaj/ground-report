@@ -3,6 +3,52 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+// "Why this matters", pre-filled with a draft cut from the YouTube description
+// (lib/draftNote.js). Saved only when the video is published.
+function NoteDraftField({ note, setNote, suggestedNote, description, showDescription, setShowDescription }) {
+  const isDraft = Boolean(suggestedNote) && note === suggestedNote;
+  return (
+    <div className="mb-2 mt-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="field-label" htmlFor="curator-note" style={{ marginBottom: 0 }}>
+          Why this matters
+        </label>
+        {isDraft && <span className="draft-chip">Draft from YouTube description</span>}
+      </div>
+      <textarea
+        id="curator-note"
+        className={"input mt-1" + (isDraft ? " input-draft" : "")}
+        rows={4}
+        maxLength={1000}
+        placeholder="1-2 lines shown on the video page"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
+      <div className="flex justify-between gap-3 flex-wrap mt-1">
+        <p className="story-meta" style={{ textTransform: "none" }}>
+          {suggestedNote
+            ? "Cut from the channel’s description, links and hashtags removed. Rewrite it in your own words before publishing."
+            : "No usable summary in this video’s description — write one if you like."}{" "}
+          {note.length} / 1000
+        </p>
+        <span className="flex gap-3">
+          {description && (
+            <button type="button" className="link-btn" onClick={() => setShowDescription(!showDescription)}>
+              {showDescription ? "Hide full description" : "Show full description"}
+            </button>
+          )}
+          {note && (
+            <button type="button" className="link-btn" onClick={() => setNote("")}>
+              Clear
+            </button>
+          )}
+        </span>
+      </div>
+      {showDescription && <pre className="description-box">{description}</pre>}
+    </div>
+  );
+}
+
 function AddVideoInner() {
   const searchParams = useSearchParams();
   const [input, setInput] = useState(searchParams.get("video") || "");
@@ -10,6 +56,8 @@ function AddVideoInner() {
   const [language, setLanguage] = useState("");
   const [beatTags, setBeatTags] = useState("");
   const [place, setPlace] = useState("");
+  const [note, setNote] = useState("");
+  const [showDescription, setShowDescription] = useState(false);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
@@ -33,6 +81,8 @@ function AddVideoInner() {
     setResult(data);
     // Pre-fill from the title/description/recording location. Editable.
     setPlace(data.video.suggestedPlace || "");
+    setNote(data.video.suggestedNote || "");
+    setShowDescription(false);
   }
 
   async function handlePublish() {
@@ -43,7 +93,17 @@ function AddVideoInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         channel: result.channel,
-        videos: [{ ...result.video, place }],
+        // The description and suggestions stay here; only the reviewed fields go.
+        videos: [
+          {
+            youtubeVideoId: result.video.youtubeVideoId,
+            title: result.video.title,
+            thumbnailUrl: result.video.thumbnailUrl,
+            publishedAt: result.video.publishedAt,
+            place,
+            curatorNote: note,
+          },
+        ],
         language,
         beatTags,
       }),
@@ -119,6 +179,15 @@ function AddVideoInner() {
                 : "No place found in the video details — add one if you know it."}
             </p>
           </div>
+
+          <NoteDraftField
+            note={note}
+            setNote={setNote}
+            suggestedNote={result.video.suggestedNote || ""}
+            description={result.video.description || ""}
+            showDescription={showDescription}
+            setShowDescription={setShowDescription}
+          />
 
           <button className="btn btn-primary w-full justify-center mt-4" disabled={status === "saving"} onClick={handlePublish}>
             {status === "saving" ? "Publishing…" : "Publish this video"}
