@@ -57,6 +57,24 @@ function FeaturedCard({ video }) {
             {displayTitle(video.title)}
           </p>
           <p className="story-meta">{video.channel.name} · {formatDate(video.publishedAt)}</p>
+          {/* The curator's "Why this matters" note, as a standfirst, cut to 3 lines.
+              On desktop it makes the 2x2 block about 20px taller. No note, no line. */}
+          {video.curatorNote && (
+            <p
+              className="mt-3"
+              style={{
+                fontSize: "15px",
+                lineHeight: 1.55,
+                color: "var(--ink-soft)",
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {video.curatorNote}
+            </p>
+          )}
         </div>
 
         <span style={{

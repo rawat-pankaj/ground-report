@@ -1063,3 +1063,11 @@ From the 9 Nov review (must-fix 1): none of the 275 videos had a note. Owner app
 - **Published Videos:** an empty note box has a "Draft from description" button (`POST /api/admin/youtube/video-description`, admin-only, 1 quota unit per click; 400 for a bad id, 404 when YouTube no longer has the video). The draft fills the box with "Save note" / "Discard draft" and does **not** save when you click away; typed notes still save on leaving the box, as before.
 - **Tested on 9 real descriptions:** 8 gave a usable summary. TheRedMike's description is only its channel blurb; the English blurb is now dropped, but its Hindi version ("रेड माइक …") still comes through, so that draft has to be discarded by hand.
 - **Checked locally** (`npm run build` passes; `next start` against the live database with a 1-hour test session, nothing saved): Add video shows the draft, the chip and the full description; on Published Videos the button fills a draft, "Discard draft" empties it, and no write request was sent. Not exercised: clicking Publish or "Save note" (they write to the live database); the owner tries them on the live site.
+
+## 📰 Curator's Note on the Featured Card — 2026-11-10
+
+Owner picked mockup option A (plain text under the title, not a boxed "Why this matters").
+
+- **`app/page.jsx` (`FeaturedCard`):** when the featured story has a `curatorNote`, it shows under the channel and date as a standfirst: 15px, `--ink-soft`, cut to 3 lines. No note, no line, so the card looks as before. `getHero` already returned every video field, so there is no new query and no cache change.
+- Grid cards do not show notes (too tight in the 2-column phone grid, and most videos have none yet).
+- **Checked locally** with a temporary test note (removed before commit; `npm run build` passes): 3 lines at 375, 1024, 1280 and 1440px, no sideways scrolling. On desktop the note makes the 2x2 featured block, and so the two rows beside it, about 18–21px taller; the "empty band" from the review was smaller than the note. Not checked live: no story has a saved note yet.
