@@ -1071,3 +1071,9 @@ Owner picked mockup option A (plain text under the title, not a boxed "Why this 
 - **`app/page.jsx` (`FeaturedCard`):** when the featured story has a `curatorNote`, it shows under the channel and date as a standfirst: 15px, `--ink-soft`, cut to 3 lines. No note, no line, so the card looks as before. `getHero` already returned every video field, so there is no new query and no cache change.
 - Grid cards do not show notes (too tight in the 2-column phone grid, and most videos have none yet).
 - **Checked locally** with a temporary test note (removed before commit; `npm run build` passes): 3 lines at 375, 1024, 1280 and 1440px, no sideways scrolling. On desktop the note makes the 2x2 featured block, and so the two rows beside it, about 18–21px taller; the "empty band" from the review was smaller than the note. Not checked live: no story has a saved note yet.
+
+## 📅 Dates on Admin Published Videos — 2026-11-10
+
+- Each row's grey line under the title now reads "Channel · Published 9 Nov 2026 · Added 10 Nov 2026" (`app/admin/page.jsx`, using `formatDate` from `app/StoryCard.jsx`, same format and India time zone as the public cards). Both dates, because the list is sorted by date added, not by YouTube's publish date. Either part is left out when the date is missing.
+- No new query: `GET /api/admin/videos` already returned `publishedAt` and `addedAt`.
+- `npm run build` passes. Not checked in a browser (the admin page needs a login); the owner checks it live.

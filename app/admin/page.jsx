@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import NoteField from "./NoteField";
+import { formatDate } from "../StoryCard";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
@@ -171,7 +172,12 @@ export default function AdminDashboard() {
                 )}
                 <p className="story-headline text-[14px] leading-snug">{video.title}</p>
               </div>
-              <p className="story-meta mb-2">{video.channel.name}</p>
+              {/* Both dates: the list is sorted by date added, not by YouTube's date. */}
+              <p className="story-meta mb-2">
+                {video.channel.name}
+                {video.publishedAt && <> · Published {formatDate(video.publishedAt)}</>}
+                {video.addedAt && <> · Added {formatDate(video.addedAt)}</>}
+              </p>
               <div className="flex flex-wrap gap-2 mb-1 items-center">
                 <input
                   className="input text-[12px] w-24"
