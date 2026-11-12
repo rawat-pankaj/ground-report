@@ -1,14 +1,13 @@
 import Link from "next/link";
 import SearchBox from "./SearchBox";
 import StoryCard from "./StoryCard";
-import { getFeedPage, getHero } from "../lib/feed";
+import { getLatestStories } from "../lib/feed";
 
 // Shown for any unknown URL and for /video/<id> when the video is gone (removed
 // by its channel, hidden or deleted in admin). Readers arriving from an old
 // link get a way back: search, the latest stories, and a link home.
-//
-// The stories come from the same cached call the homepage makes (same
-// arguments, so the same cache entry), which adds no database work.
+// getLatestStories reuses the homepage's cache entry and never throws, so a
+// database hiccup can't break the 404 page itself.
 
 const LATEST_COUNT = 4;
 
@@ -17,19 +16,8 @@ export const metadata = {
   robots: { index: false, follow: true },
 };
 
-async function getLatest() {
-  try {
-    const hero = await getHero();
-    const { videos } = await getFeedPage("", "", 0, hero?.id || null);
-    return videos.slice(0, LATEST_COUNT);
-  } catch {
-    // A database hiccup must not break the 404 page itself.
-    return [];
-  }
-}
-
 export default async function NotFound() {
-  const latest = await getLatest();
+  const latest = await getLatestStories(LATEST_COUNT);
 
   return (
     <div>

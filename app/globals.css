@@ -333,6 +333,28 @@ body {
     display: none;
   }
 
+  /* Fade at the right edge: more chips to swipe to. CategoryPills adds
+     .at-end when the row is scrolled to the end, which hides it. */
+  .filter-strip-wrap {
+    position: relative;
+  }
+
+  .filter-strip-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -16px;
+    width: 48px;
+    pointer-events: none;
+    background: linear-gradient(to right, rgba(247, 246, 242, 0), var(--paper));
+    transition: opacity 0.15s;
+  }
+
+  .filter-strip-wrap.at-end::after {
+    opacity: 0;
+  }
+
   /* Hover styles stick on touch devices after a tap */
   .story-card:hover {
     border-color: var(--rule);

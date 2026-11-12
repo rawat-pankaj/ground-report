@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const VISIBLE_COUNT = 8;
@@ -26,33 +26,49 @@ export default function CategoryPills({ categories, language, category }) {
   const visible = expanded ? categories : categories.slice(0, VISIBLE_COUNT);
   const hiddenCount = categories.length - VISIBLE_COUNT;
 
+  // On phones the row scrolls sideways; a fade at the right edge says so. It
+  // goes away once the row is scrolled to the end (or doesn't overflow at all).
+  const stripRef = useRef(null);
+  const [atEnd, setAtEnd] = useState(false);
+  const updateEnd = useCallback(() => {
+    const el = stripRef.current;
+    if (el) setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+  useEffect(() => {
+    updateEnd();
+    window.addEventListener("resize", updateEnd);
+    return () => window.removeEventListener("resize", updateEnd);
+  }, [updateEnd, expanded]);
+
   return (
-    <div className="filter-strip">
-      <Link
-        href={hrefFor(language, "")}
-        className={"tag " + (category === "" ? "tag-active" : "")}
-      >
-        All
-      </Link>
-      {visible.map((c) => (
+    <div className={"filter-strip-wrap" + (atEnd ? " at-end" : "")}>
+      <div className="filter-strip" ref={stripRef} onScroll={updateEnd}>
         <Link
-          key={c.id}
-          href={hrefFor(language, c.slug)}
-          className={"tag " + (category === c.slug ? "tag-active" : "")}
+          href={hrefFor(language, "")}
+          className={"tag " + (category === "" ? "tag-active" : "")}
         >
-          {c.name}
+          All
         </Link>
-      ))}
-      {hiddenCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setExpanded((e) => !e)}
-          className="tag"
-          style={{ cursor: "pointer", borderStyle: "dashed" }}
-        >
-          {expanded ? "Less ⌃" : `More (${hiddenCount}) ⌄`}
-        </button>
-      )}
+        {visible.map((c) => (
+          <Link
+            key={c.id}
+            href={hrefFor(language, c.slug)}
+            className={"tag " + (category === c.slug ? "tag-active" : "")}
+          >
+            {c.name}
+          </Link>
+        ))}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="tag"
+            style={{ cursor: "pointer", borderStyle: "dashed" }}
+          >
+            {expanded ? "Less ⌃" : `More (${hiddenCount}) ⌄`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,60 @@ import Link from "next/link";
 import SearchBox from "../SearchBox";
 import StoryCard from "../StoryCard";
 import { SEARCH_LIMIT, MAX_QUERY_LENGTH, searchVideos } from "../../lib/search";
+import { getCategories, getLatestStories } from "../../lib/feed";
+
+const TOPIC_COUNT = 8; // same as the homepage's visible chips
+const LATEST_COUNT = 4;
+
+// Shown on /search with no query: the biggest topics and the newest stories, so
+// the page is never empty. Both come from cached homepage data.
+async function BrowseSuggestions() {
+  const [categories, latest] = await Promise.all([
+    getCategories().catch(() => []),
+    getLatestStories(LATEST_COUNT),
+  ]);
+  const topics = categories.slice(0, TOPIC_COUNT);
+
+  const sectionHeading = {
+    fontWeight: 400,
+    letterSpacing: "0.06em",
+    paddingBottom: "6px",
+    borderBottom: "1px solid var(--rule)",
+    marginBottom: "12px",
+  };
+
+  return (
+    <>
+      {topics.length > 0 && (
+        <section className="mt-6">
+          <h2 className="story-meta" style={sectionHeading}>
+            Or browse a topic
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {topics.map((c) => (
+              <Link key={c.id} href={`/?category=${c.slug}`} className="tag">
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {latest.length > 0 && (
+        <section className="mt-8">
+          <h2 className="story-meta" style={sectionHeading}>
+            Latest stories
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {latest.map((video) => (
+              <StoryCard key={video.id} video={video} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
 
 // Search result pages are not worth indexing (endless query variants, thin
 // content), but links on them can be followed.
@@ -28,9 +82,12 @@ export default async function SearchPage({ searchParams }) {
       </div>
 
       {!hasQuery && (
-        <p style={{ color: "var(--ink-soft)" }} className="text-sm">
-          Type a word to search story titles, channels, places and categories. Hindi and English both work.
-        </p>
+        <>
+          <p style={{ color: "var(--ink-soft)" }} className="text-sm">
+            Type a word to search story titles, channels, places and categories. Hindi and English both work.
+          </p>
+          <BrowseSuggestions />
+        </>
       )}
 
       {hasQuery && (

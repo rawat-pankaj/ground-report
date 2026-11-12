@@ -1088,3 +1088,20 @@ From the 9 Nov review (should-fix 5, 7 and 8). Owner chose to keep the grid orde
 - **Shorter dates on cards:** new `formatCardDate`: "9 Nov" for this year's dates, "24 Jan 2022" for older ones, India time. Used by story cards only (grid, Load more, search, related stories); the featured card, video page and admin keep the full `formatDate`. The date is in a `nowrap` span, so it never splits across lines; long channel names still wrap onto a second line (40 of 48 cards on a 375px phone), with the date kept whole. Known limit: pages are cached until the next admin change, so just after New Year a cached card may show last year's dates without the year until then.
 - **Grid order:** unchanged (date added, newest first), by owner's choice; the cards keep showing the YouTube publish date.
 - **Checked locally** (`npm run build`, `next start`, 375px): 48 cards, no date split across lines, grey placeholder applied, no sideways scrolling; related stories and search use the short dates; the video page keeps "9 Nov 2026".
+
+## 🔍 Empty Search Page: Topics and Latest Stories — 2026-11-12
+
+From the 9 Nov review (nice-to-have 10); owner picked mockup 2b.
+
+- `/search` with no query now shows, under the hint line, "Or browse a topic" (the 8 biggest categories, linking to `/?category=<slug>`, same as the homepage's visible chips) and "Latest stories" (4 story cards). Searches with a query are unchanged.
+- New `getLatestStories(count)` in `lib/feed.js`: same `getHero` + `getFeedPage` call as the homepage's first batch, so it reuses that cache entry; never throws. The 404 page (`app/not-found.jsx`) now uses it too instead of its own copy. Categories come from the cached `getCategories`. No extra database work.
+- **Checked locally** (`npm run build`, `next start`, 375px): empty search shows 8 topic links and 4 cards, no sideways scrolling; `?q=delhi` still shows 24 results and no extra sections; the 404 page still shows 4 cards.
+- **Homepage headline rewrite: dropped** by the owner on 12 Nov (keep "Stories that matter & issues that affect ordinary people!"). Not a pending item. The phone chip-row fade was built the same day (next section).
+
+## 👉 Phone Category Chips: Right-edge Fade — 2026-11-12
+
+From the 9 Nov review (nice-to-have 12, corrected: the chips only scroll sideways on phones; on tablet and desktop they wrap and nothing is hidden).
+
+- `app/CategoryPills.jsx`: the chip row is wrapped in `.filter-strip-wrap`; it tracks the row's scroll position (on scroll, on resize, and when "More" expands the list) and adds `.at-end` once the row is scrolled to the end or doesn't overflow.
+- `app/globals.css` (phones only, under 768px): a 48px fade from transparent to the page colour on the right edge, reaching the screen edge; `pointer-events: none` so chips under it stay tappable; it fades out at the end of the row.
+- **Checked locally** (`npm run build`, `next start`): at 375px the fade shows at the right edge, disappears when the row is scrolled to the end and comes back at the start, no sideways page scroll; at 1280px there is no fade.
