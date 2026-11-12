@@ -21,7 +21,7 @@ export default function AdminNav() {
 
   return (
     <nav
-      className="flex items-center gap-5 mb-6 pb-4"
+      className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-6 pb-4"
       style={{ borderBottom: "1px solid var(--rule)" }}
     >
       <a href="/admin" style={navLinkStyle}>Published Videos</a>
@@ -29,6 +29,7 @@ export default function AdminNav() {
       <a href="/admin/add-video" style={navLinkStyle}>Add video</a>
       <a href="/admin/add" style={navLinkStyle}>Add channel</a>
       <a href="/admin/categories" style={navLinkStyle}>Categories</a>
+      <a href="/admin/place-suggestions" style={navLinkStyle}>Places</a>
       <a href="/admin/stats" style={navLinkStyle}>Stats</a>
       <a href="/admin/link-check" style={navLinkStyle}>Link check</a>
     </nav>

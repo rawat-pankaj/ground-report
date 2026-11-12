@@ -639,7 +639,7 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 - [x] Verify Vercel Node version is not 20 (done 2026-10-27: 24.x).
 - [x] Apex→www redirect appears to strip query strings (checked 2026-10-27: query string kept on `/about?x=1`).
 - [ ] Channel pages and real `/category/[slug]` routes (roadmap Tier 1) — the video page's channel card currently links out to YouTube.
-- [ ] Suggest places for the existing videos — **built, parked by owner 2026-10-11, not pushed.** Package `place-backfill.zip` (Admin → Places: scan, review/edit, save; never overwrites an existing place; no SQL needed). See "Place Suggestions on Add" below.
+- [x] Suggest places for the existing videos — originally built and parked 2026-10-11 (the zip was lost); **rebuilt 2026-11-12**, see "Place Backfill Rebuilt" at the end of this file. The owner still has to run the scan and save on the live site.
 - [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
 - [ ] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused.
 - [ ] **Parked 2026-11-10:** click-to-play video on video pages (show the full-size thumbnail with a play button; load the YouTube player only on click; no CSP change needed). From the 9 Nov site review, should-fix 6.
@@ -1112,3 +1112,15 @@ Owner reported the "empty search page" showed no topics or stories on PC. The pa
 
 - `app/search/page.jsx`: a search with no results now also shows "Or browse a topic" (8 topics) and "Latest stories" (4 cards) under the "No stories for …" panel. Searches with results are unchanged.
 - **Checked locally** (`npm run build`, `next start`, 1280px): no query, `xyzqq` and a Hindi word with no matches each show 8 topics and 4 cards; `delhi` still shows its 24 results and nothing extra; no sideways scrolling.
+
+## 📍 Place Backfill Rebuilt (Admin → Places) — 2026-11-12
+
+The 11 Oct version was never pushed and its `place-backfill.zip` could not be found, so it was rebuilt from the notes above. 221 of 281 published videos had no place.
+
+- **`lib/youtube.js`:** new `suggestPlacesForVideos(ids)`: `videos.list` with `snippet,recordingDetails`, 50 ids per call (~5 quota units for the catalogue), same `suggestPlace` as Add video. A YouTube error throws, so a failed scan never looks like "no places".
+- **`POST /api/admin/suggest-places`** (read-only): videos with an empty place (any status, newest first, up to 500); a video YouTube no longer returns falls back to its stored title.
+- **`POST /api/admin/suggest-places/apply`:** saves `{ items: [{ id, place }] }`; each place is written only if that video's place is **still empty** (`updateMany` with that condition, so a hand-typed place is never overwritten); trims, skips blanks, caps at 100 characters and 500 items; `revalidateTag("videos")` when anything was saved. Bad body → 400.
+- **`app/admin/place-suggestions/page.jsx` + "Places" in the admin menu** (the menu now wraps on narrow screens): "Find places", then one row per suggestion with a tick box, the editable place and a YouTube link; "Save N places" saves the ticked rows and removes them from the list.
+- **`lib/places.js`:** "Jantar Mantar" / "जंतर मंतर" (and hyphenated forms) now suggest Delhi; 33 of the blank videos are Jantar Mantar protest videos.
+- **Checked locally** (`npm run build`, `next start` against the live database with a 1-hour test session; Save not clicked): the scan returns suggestions for **144 of 221** (Delhi 79, Uttarakhand 13, Bihar 5, Jharkhand 5, Dehradun 4, …); the page lists 144 rows; both endpoints answer 401 without the cookie; apply answers 400 for a bad body and saves nothing for empty or blank items.
+- **Review before saving:** some suggestions come from the description or the creator's recording location and can be off (e.g. "What are curtains hiding from the BRICS leaders" → Delhi; an Arctic video → "Svalbard and Jan Mayen", which is right). Untick or edit those first.
