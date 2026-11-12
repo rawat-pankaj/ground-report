@@ -1105,3 +1105,10 @@ From the 9 Nov review (nice-to-have 12, corrected: the chips only scroll sideway
 - `app/CategoryPills.jsx`: the chip row is wrapped in `.filter-strip-wrap`; it tracks the row's scroll position (on scroll, on resize, and when "More" expands the list) and adds `.at-end` once the row is scrolled to the end or doesn't overflow.
 - `app/globals.css` (phones only, under 768px): a 48px fade from transparent to the page colour on the right edge, reaching the screen edge; `pointer-events: none` so chips under it stay tappable; it fades out at the end of the row.
 - **Checked locally** (`npm run build`, `next start`): at 375px the fade shows at the right edge, disappears when the row is scrolled to the end and comes back at the start, no sideways page scroll; at 1280px there is no fade.
+
+## 🔍 No-results Search Shows Topics Too — 2026-11-12
+
+Owner reported the "empty search page" showed no topics or stories on PC. The page with no query did (checked live at 1280px); the gap was a search that **finds nothing** ("No stories for …"), which only had a "Browse all stories" button.
+
+- `app/search/page.jsx`: a search with no results now also shows "Or browse a topic" (8 topics) and "Latest stories" (4 cards) under the "No stories for …" panel. Searches with results are unchanged.
+- **Checked locally** (`npm run build`, `next start`, 1280px): no query, `xyzqq` and a Hindi word with no matches each show 8 topics and 4 cards; `delhi` still shows its 24 results and nothing extra; no sideways scrolling.

@@ -7,8 +7,9 @@ import { getCategories, getLatestStories } from "../../lib/feed";
 const TOPIC_COUNT = 8; // same as the homepage's visible chips
 const LATEST_COUNT = 4;
 
-// Shown on /search with no query: the biggest topics and the newest stories, so
-// the page is never empty. Both come from cached homepage data.
+// Shown on /search with no query, and when a search finds nothing: the biggest
+// topics and the newest stories, so the page is never empty. Both come from
+// cached homepage data.
 async function BrowseSuggestions() {
   const [categories, latest] = await Promise.all([
     getCategories().catch(() => []),
@@ -110,6 +111,9 @@ export default async function SearchPage({ searchParams }) {
           </Link>
         </div>
       )}
+
+      {/* A search with no results gets the same topics and latest stories. */}
+      {hasQuery && videos.length === 0 && <BrowseSuggestions />}
 
       {videos.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
