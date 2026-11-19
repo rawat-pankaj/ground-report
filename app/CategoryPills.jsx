@@ -5,15 +5,19 @@ import Link from "next/link";
 
 const VISIBLE_COUNT = 8;
 
-function hrefFor(language, category) {
-  const p = new URLSearchParams();
-  if (language) p.set("language", language);
+// Where a chip links. On a channel page (basePath "/channel/<slug>") chips filter
+// within the channel with ?category=. Elsewhere a category has its own page,
+// /category/<slug>, and "All" is the homepage. Old ?language= links keep the
+// query-string form, since category pages don't filter by language.
+function hrefFor(basePath, language, category) {
+  if (basePath) return category ? `${basePath}?category=${category}` : basePath;
+  if (!language) return category ? `/category/${category}` : "/";
+  const p = new URLSearchParams({ language });
   if (category) p.set("category", category);
-  const qs = p.toString();
-  return qs ? "/" + "?" + qs : "/";
+  return "/?" + p.toString();
 }
 
-export default function CategoryPills({ categories, language, category }) {
+export default function CategoryPills({ categories, language = "", category, basePath = "" }) {
   const topSlugs = categories.slice(0, VISIBLE_COUNT).map((c) => c.slug);
   const activeIsHidden = category && !topSlugs.includes(category);
 
@@ -44,7 +48,7 @@ export default function CategoryPills({ categories, language, category }) {
     <div className={"filter-strip-wrap" + (atEnd ? " at-end" : "")}>
       <div className="filter-strip" ref={stripRef} onScroll={updateEnd}>
         <Link
-          href={hrefFor(language, "")}
+          href={hrefFor(basePath, language, "")}
           className={"tag " + (category === "" ? "tag-active" : "")}
         >
           All
@@ -52,7 +56,7 @@ export default function CategoryPills({ categories, language, category }) {
         {visible.map((c) => (
           <Link
             key={c.id}
-            href={hrefFor(language, c.slug)}
+            href={hrefFor(basePath, language, c.slug)}
             className={"tag " + (category === c.slug ? "tag-active" : "")}
           >
             {c.name}

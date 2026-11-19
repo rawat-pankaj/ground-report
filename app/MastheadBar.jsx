@@ -30,9 +30,10 @@ export default function MastheadBar() {
   const searchRef = useRef(null);
   const dropRef = useRef(null);
   const [dropOpen, setDropOpen] = useState(false);
-  // Search lives in the bar on the home page only (including its ?category= views,
-  // since pathname ignores the query). Other pages, e.g. /search, have their own box.
-  const showSearch = !isAdmin && pathname === "/";
+  // Search lives in the bar on the home page and the category pages (which used
+  // to be the home page's ?category= views). Other pages, e.g. /search, have
+  // their own box or don't need one.
+  const showSearch = !isAdmin && (pathname === "/" || pathname.startsWith("/category/"));
 
   // "/" focuses the search box, the same shortcut the hint chip shows. Ignored
   // while typing in a field, with a modifier held, or when the box is hidden

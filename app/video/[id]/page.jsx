@@ -167,7 +167,7 @@ export default async function VideoPage({ params }) {
           {categories[0] && (
             <>
               {" / "}
-              <Link href={`/?category=${categories[0].slug}`} style={{ borderBottom: "1px solid var(--rule)" }}>
+              <Link href={`/category/${categories[0].slug}`} style={{ borderBottom: "1px solid var(--rule)" }}>
                 {categories[0].name}
               </Link>
             </>
@@ -206,7 +206,7 @@ export default async function VideoPage({ params }) {
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((c) => (
-              <Link key={c.id} href={`/?category=${c.slug}`} className="tag">
+              <Link key={c.id} href={`/category/${c.slug}`} className="tag">
                 {c.name}
               </Link>
             ))}
@@ -285,15 +285,23 @@ export default async function VideoPage({ params }) {
               {channelCount} {channelCount === 1 ? "story" : "stories"} on PeopleLens
             </p>
           </div>
-          <a
-            className="btn btn-outline"
-            style={{ padding: "6px 12px", fontSize: "13px" }}
-            href={`https://www.youtube.com/channel/${video.channel.youtubeChannelId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Channel →
-          </a>
+          {/* The channel's page on PeopleLens (which links on to YouTube); a
+              channel without a slug yet goes straight to YouTube. */}
+          {video.channel.slug ? (
+            <Link className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "13px" }} href={`/channel/${video.channel.slug}`}>
+              Channel →
+            </Link>
+          ) : (
+            <a
+              className="btn btn-outline"
+              style={{ padding: "6px 12px", fontSize: "13px" }}
+              href={`https://www.youtube.com/channel/${video.channel.youtubeChannelId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Channel →
+            </a>
+          )}
         </div>
       </div>
 

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import StoryCard from "./StoryCard";
 
-// Rendered as the LAST child of the homepage grid: appended cards flow into the
-// same grid as the server-rendered ones, followed by a full-width button row.
-export default function LoadMore({ initialHasMore, initialIds, pageSize, language, category }) {
+// Rendered as the LAST child of a story grid (homepage, category or channel
+// page): appended cards flow into the same grid as the server-rendered ones,
+// followed by a full-width button row.
+export default function LoadMore({ initialHasMore, initialIds, pageSize, language, category, channel }) {
   const [extra, setExtra] = useState([]);
   const [offset, setOffset] = useState(pageSize);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -19,6 +20,7 @@ export default function LoadMore({ initialHasMore, initialIds, pageSize, languag
       const qs = new URLSearchParams({ offset: String(offset) });
       if (language) qs.set("language", language);
       if (category) qs.set("category", category);
+      if (channel) qs.set("channel", channel);
       const res = await fetch(`/api/feed?${qs.toString()}`);
       if (!res.ok) throw new Error("bad response");
       const data = await res.json();

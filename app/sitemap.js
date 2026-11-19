@@ -21,7 +21,7 @@ export default async function sitemap() {
   });
 
   const categoryRoutes = categories.map((c) => ({
-    url: `${BASE_URL}/?category=${c.slug}`,
+    url: `${BASE_URL}/category/${c.slug}`,
     changeFrequency: "daily",
     priority: 0.7,
   }));
@@ -39,5 +39,17 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...videoRoutes];
+  // One entry per channel page (channels with a published story and a slug).
+  const channels = await prisma.channel.findMany({
+    where: { slug: { not: null }, videos: { some: { status: "published" } } },
+    select: { slug: true },
+  });
+
+  const channelRoutes = channels.map((c) => ({
+    url: `${BASE_URL}/channel/${c.slug}`,
+    changeFrequency: "weekly",
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes, ...channelRoutes, ...videoRoutes];
 }

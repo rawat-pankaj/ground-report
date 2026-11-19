@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
 import { readJson, badBody } from "../../../../lib/http";
+import { uniqueSlug } from "../../../../lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -57,12 +58,25 @@ export async function POST(request) {
     return NextResponse.json({ error: "channel and videos are required" }, { status: 400 });
   }
 
+  // Every channel gets a slug for its /channel/<slug> page: a new channel when it
+  // is created, and an existing one without a slug the next time it is used.
+  const existing = await prisma.channel.findUnique({
+    where: { youtubeChannelId: channel.youtubeChannelId },
+    select: { slug: true },
+  });
+  const slug =
+    existing?.slug ||
+    (await uniqueSlug(channel.name, async (candidate) =>
+      Boolean(await prisma.channel.findUnique({ where: { slug: candidate }, select: { id: true } }))
+    ));
+
   const channelRow = await prisma.channel.upsert({
     where: { youtubeChannelId: channel.youtubeChannelId },
-    update: { lastBrowsedAt: new Date() },
+    update: { lastBrowsedAt: new Date(), ...(existing?.slug ? {} : { slug }) },
     create: {
       youtubeChannelId: channel.youtubeChannelId,
       name: channel.name,
+      slug,
       thumbnailUrl: channel.thumbnailUrl,
       uploadsPlaylistId: channel.uploadsPlaylistId,
     },

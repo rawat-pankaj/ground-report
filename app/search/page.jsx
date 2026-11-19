@@ -34,7 +34,7 @@ async function BrowseSuggestions() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {topics.map((c) => (
-              <Link key={c.id} href={`/?category=${c.slug}`} className="tag">
+              <Link key={c.id} href={`/category/${c.slug}`} className="tag">
                 {c.name}
               </Link>
             ))}

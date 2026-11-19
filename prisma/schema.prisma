@@ -12,6 +12,7 @@ model Channel {
   id                 String   @id @default(cuid())
   youtubeChannelId   String   @unique
   name               String
+  slug               String?  @unique // for /channel/<slug>; added by prisma/sql/2026-11-18-channel-slugs.sql
   thumbnailUrl       String?
   uploadsPlaylistId  String
   lastBrowsedAt      DateTime @default(now())

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { permanentRedirect } from "next/navigation";
 import CategoryPills from "./CategoryPills";
 import StoryCard, { CardLabel, formatDate } from "./StoryCard";
 import LoadMore from "./LoadMore";
@@ -122,6 +123,10 @@ export default async function FeedPage({ searchParams }) {
   const category = categories.some((c) => c.slug === requestedCategory)
     ? requestedCategory
     : "";
+
+  // Categories have their own pages now; old /?category=<slug> links (shared,
+  // bookmarked, already in Google) move there for good (308).
+  if (category && !language) permanentRedirect(`/category/${category}`);
 
   const noFilters = !language && !category;
 
