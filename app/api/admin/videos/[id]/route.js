@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody, isNotFound } from "../../../../../lib/http";
 import { normalizePlace } from "../../../../../lib/places";
+import { pingIndexNow } from "../../../../../lib/indexnow";
 
 function normalizeLanguage(input) {
   if (!input) return null;
@@ -88,9 +89,20 @@ export async function PATCH(request, { params }) {
   const video = await prisma.video.update({
     where: { id },
     data,
-    include: { categories: { include: { category: true } } },
+    include: { categories: { include: { category: true } }, channel: { select: { slug: true } } },
   });
   revalidateTag("videos");
+  // Tell Bing the page changed (lib/indexnow.js); hiding a video also announces
+  // it, so the engines drop it. Featuring or hiding also changes the homepage
+  // and the channel page.
+  const listsChanged = body.status !== undefined || body.featured !== undefined;
+  after(() =>
+    pingIndexNow([
+      `/video/${video.youtubeVideoId}`,
+      listsChanged && "/",
+      listsChanged && video.channel?.slug && `/channel/${video.channel.slug}`,
+    ])
+  );
   return NextResponse.json({ video });
 }
 
@@ -110,5 +122,7 @@ export async function DELETE(request, { params }) {
     throw err;
   }
   revalidateTag("videos");
+  // The page is gone now; announcing it lets the engines drop it sooner.
+  after(() => pingIndexNow([`/video/${existing.youtubeVideoId}`, "/"]));
   return NextResponse.json({ ok: true });
 }

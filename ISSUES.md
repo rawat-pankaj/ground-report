@@ -713,7 +713,7 @@ A second look at how the site gets found, after video pages shipped. Checked liv
   - **2026-11-19, Bing:** "Import from Google Search Console" found no sites (probably because the Google property is a Domain property); the site was added to Bing Webmaster Tools directly and the owner submitted `https://www.peoplelens.in/sitemap.xml` there. Check Bing's Sitemaps page for the discovered count in a few days. **Same day:** Bing crawled it already: status **Success, 385 URLs discovered**, even though the Bing site is listed as `peoplelens.in/` (no www) and the sitemap URLs use www, so no second www site is needed.
   - **2026-11-19, Google:** Search Console Sitemaps shows `/sitemap.xml` **Success, 385 discovered pages**, read the same day. "Discovered videos: 0" is expected: that column only counts video-sitemap entries, and ours is a plain sitemap; video pages are found from each page's `VideoObject` JSON-LD and show up later under Indexing → Videos. Still to do: the Pages report in a week or two.
 - [ ] **Possible later code item: video sitemap** — add `<video:video>` entries (thumbnail, title, description, player URL) to the sitemap so Search Console counts video pages directly. Optional; the JSON-LD already describes each video.
-- [ ] **Possible later code item: IndexNow** — ping Bing (and Yandex) when a story is published or updated in Admin, so new stories show up in Bing within hours. Needs a key file in `public/` and one call from the admin write routes; no database change. Google does not use IndexNow.
+- [x] **IndexNow** (built 2026-11-20, see "IndexNow" at the end of this file) — ping Bing (and Yandex) when a story is published or updated in Admin, so new stories show up in Bing within hours. Needs a key file in `public/` and one call from the admin write routes; no database change. Google does not use IndexNow.
 - [ ] **Thin video pages.** A page with only title, byline, embed and related links (no curator note) is weak content. Fill "Why this matters" (2–3 sentences) starting with the newest and most topical videos.
 - [ ] **Channel pages** (e.g. a page for "Sharad Sharma on Ground") and real `/category/[slug]` routes replacing `?category=`. People search by channel and topic; these pages also give internal links and richer sitemap entries. Recommended next code item.
 - [x] **Larger social preview image** for video pages — done 2026-10-31 with `maxresdefault` where available (owner picked option A over a branded 1200×630 card; see "Share Image" at the end of this file). The branded card is a possible later step.
@@ -1191,3 +1191,17 @@ Owner approved the mockup. Resumes the "Later, separate step" noted under "Chann
 ## 🏷️ Supabase Renames — 2026-11-19
 
 The owner renamed the Supabase organization ("iTech" → "ItechNova") and the project ("ground-report" → **"PeopleLens"**). Display names only: the project ref `vhuzrnjcadpwlzpqufmv` (Mumbai, `ap-south-1`) and the organization id are unchanged, so the connection strings in Vercel and `.env`, the Vercel–Supabase integration and the Supabase connector all keep working; checked afterwards that the project is healthy and the live site responds. The GitHub repo and local folder keep the name `ground-report`.
+
+## 📣 IndexNow — 2026-11-20
+
+Owner approved. Tells Bing (and other IndexNow engines such as Yandex) about changed pages right away, so new and edited stories can show in Bing within hours. Google does not use IndexNow; it keeps reading the sitemap.
+
+- **Key file:** `public/6af50d47cd21e00a49a5a1318b1278fc.txt` (contains the key; served as text/plain). The key is public by design; `lib/indexnow.js` holds the same value, so renaming one means renaming the other.
+- **`lib/indexnow.js`:** `pingIndexNow(paths)` POSTs to `api.indexnow.org` with host `www.peoplelens.in`, the key, the key location and the full URLs (deduplicated, blanks dropped, max 10,000). **Only when `VERCEL_ENV === "production"`**, so local runs and preview deploys never ping. 5 s timeout; errors are swallowed (a failed ping just means the next crawl finds it).
+- **Pings run after the response** (`after()` from `next/server`), so admin saves are not slowed:
+  - Add video / Add channel (`POST /api/admin/videos`): the homepage, the channel page and each new published video page.
+  - Any edit on Published Videos (`PATCH /api/admin/videos/[id]`): that video page; plus the homepage and channel page when it is hidden, published or featured. (Typed fields save on leaving the box, so one video can be announced a few times while editing; harmless.)
+  - Delete (`DELETE`): the video page (now gone) and the homepage.
+  - Admin → Places save: the published video pages whose place was filled.
+- **Checked locally** (`npm run build`, `next start`): the key file is served (200, `text/plain`, the key); the homepage is still static (`○ /`); the admin routes still need the session (401). The helper was tested with a fake network: no call without `VERCEL_ENV=production`; with it, the request body has the right host, key, key location and full URLs; a network error is swallowed. No real ping was sent.
+- **To check live:** after the next story is added or edited, Bing Webmaster Tools → **IndexNow** should list the submitted URLs (it can take a little while to appear).

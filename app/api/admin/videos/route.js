@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
 import { readJson, badBody } from "../../../../lib/http";
 import { uniqueSlug } from "../../../../lib/slug";
 import { normalizePlace } from "../../../../lib/places";
+import { pingIndexNow } from "../../../../lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -105,5 +106,13 @@ export async function POST(request) {
   }
 
   revalidateTag("videos");
+  // Tell Bing about the new pages once the response has gone (lib/indexnow.js).
+  after(() =>
+    pingIndexNow([
+      "/",
+      channelRow.slug && `/channel/${channelRow.slug}`,
+      ...created.filter((v) => v.status === "published").map((v) => `/video/${v.youtubeVideoId}`),
+    ])
+  );
   return NextResponse.json({ videos: created });
 }
