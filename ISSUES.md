@@ -1169,3 +1169,15 @@ Owner asked to tidy place names (47 spellings in use, e.g. "Delhi", "Delhi, Indi
 - **Left as they are, for the owner to judge:** "Sikkim, Uttarakhand" (1 video; Sikkim is not in Uttarakhand), "Delhi, Bihar" and "Ladakh, Arunachal Pradesh" (two places on one video, after the SQL), "Svalbard and Jan Mayen" (Arctic video), and 13 videos with just "India".
 - **Checked:** `npm run build` passes; `normalizePlace` tested on the real spellings (above) plus "  Gaya ,  bihar " → "Gaya, Bihar" and an empty place.
 - **Owner ran the SQL, 2026-11-19:** 47 spellings → 33; every remaining spelling is in the standard form (Delhi 110, Uttarakhand 20, India 14, Uttar Pradesh 9, …). The judgment cases above are unchanged. Live pages pick up the new spellings after the next admin change.
+
+## ⚡ Ready-made (Static) Homepage — 2026-11-19
+
+Owner approved the mockup. Resumes the "Later, separate step" noted under "Channel and Category Pages: plan, parked".
+
+- **Why it was dynamic:** `app/page.jsx` read the admin cookie (for the "no featured story" note), `searchParams` (old `?category=` / `?language=` links) and the server clock (the header date), so every visit was built on the server. Measured before the change from the owner's PC: home 0.18–0.36 s to first byte (`x-vercel-cache: MISS`, `no-store`) vs a ready-made page (About) 0.11–0.20 s. (The earlier "about 50 ms instead of about 0.4 s" estimate was too optimistic.)
+- **Now:** the homepage reads none of those on the server; the build marks it `○ /` (static) and Vercel serves a saved copy, rebuilt when the `"videos"` tag is revalidated (any admin change), like the data already was.
+  - `app/TodayDate.jsx`: the header date, filled in by the browser (India time), empty for a split second.
+  - `app/AdminHint.jsx`: the admin-only note, shown when no story is featured and the readable `pl_admin=1` marker cookie is present (`lib/adminMarker.js`). Login sets it next to the signed session (same 30 days); logout clears it. It proves nothing (admin pages and routes still check the signed session); visitors make no extra request. **The owner needs to log in again once** for the marker to exist.
+  - `proxy.js`: old `/?category=<slug>` links → 308 to `/category/<slug>` (a malformed value → `/`); the matcher only sends `/` there when `?category=` is present, so ordinary homepage visits don't run it. Old `?language=hi` links now show all stories (no UI for it since October).
+- **Checked locally** (`npm run build`, `next start`): route table shows `○ /`; `/` served with `x-nextjs-cache: HIT`, 49 cards, date "Thu, 19 Nov 2026", no hydration errors; "Load more" adds the next 48; `/?category=environment` → 308 `/category/environment`; `/?language=hi&category=corruption` → 308 `/category/corruption`; `/?language=hi` → the normal homepage; admin gate unchanged (307 / 401). The admin note itself could not be shown locally (a story is featured).
+- **To check live after deploy:** first-byte time on `/` with `x-vercel-cache: HIT`, and that an admin change (e.g. featuring a different story) shows on the homepage — that is the rebuild-on-change behaviour this relies on.

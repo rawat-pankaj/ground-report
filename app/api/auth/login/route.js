@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { readJson, badBody } from "../../../../lib/http";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "../../../../lib/session";
+import { ADMIN_MARKER_COOKIE } from "../../../../lib/adminMarker";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,13 @@ export async function POST(request) {
   // A signed, expiring token (see lib/session.js), not the password itself.
   res.cookies.set(SESSION_COOKIE, await createSessionToken(), {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  });
+  // Readable marker for admin-only hints on public pages (see lib/adminMarker.js).
+  res.cookies.set(ADMIN_MARKER_COOKIE, "1", {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
