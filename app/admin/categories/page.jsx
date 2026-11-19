@@ -154,8 +154,9 @@ export default function AdminCategories() {
               ) : (
                 <p className="story-headline text-[14px]">{category.name}</p>
               )}
-              <p className="story-meta mt-1" style={{ fontSize: "10px" }}>
-                {category.slug} &nbsp;·&nbsp; {category._count?.videos || 0} video
+              {/* The address is fixed at creation; renaming keeps it. */}
+              <p className="story-meta mt-1" style={{ fontSize: "12px", textTransform: "none" }}>
+                /category/{category.slug} &nbsp;·&nbsp; {category._count?.videos || 0} video
                 {category._count?.videos === 1 ? "" : "s"}
               </p>
               {rowError[category.id] && (

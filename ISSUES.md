@@ -1148,3 +1148,12 @@ The build on 19 Nov stopped once with a Next.js "SecurityFatalError" notice (a r
 - **Change:** owner approved; `npm install next@16.4.6 --save-exact` after a `--dry-run` (16.4.5 is the first fixed release). Only 3 packages changed: `next`, `@next/env`, `@next/swc-win32-x64-msvc` (16.4.1 → 16.4.6). React, Prisma, Tailwind unchanged. `npm audit`: 0 vulnerabilities. The notice's suggested `next upgrade --agent=security …` command was **not** run.
 - **Checked locally** (`npm run build`, `next start`): the build passes with only the known React 18 deprecation warning; home (49 cards), `/category/environment` (46), `/channel/sharad-sharma-on-ground` (14), a video page, `/search` (empty and `delhi`), About, Suggest, 404, the `?category=` 308, the admin gate (`/admin` → login, `/api/admin/stats` 401), `/api/feed`, sitemap, robots, self-hosted fonts (year-long cache header) and the CSP header all behave as before; all four font families load. Browser console errors are only the Vercel Analytics / Speed Insights scripts, which exist only on Vercel.
 - `CLAUDE.md` updated (version pin and the note about the build's upgrade notice).
+
+## 🔒 Category Addresses Stay Fixed on Rename — 2026-11-19
+
+Follow-up to the category pages: renaming a category used to re-make its slug, so `/category/<old-slug>` links (shared, bookmarked, in the sitemap and Google) would break.
+
+- `app/api/admin/categories/[id]/route.js` (PATCH): a rename now changes **only the name**; the slug set at creation stays. The duplicate check is on the name only. Creating a category still makes its slug from the name, as before.
+- `app/admin/categories/page.jsx`: each category shows its address as `/category/<slug>` (12px, was the bare slug at 10px), so it's clear what stays fixed.
+- Channel slugs already work this way (set once; a channel renaming itself on YouTube doesn't change its PeopleLens address).
+- **Checked locally** (`npm run build`, `next start` with a 1-hour test session; no rename was saved): 401 without the cookie, 400 for a bad body or empty name, 409 for a name another category already has, 404 for an unknown id. An actual rename was not run (it writes to the live database); the owner can confirm by renaming one and opening its old address.
