@@ -44,4 +44,3 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - Channel pages and real `/category/[slug]` routes (the next SEO step).
 - Done 2026-10-27/28 and no longer parked: Vercel Node 24.x, the apex redirect, the cold-load speed fix (functions pinned to `bom1`), on-site search (home-page pill plus `/search`), footer, card labels and dates, the Next.js 16.4.1 upgrade, and the admin "no featured story" hints.
 - Beat tags, Instagram, bulk admin edit and admin sort/filter, rate-limit consolidation, `unstable_cache` to `use cache`, nomination email alerts, Hindi About page, RSS feed, the modern header directions, the empty `/search` page.
-- Paused duplicate Supabase project "GroundReport" (Tokyo) can be deleted if unused.

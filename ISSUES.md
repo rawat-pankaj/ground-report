@@ -641,7 +641,7 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 - [x] Channel pages and real `/category/[slug]` routes — built 2026-11-19, see "Channel and Category Pages" at the end of this file.
 - [x] Suggest places for the existing videos — originally built and parked 2026-10-11 (the zip was lost); **rebuilt 2026-11-12**, see "Place Backfill Rebuilt" at the end of this file. The owner still has to run the scan and save on the live site.
 - [ ] Admin "export notes" button — deliberately deferred; curator's notes live only in Postgres, so revisit once a meaningful number are written.
-- [ ] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused.
+- [x] Possibly delete the paused duplicate Supabase project "GroundReport" (Tokyo) if unused. **Deleted by the owner 2026-11-19** after checking nothing used it (local `.env` and the live site both use `ground-report`, Mumbai); only `ground-report` remains in Supabase.
 - [ ] **Parked 2026-11-10:** click-to-play video on video pages (show the full-size thumbnail with a play button; load the YouTube player only on click; no CSP change needed). From the 9 Nov site review, should-fix 6.
 - [x] **Done 2026-11-10:** "Why this matters" notes started. Checked: 17 of 276 published videos have a note, and all 17 video pages show it on the live site. More get added over time with "Draft from description" on Published Videos (owner content work, no code needed).
 
@@ -824,8 +824,8 @@ Investigated the ~6 s first load of uncached pages. Pushed as `b3d3b61`.
 ## 🧹 Clean-up — outside the repo, parked (2026-10-28)
 
 Repo clean-up is done (27 `_old` backups, two unused icons and `/api/videos` removed; env var names fixed in README and `.env.example`). These items sit outside the repo and are **parked by the owner for later review**:
-- [ ] Review the paused duplicate Supabase project "GroundReport" (Tokyo) and delete it if unused (also listed under "Still open").
-- [ ] In the Vercel dashboard (Settings → Environment Variables), check for a leftover `DATABASE_URL`; the code reads only `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `YOUTUBE_API_KEY` and `ADMIN_PASSWORD`. The Claude Code connector cannot see this project, so this needs a manual check.
+- [x] Review the paused duplicate Supabase project "GroundReport" (Tokyo) and delete it if unused. **Deleted 2026-11-19.**
+- [x] In the Vercel dashboard (Settings → Environment Variables), check for a leftover `DATABASE_URL`; the code reads only `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `YOUTUBE_API_KEY` and `ADMIN_PASSWORD`. The Claude Code connector cannot see this project, so this needs a manual check. **Done 2026-11-19:** the owner checked and no `DATABASE_URL` remains in Vercel (a project-wide search found nothing in the code reading it).
 - [ ] Optional: add a `.gitattributes` (for example `* text=auto`) to silence Git's "LF will be replaced by CRLF" warnings on Windows.
 
 ## 🔎 On-site Search — 2026-10-28
