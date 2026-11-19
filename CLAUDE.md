@@ -5,6 +5,7 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 ## Stack and coordinates
 - Next.js **16.4.6, exact pin** (16.4.1 until 2026-11-19) (the build warns that React 18 support is deprecated and goes away in Next 17) (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
 - Repo: github.com/rawat-pankaj/ground-report. Local path: `D:\Projects\ground-report` (Windows, PowerShell).
+- Supabase: project **"PeopleLens"** (ref `vhuzrnjcadpwlzpqufmv`, Mumbai `ap-south-1`; it was named "ground-report" until 2026-11-19), organization "ItechNova". The only project; connections use the ref, not the names.
 - Env vars (never commit `.env`, never print its values): `POSTGRES_PRISMA_URL` (pooled connection, used by `prisma/schema.prisma` as `url`), `POSTGRES_URL_NON_POOLING` (direct connection, used as `directUrl`), `YOUTUBE_API_KEY`, `ADMIN_PASSWORD`. These are the names the code actually reads (they match Vercel's Supabase integration). `.env.example` and the README list the same four names.
 - Commands: `npm run dev`, `npm run build` (runs `prisma generate` first). There are no tests; verify with a local build and by checking the running site.
 
