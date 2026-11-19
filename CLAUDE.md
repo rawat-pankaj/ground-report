@@ -3,7 +3,7 @@
 Hand-curated portal of independent Indian YouTube journalism. Nothing appears on the public site unless the owner (Pankaj, sole developer/admin/curator) chose it. Live at https://www.peoplelens.in (canonical host is `www`). Formerly called "Ground Report"; the repo and DB keep that name.
 
 ## Stack and coordinates
-- Next.js **16.4.1, exact pin** (the build warns that React 18 support is deprecated and goes away in Next 17) (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
+- Next.js **16.4.6, exact pin** (16.4.1 until 2026-11-19) (the build warns that React 18 support is deprecated and goes away in Next 17) (App Router, Turbopack), React 18, Tailwind 3, Prisma 5 + Supabase Postgres (RLS on), Vercel Hobby (auto-deploys `main`; Node 20 is disabled for new deploys, so use 22+).
 - Repo: github.com/rawat-pankaj/ground-report. Local path: `D:\Projects\ground-report` (Windows, PowerShell).
 - Env vars (never commit `.env`, never print its values): `POSTGRES_PRISMA_URL` (pooled connection, used by `prisma/schema.prisma` as `url`), `POSTGRES_URL_NON_POOLING` (direct connection, used as `directUrl`), `YOUTUBE_API_KEY`, `ADMIN_PASSWORD`. These are the names the code actually reads (they match Vercel's Supabase integration). `.env.example` and the README list the same four names.
 - Commands: `npm run dev`, `npm run build` (runs `prisma generate` first). There are no tests; verify with a local build and by checking the running site.
@@ -37,7 +37,7 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - All `*_old*` backup files were removed on 2026-10-27 (27 files, nothing referenced them). Git history keeps them. Do not create new `_old` copies; use git for history.
 
 ## Parked items (see `ISSUES.md` for detail)
-- Plan a React 19 upgrade before Next 17. (`npm audit` is clean as of 2026-10-31; before any future `audit fix`, run it with `--dry-run` first and never use `--force`, since it once moved Next's minor version.)
+- Plan a React 19 upgrade before Next 17. (`npm audit` is clean as of 2026-11-19, after the Next.js 16.4.6 patch; before any future `audit fix`, run it with `--dry-run` first and never use `--force`, since it once moved Next's minor version. For a Next.js advisory, change the exact pin with `npm install next@<version> --save-exact` after a `--dry-run`. The Next build may stop with a "SecurityFatalError" upgrade notice; a re-run continues, and its suggested `next upgrade --agent=…` command is not to be run without the owner's say-so.)
 - Place backfill for existing videos (Admin → Places; built earlier, not pushed).
 - AI-drafted "Why this matters" notes (on hold; YouTube's own AI summary is not available through the API).
 - Channel pages and real `/category/[slug]` routes (the next SEO step).
