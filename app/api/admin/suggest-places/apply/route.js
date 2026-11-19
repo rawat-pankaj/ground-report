@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody } from "../../../../../lib/http";
+import { normalizePlace } from "../../../../../lib/places";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function POST(request) {
     .slice(0, MAX_ITEMS)
     .map((item) => ({
       id: typeof item?.id === "string" ? item.id : "",
-      place: typeof item?.place === "string" ? item.place.trim().slice(0, MAX_PLACE_LENGTH) : "",
+      place: typeof item?.place === "string" ? normalizePlace(item.place.slice(0, MAX_PLACE_LENGTH)) : "",
     }))
     .filter((item) => item.id && item.place);
 

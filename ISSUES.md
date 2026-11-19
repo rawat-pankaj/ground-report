@@ -1158,3 +1158,14 @@ Follow-up to the category pages: renaming a category used to re-make its slug, s
 - Channel slugs already work this way (set once; a channel renaming itself on YouTube doesn't change its PeopleLens address).
 - **Checked locally** (`npm run build`, `next start` with a 1-hour test session; no rename was saved): 401 without the cookie, 400 for a bad body or empty name, 409 for a name another category already has, 404 for an unknown id. An actual rename was not run (it writes to the live database); the owner can confirm by renaming one and opening its old address.
 - **Live check, 2026-11-19:** the owner renamed "Documentaries" to "Documentary"; the slug stayed `documentaries`, and `/category/documentaries` shows the new name (title and heading "Documentary", 15 stories). `/category/documentary` is a 404, as expected (the address didn't move).
+
+## 🧹 One Spelling per Place — 2026-11-19
+
+Owner asked to tidy place names (47 spellings in use, e.g. "Delhi", "Delhi, India", "delhi", "Delhi,India", "india, delhi").
+
+- **Standard:** "City, State" or "State" with the usual capitalisation, as Add video and Admin → Places already suggest; "India" only when nothing more specific is given.
+- **`lib/places.js`:** new `normalizePlace()`: splits on commas, tidies spacing, gives every known state, union territory and city its usual capitalisation, drops "India" when a more specific place is present, keeps anything unknown as typed. Now applied when a place is saved from Add video / Add channel (`POST /api/admin/videos`), the Published Videos place box (`PATCH /api/admin/videos/[id]`) and Admin → Places. (The Published Videos box keeps showing what was typed until the page is reloaded.)
+- **Existing data:** `prisma/sql/2026-11-19-tidy-places.sql` (owner runs it in Supabase) changes 19 spellings on 44 videos, each by exact match, generated from the live data with `normalizePlace` plus one hand fix ("uttara pradesh, india" → "Uttar Pradesh"). After it runs, one small admin change refreshes cached pages.
+- **Left as they are, for the owner to judge:** "Sikkim, Uttarakhand" (1 video; Sikkim is not in Uttarakhand), "Delhi, Bihar" and "Ladakh, Arunachal Pradesh" (two places on one video, after the SQL), "Svalbard and Jan Mayen" (Arctic video), and 13 videos with just "India".
+- **Checked:** `npm run build` passes; `normalizePlace` tested on the real spellings (above) plus "  Gaya ,  bihar " → "Gaya, Bihar" and an empty place.
+- **Owner ran the SQL, 2026-11-19:** 47 spellings → 33; every remaining spelling is in the standard form (Delhi 110, Uttarakhand 20, India 14, Uttar Pradesh 9, …). The judgment cases above are unchanged. Live pages pick up the new spellings after the next admin change.

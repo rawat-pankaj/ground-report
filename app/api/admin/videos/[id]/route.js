@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody, isNotFound } from "../../../../../lib/http";
+import { normalizePlace } from "../../../../../lib/places";
 
 function normalizeLanguage(input) {
   if (!input) return null;
@@ -61,7 +62,7 @@ export async function PATCH(request, { params }) {
     if (value.length > max) {
       return NextResponse.json({ error: `${field} must be ${max} characters or fewer` }, { status: 400 });
     }
-    data[field] = value || null;
+    data[field] = (field === "place" ? normalizePlace(value) : value) || null;
   }
 
   if (body.featured !== undefined) {

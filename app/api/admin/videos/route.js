@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
 import { readJson, badBody } from "../../../../lib/http";
 import { uniqueSlug } from "../../../../lib/slug";
+import { normalizePlace } from "../../../../lib/places";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,10 @@ const MAX_PLACE_LENGTH = 100;
 
 // Per-video place sent by the add-video / add-channel pages. Optional; empty
 // or non-text values become null so a bad payload can't break publishing.
+// normalizePlace keeps one spelling per place ("delhi, india" -> "Delhi").
 function cleanPlace(input) {
   if (typeof input !== "string") return null;
-  return input.trim().slice(0, MAX_PLACE_LENGTH) || null;
+  return normalizePlace(input.slice(0, MAX_PLACE_LENGTH)) || null;
 }
 
 const MAX_NOTE_LENGTH = 1000;
