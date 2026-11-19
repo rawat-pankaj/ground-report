@@ -645,6 +645,21 @@ Admin → Link check (`POST /api/admin/check-videos`): batches `videos.list` (1 
 - [ ] **Parked 2026-11-10:** click-to-play video on video pages (show the full-size thumbnail with a play button; load the YouTube player only on click; no CSP change needed). From the 9 Nov site review, should-fix 6.
 - [x] **Done 2026-11-10:** "Why this matters" notes started. Checked: 17 of 276 published videos have a note, and all 17 video pages show it on the live site. More get added over time with "Draft from description" on Published Videos (owner content work, no code needed).
 
+### Ideas, not scheduled
+
+Moved here from `CLAUDE.md` on 2026-11-20 (owner's choice). Not planned; picked up only if the owner asks.
+
+- [ ] Dark mode.
+- [ ] A branded share card per video (1200×630 with headline and channel; option B of the 31 Oct share-image mockup).
+- [ ] Hindi site text and a Hindi About page.
+- [ ] Better search (search v2).
+- [ ] Beat tags.
+- [ ] Instagram.
+- [ ] Rate-limit consolidation (the suggestion form and admin login each have their own table).
+- [ ] Moving from `unstable_cache` to `use cache`.
+- [ ] Other header designs from the October header mockups.
+- [ ] Repo housekeeping: an `engines` field in `package.json` and a `.gitattributes` file (would stop the LF/CRLF warnings on every commit).
+
 ---
 
 ## 📍 Place Suggestions on Add — 2026-10-11
@@ -1206,3 +1221,7 @@ Owner approved. Tells Bing (and other IndexNow engines such as Yandex) about cha
 - **Checked locally** (`npm run build`, `next start`): the key file is served (200, `text/plain`, the key); the homepage is still static (`○ /`); the admin routes still need the session (401). The helper was tested with a fake network: no call without `VERCEL_ENV=production`; with it, the request body has the right host, key, key location and full URLs; a network error is swallowed. No real ping was sent.
 - **To check live:** after the next story is added or edited, Bing Webmaster Tools → **IndexNow** should list the submitted URLs (it can take a little while to appear).
 - **Live check, 2026-11-20:** key file live (200, text/plain, the key; the bare domain 308s to it). After the owner's first edit, Bing's IndexNow page listed nothing yet. A manual test ping for `/` got **200** from both `www.bing.com/indexnow` and `api.indexnow.org`, so pings are accepted. Likely the report lags, or it files www pings under a `www.peoplelens.in` site (Bing has the site as `peoplelens.in/`). Owner to look again on 2026-11-21; if still empty, add `https://www.peoplelens.in` as a second site in Bing.
+
+## 📘 CLAUDE.md Review — 2026-11-20
+
+Owner asked for an accuracy review after the last few weeks' changes. `CLAUDE.md` was checked line by line against the code and rewritten: stale items fixed (Supabase project name, the parked list still listing finished work, cache-key rules, the `ISSUES.md` size), and the recent rules added (static homepage, channel/category slugs, place normalisation, IndexNow, `prisma/sql/` for one-off SQL, refreshing cached pages after a schema change, local testing against the live database, dependency upgrade rules, a short site map). The unscheduled ideas list moved here, under "Still open" → "Ideas, not scheduled".
