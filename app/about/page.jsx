@@ -1,6 +1,7 @@
 export const metadata = {
   title: "About — PeopleLens",
   description: "Why this exists and how videos are chosen.",
+  alternates: { canonical: "/about" },
   openGraph: {
     title: "About — PeopleLens",
     description: "Why this exists and how videos are chosen.",

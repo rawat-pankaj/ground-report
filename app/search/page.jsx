@@ -63,6 +63,8 @@ async function BrowseSuggestions() {
 export const metadata = {
   title: "Search — PeopleLens",
   robots: { index: false, follow: true },
+  // Every ?q= variant points at the plain search page.
+  alternates: { canonical: "/search" },
 };
 
 export default async function SearchPage({ searchParams }) {
