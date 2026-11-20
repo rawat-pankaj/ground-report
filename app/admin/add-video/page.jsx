@@ -2,10 +2,11 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import NoteHint from "../NoteHint";
 
 // "Why this matters", pre-filled with a draft cut from the YouTube description
 // (lib/draftNote.js). Saved only when the video is published.
-function NoteDraftField({ note, setNote, suggestedNote, description, showDescription, setShowDescription }) {
+function NoteDraftField({ note, setNote, suggestedNote, description, title, showDescription, setShowDescription }) {
   const isDraft = Boolean(suggestedNote) && note === suggestedNote;
   return (
     <div className="mb-2 mt-3">
@@ -24,6 +25,7 @@ function NoteDraftField({ note, setNote, suggestedNote, description, showDescrip
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
+      <NoteHint note={note} description={description} title={title} />
       <div className="flex justify-between gap-3 flex-wrap mt-1">
         <p className="story-meta" style={{ textTransform: "none" }}>
           {suggestedNote
@@ -185,6 +187,7 @@ function AddVideoInner() {
             setNote={setNote}
             suggestedNote={result.video.suggestedNote || ""}
             description={result.video.description || ""}
+            title={result.video.title || ""}
             showDescription={showDescription}
             setShowDescription={setShowDescription}
           />

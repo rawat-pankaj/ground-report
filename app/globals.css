@@ -755,3 +755,23 @@ body {
   border: 1px solid var(--rule);
   padding: 10px 12px;
 }
+
+/* Admin: hint under a "Why this matters" box (app/admin/NoteHint.jsx). */
+.note-hint {
+  margin: 6px 0 0;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.note-hint-warn {
+  background: #fcf3d9;
+  border: 1px solid #e8c96a;
+  color: #5c4100;
+}
+
+.note-hint-ok {
+  background: #e6f2ea;
+  border: 1px solid #9ccbaa;
+  color: #1e5a33;
+}

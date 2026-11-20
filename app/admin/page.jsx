@@ -24,6 +24,13 @@ export default function AdminDashboard() {
     load();
   }, []);
 
+  // Admin -> Notes links here as /admin#v-<id>. The list loads after the page,
+  // so scroll to that video once it is on screen.
+  useEffect(() => {
+    if (!videos || !window.location.hash.startsWith("#v-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "center" });
+  }, [videos]);
+
   async function toggleStatus(video) {
     const nextStatus = video.status === "published" ? "hidden" : "published";
     const res = await fetch(`/api/admin/videos/${video.id}`, {
@@ -137,7 +144,7 @@ export default function AdminDashboard() {
 
       <div className="flex flex-col gap-3">
         {videos.map((video) => (
-          <div key={video.id} className="story-card p-3 flex gap-3 items-start">
+          <div key={video.id} id={`v-${video.id}`} className="story-card p-3 flex gap-3 items-start">
             {video.thumbnailUrl && (
               <div style={{ position: "relative" }} className="shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NoteHint from "./NoteHint";
 
 // The "Why this matters" box on Published Videos. Typed notes save when you
 // leave the box, as before. A draft from the YouTube description (the button
@@ -63,6 +64,7 @@ export default function NoteField({ video, onSave }) {
           if (!isDraft) onSave(value);
         }}
       />
+      <NoteHint note={value} description={description} title={video.title} />
 
       {isDraft && (
         <div className="flex gap-3 items-center flex-wrap mt-1">
