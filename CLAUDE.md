@@ -46,6 +46,6 @@ Hand-curated portal of independent Indian YouTube journalism. Nothing appears on
 - Do not create `*_old*` backup copies; git keeps history.
 
 ## Pending and parked (detail in `ISSUES.md`)
-- Next up: admin sort/filter, bulk edit, nomination email alerts and a notes export; RSS feed; optional video sitemap.
+- Next up: nomination email alerts and a notes export; RSS feed. (Admin sort/filter and bulk edit, the video sitemap and the Admin → Notes check are done.)
 - Parked: click-to-play video on video pages; a "who runs PeopleLens" line on the About page; matching the "Why this matters" label to the note's language; React 19 upgrade before Next 17.
 - Unscheduled ideas are listed only in `ISSUES.md` ("Ideas, not scheduled" under "Still open").

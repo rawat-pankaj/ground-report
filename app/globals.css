@@ -775,3 +775,61 @@ body {
   border: 1px solid #9ccbaa;
   color: #1e5a33;
 }
+
+/* Admin: bulk edit bar on Published Videos (app/admin/BulkBar.jsx). */
+.bulk-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.bulk-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bulk-select,
+.bulk-input,
+.bulk-btn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  padding: 6px 9px;
+  border: 1px solid #6b6f76;
+  background: transparent;
+  color: var(--paper);
+}
+
+.bulk-select option {
+  color: var(--ink);
+}
+
+.bulk-input::placeholder {
+  color: #a9adb3;
+}
+
+.bulk-btn {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.bulk-btn:disabled,
+.bulk-select:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.bulk-bar .bulk-clear {
+  margin-left: auto;
+  color: var(--paper);
+}

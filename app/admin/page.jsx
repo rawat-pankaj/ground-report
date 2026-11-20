@@ -1,13 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import NoteField from "./NoteField";
+import VideoFilters, { EMPTY_FILTERS, applyFilters } from "./VideoFilters";
+import BulkBar from "./BulkBar";
 import { formatDate } from "../StoryCard";
 
 export default function AdminDashboard() {
   const [videos, setVideos] = useState(null);
   const [categories, setCategories] = useState([]);
   const [saveState, setSaveState] = useState({});
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [sort, setSort] = useState("added-desc");
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState("");
+  // Bumped after a bulk edit so every row remounts and its boxes show the new values.
+  const [version, setVersion] = useState(0);
+
+  const shown = useMemo(() => (videos ? applyFilters(videos, filters, sort) : []), [videos, filters, sort]);
 
   async function load() {
     const [videosRes, categoriesRes] = await Promise.all([
@@ -100,6 +111,49 @@ export default function AdminDashboard() {
     );
   }
 
+  function toggleSelected(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const allShownSelected = shown.length > 0 && shown.every((v) => selected.has(v.id));
+  function toggleAllShown() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const v of shown) allShownSelected ? next.delete(v.id) : next.add(v.id);
+      return next;
+    });
+  }
+
+  async function applyBulk(action, value) {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (action === "status" && value === "hidden" && !confirm(`Hide ${ids.length} video${ids.length === 1 ? "" : "s"} from the site?`)) return;
+    setBulkBusy(true);
+    setBulkMessage("");
+    const payload = action === "addCategory" || action === "removeCategory"
+      ? { ids, action, categoryId: value }
+      : { ids, action, value: action === "language" && value === "none" ? "" : value };
+    try {
+      const res = await fetch("/api/admin/videos/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save");
+      await load();
+      setVersion((n) => n + 1);
+      setBulkMessage(`Updated ${data.updated} ${action.endsWith("Category") ? "topic link" : "video"}${data.updated === 1 ? "" : "s"}.`);
+    } catch (err) {
+      setBulkMessage(`Could not save: ${err.message}`);
+    }
+    setBulkBusy(false);
+  }
+
   async function remove(video) {
     if (!confirm(`Remove "${video.title}"?`)) return;
     const res = await fetch(`/api/admin/videos/${video.id}`, { method: "DELETE" });
@@ -108,6 +162,11 @@ export default function AdminDashboard() {
       return;
     }
     setVideos((prev) => prev.filter((v) => v.id !== video.id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(video.id);
+      return next;
+    });
   }
 
   if (!videos) return <p className="story-meta">Loading…</p>;
@@ -142,9 +201,49 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <VideoFilters
+        filters={filters}
+        setFilters={setFilters}
+        sort={sort}
+        setSort={setSort}
+        categories={categories}
+        shownCount={shown.length}
+        totalCount={videos.length}
+      />
+
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          categories={categories}
+          onApply={applyBulk}
+          onClear={() => setSelected(new Set())}
+          busy={bulkBusy}
+        />
+      )}
+      {bulkMessage && (
+        <p className="story-meta mb-2" role="status" style={{ textTransform: "none", color: bulkMessage.startsWith("Could not") ? "var(--signal)" : "#2f8f4e" }}>
+          {bulkMessage}
+        </p>
+      )}
+
+      {shown.length > 0 && (
+        <label className="flex items-center gap-2 mb-2 story-meta" style={{ cursor: "pointer" }}>
+          <input type="checkbox" checked={allShownSelected} onChange={toggleAllShown} />
+          Select all {shown.length} shown
+        </label>
+      )}
+      {shown.length === 0 && <p className="story-meta">No videos match these filters.</p>}
+
       <div className="flex flex-col gap-3">
-        {videos.map((video) => (
-          <div key={video.id} id={`v-${video.id}`} className="story-card p-3 flex gap-3 items-start">
+        {shown.map((video) => (
+          <div key={`${video.id}:${version}`} id={`v-${video.id}`} className="story-card p-3 flex gap-3 items-start">
+            <input
+              type="checkbox"
+              className="mt-1 shrink-0"
+              checked={selected.has(video.id)}
+              onChange={() => toggleSelected(video.id)}
+              aria-label={`Select ${video.title}`}
+            />
             {video.thumbnailUrl && (
               <div style={{ position: "relative" }} className="shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
