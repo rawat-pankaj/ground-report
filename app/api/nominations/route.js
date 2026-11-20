@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { readJson, badBody } from "../../../lib/http";
+import { readJson, badBody, getClientIp } from "../../../lib/http";
 
 const MAX_INPUT_LENGTH = 500;
 const MAX_REASON_LENGTH = 1000;
@@ -9,12 +9,6 @@ const MAX_CONTACT_LENGTH = 200;
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-function getClientIp(request) {
-  // Vercel sets x-forwarded-for; take the first (client) address.
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || "unknown";
-}
 
 export async function POST(request) {
   const ip = getClientIp(request);

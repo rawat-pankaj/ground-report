@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody, isNotFound } from "../../../../../lib/http";
+import { requireAdmin } from "../../../../../lib/adminAuth";
 
 const VALID_STATUSES = ["pending", "approved", "rejected"];
 
 export async function PATCH(request, { params }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { id } = await params;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();

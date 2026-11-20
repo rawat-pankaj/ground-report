@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import NoteHint from "../NoteHint";
+import NoteHint from "../../NoteHint";
 
 // "Why this matters", pre-filled with a draft cut from the YouTube description
 // (lib/draftNote.js). Saved only when the video is published.

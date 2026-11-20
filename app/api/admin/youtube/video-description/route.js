@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { getVideoDescription } from "../../../../../lib/youtube";
 import { readJson, badBody } from "../../../../../lib/http";
+import { requireAdmin } from "../../../../../lib/adminAuth";
 
 // For the "Draft from description" button on Published Videos: returns the
 // video's YouTube description and a draft note cut from it. Saves nothing.
 export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();
   const videoId = typeof body.videoId === "string" ? body.videoId : "";

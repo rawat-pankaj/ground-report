@@ -5,6 +5,7 @@ import { readJson, badBody } from "../../../../lib/http";
 import { uniqueSlug } from "../../../../lib/slug";
 import { normalizePlace } from "../../../../lib/places";
 import { pingIndexNow } from "../../../../lib/indexnow";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,51 @@ function cleanNote(input) {
   return input.trim().slice(0, MAX_NOTE_LENGTH) || null;
 }
 
-export async function GET() {
+const MAX_VIDEOS = 200;
+const IMAGE_HOSTS = ["i.ytimg.com", "yt3.ggpht.com", "yt3.googleusercontent.com"];
+
+function cleanImage(input) {
+  if (typeof input !== "string") return null;
+  try {
+    const url = new URL(input);
+    return url.protocol === "https:" && IMAGE_HOSTS.includes(url.hostname) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+const cleanText = (input, max) => (typeof input === "string" ? input.trim().slice(0, max) : "");
+
+function cleanChannel(c) {
+  if (!c || typeof c !== "object" || !/^UC[\w-]{22}$/.test(c.youtubeChannelId || "")) return null;
+  const name = cleanText(c.name, 200);
+  if (!name) return null;
+  return {
+    youtubeChannelId: c.youtubeChannelId,
+    name,
+    thumbnailUrl: cleanImage(c.thumbnailUrl),
+    uploadsPlaylistId: /^[\w-]{10,64}$/.test(c.uploadsPlaylistId || "") ? c.uploadsPlaylistId : null,
+  };
+}
+
+function cleanVideo(v) {
+  if (!v || typeof v !== "object" || !/^[\w-]{11}$/.test(v.youtubeVideoId || "")) return null;
+  const title = cleanText(v.title, 300);
+  if (!title) return null;
+  const published = v.publishedAt ? new Date(v.publishedAt) : null;
+  return {
+    youtubeVideoId: v.youtubeVideoId,
+    title,
+    thumbnailUrl: cleanImage(v.thumbnailUrl),
+    publishedAt: published && !Number.isNaN(published.getTime()) ? published : null,
+    place: v.place,
+    curatorNote: v.curatorNote,
+  };
+}
+
+export async function GET(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const videos = await prisma.video.findMany({
     include: { channel: true, categories: { include: { category: true } } },
     orderBy: [{ featured: "desc" }, { addedAt: "desc" }],
@@ -53,12 +98,22 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();
-  const { channel, videos, language, beatTags } = body;
+  const { language, beatTags } = body;
+  if ((language != null && typeof language !== "string") || (beatTags != null && typeof beatTags !== "string")) {
+    return NextResponse.json({ error: "language and beatTags must be text" }, { status: 400 });
+  }
 
-  if (!channel?.youtubeChannelId || !videos?.length) {
-    return NextResponse.json({ error: "channel and videos are required" }, { status: 400 });
+  // The browser sends what the YouTube lookup returned. Check its shape here
+  // rather than trust it: ids in YouTube's formats, text capped, and pictures
+  // only from YouTube's image hosts (the same ones the CSP allows).
+  const channel = cleanChannel(body.channel);
+  const videos = Array.isArray(body.videos) ? body.videos.slice(0, MAX_VIDEOS).map(cleanVideo) : [];
+  if (!channel || !videos.length || videos.some((v) => !v)) {
+    return NextResponse.json({ error: "channel and videos are required, in YouTube's formats" }, { status: 400 });
   }
 
   // Every channel gets a slug for its /channel/<slug> page: a new channel when it
@@ -94,7 +149,7 @@ export async function POST(request) {
         youtubeVideoId: v.youtubeVideoId,
         title: v.title,
         thumbnailUrl: v.thumbnailUrl,
-        publishedAt: v.publishedAt ? new Date(v.publishedAt) : null,
+        publishedAt: v.publishedAt,
         language: normalizeLanguage(language),
         beatTags: normalizeBeatTags(beatTags),
         place: cleanPlace(v.place),

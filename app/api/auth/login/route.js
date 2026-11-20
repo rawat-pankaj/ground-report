@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
-import { readJson, badBody } from "../../../../lib/http";
+import { readJson, badBody, getClientIp } from "../../../../lib/http";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "../../../../lib/session";
 import { ADMIN_MARKER_COOKIE } from "../../../../lib/adminMarker";
 
@@ -21,11 +21,6 @@ const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const FAILED_ATTEMPT_DELAY_MS = 750;
 
-function getClientIp(request) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || "unknown";
-}
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

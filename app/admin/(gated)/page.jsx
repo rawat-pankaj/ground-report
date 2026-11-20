@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import NoteField from "./NoteField";
-import VideoFilters, { EMPTY_FILTERS, applyFilters } from "./VideoFilters";
-import BulkBar from "./BulkBar";
-import { formatDate } from "../StoryCard";
+import NoteField from "../NoteField";
+import VideoFilters, { EMPTY_FILTERS, applyFilters } from "../VideoFilters";
+import BulkBar from "../BulkBar";
+import { formatDate } from "../../StoryCard";
 
 const LANGUAGE_NAMES = { hi: "Hindi", en: "English" };
 

@@ -113,6 +113,7 @@ export default function AdminCategories() {
           <input
             className="input text-[13px] w-full"
             placeholder="New category name"
+            maxLength={60}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
@@ -144,6 +145,7 @@ export default function AdminCategories() {
                 <input
                   className="input text-[13px] w-full"
                   value={editValue}
+                  maxLength={60}
                   autoFocus
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={(e) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NOTE_LABELS } from "../../../lib/noteCheck";
+import { NOTE_LABELS } from "../../../../lib/noteCheck";
 
 // Admin -> Notes: one click checks every saved "Why this matters" note against
 // its video's YouTube text, so the curator can see which notes are copied and

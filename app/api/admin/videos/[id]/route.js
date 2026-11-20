@@ -4,6 +4,7 @@ import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody, isNotFound } from "../../../../../lib/http";
 import { normalizePlace } from "../../../../../lib/places";
 import { pingIndexNow } from "../../../../../lib/indexnow";
+import { requireAdmin } from "../../../../../lib/adminAuth";
 
 function normalizeLanguage(input) {
   if (!input) return null;
@@ -27,6 +28,8 @@ const MAX_NOTE_LENGTH = 1000;
 const MAX_PLACE_LENGTH = 100;
 
 export async function PATCH(request, { params }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { id } = await params;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();
@@ -49,6 +52,20 @@ export async function PATCH(request, { params }) {
     data.status = body.status;
   }
 
+  for (const field of ["language", "beatTags"]) {
+    if (body[field] !== undefined && body[field] !== null && typeof body[field] !== "string") {
+      return NextResponse.json({ error: `${field} must be text` }, { status: 400 });
+    }
+  }
+  if (typeof body.language === "string" && body.language.length > 20) {
+    return NextResponse.json({ error: "language is too long" }, { status: 400 });
+  }
+  if (typeof body.beatTags === "string" && body.beatTags.length > 300) {
+    return NextResponse.json({ error: "beatTags is too long" }, { status: 400 });
+  }
+  if (body.featured !== undefined && typeof body.featured !== "boolean") {
+    return NextResponse.json({ error: "featured must be true or false" }, { status: 400 });
+  }
   if (body.language !== undefined) data.language = normalizeLanguage(body.language);
   if (body.beatTags !== undefined) data.beatTags = normalizeBeatTags(body.beatTags);
 
@@ -66,6 +83,23 @@ export async function PATCH(request, { params }) {
     data[field] = (field === "place" ? normalizePlace(value) : value) || null;
   }
 
+  if (body.categoryIds !== undefined) {
+    if (!Array.isArray(body.categoryIds) || !body.categoryIds.every((c) => typeof c === "string")) {
+      return NextResponse.json({ error: "categoryIds must be a list of ids" }, { status: 400 });
+    }
+    const wanted = [...new Set(body.categoryIds)];
+    const found = await prisma.category.count({ where: { id: { in: wanted } } });
+    if (found !== wanted.length) {
+      return NextResponse.json({ error: "Unknown category" }, { status: 400 });
+    }
+    data.categories = {
+      deleteMany: {},
+      create: wanted.map((categoryId) => ({ categoryId })),
+    };
+  }
+
+  // Last, after every check has passed: featuring one video un-features the
+  // rest, so a request refused above must not get this far.
   if (body.featured !== undefined) {
     if (body.featured) {
       await prisma.video.updateMany({
@@ -74,16 +108,6 @@ export async function PATCH(request, { params }) {
       });
     }
     data.featured = body.featured;
-  }
-
-  if (body.categoryIds !== undefined) {
-    if (!Array.isArray(body.categoryIds) || !body.categoryIds.every((c) => typeof c === "string")) {
-      return NextResponse.json({ error: "categoryIds must be a list of ids" }, { status: 400 });
-    }
-    data.categories = {
-      deleteMany: {},
-      create: body.categoryIds.map((categoryId) => ({ categoryId })),
-    };
   }
 
   const video = await prisma.video.update({
@@ -107,6 +131,8 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { id } = await params;
 
   const existing = await prisma.video.findUnique({ where: { id } });

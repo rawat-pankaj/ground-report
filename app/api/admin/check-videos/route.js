@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { checkVideoAvailability } from "../../../../lib/youtube";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,9 @@ export const dynamic = "force-dynamic";
 // Hiding/removing stays an explicit admin action (via the existing
 // /api/admin/videos/[id] routes), so a false alarm can never silently pull a
 // story off the site. Gated by proxy.js like every /api/admin/* route.
-export async function POST() {
+export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const videos = await prisma.video.findMany({
     select: {
       id: true,

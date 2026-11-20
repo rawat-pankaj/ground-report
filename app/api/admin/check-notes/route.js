@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { getVideoSnippets } from "../../../../lib/youtube";
 import { classifyNote } from "../../../../lib/noteCheck";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,9 @@ export const dynamic = "force-dynamic";
 // note with its video's YouTube description and title (lib/noteCheck.js).
 // Changes nothing; editing stays on Published Videos. Gated by proxy.js like
 // every /api/admin/* route.
-export async function POST() {
+export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const videos = await prisma.video.findMany({
     where: { AND: [{ curatorNote: { not: null } }, { curatorNote: { not: "" } }] },
     select: {

@@ -4,6 +4,7 @@ import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody } from "../../../../../lib/http";
 import { normalizePlace } from "../../../../../lib/places";
 import { pingIndexNow } from "../../../../../lib/indexnow";
+import { requireAdmin } from "../../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ const LANGUAGES = { hi: "hi", en: "en", "": null };
 const STATUSES = ["published", "hidden"];
 
 export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();
 

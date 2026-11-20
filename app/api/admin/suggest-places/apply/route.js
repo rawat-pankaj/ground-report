@@ -4,6 +4,7 @@ import { prisma } from "../../../../../lib/prisma";
 import { readJson, badBody } from "../../../../../lib/http";
 import { normalizePlace } from "../../../../../lib/places";
 import { pingIndexNow } from "../../../../../lib/indexnow";
+import { requireAdmin } from "../../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ const MAX_PLACE_LENGTH = 100;
 // written if that video's Place is STILL empty, so a place typed by hand (even
 // after the scan) is never overwritten. Blank places are skipped.
 export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const body = await readJson(request);
   if (!body || typeof body !== "object" || !Array.isArray(body.items)) return badBody();
 

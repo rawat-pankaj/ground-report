@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { suggestPlacesForVideos } from "../../../../lib/youtube";
 import { suggestPlace } from "../../../../lib/places";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,9 @@ const MAX_SCAN = 500;
 // Place is empty. Nothing is saved here; the admin reviews the list and saving
 // goes through ./apply. A video YouTube no longer returns still gets a
 // suggestion from its stored title. Gated by proxy.js like every /api/admin/* route.
-export async function POST() {
+export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const videos = await prisma.video.findMany({
     where: { OR: [{ place: null }, { place: "" }] },
     select: {

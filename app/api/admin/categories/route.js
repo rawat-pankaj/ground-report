@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "../../../../lib/prisma";
 import { readJson, badBody } from "../../../../lib/http";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,9 @@ function slugify(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function GET() {
+export async function GET(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { videos: true } } },
@@ -22,9 +25,14 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const body = await readJson(request);
   if (!body || typeof body !== "object") return badBody();
   const name = (typeof body.name === "string" ? body.name : "").trim();
+  if (name.length > 60) {
+    return NextResponse.json({ error: "A category name can be at most 60 characters" }, { status: 400 });
+  }
 
   if (!name) {
     return NextResponse.json({ error: "A category name is required" }, { status: 400 });
