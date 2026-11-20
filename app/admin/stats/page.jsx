@@ -260,7 +260,10 @@ export default function AdminStats() {
       <div className="grid sm:grid-cols-2 gap-8">
         <div>
           <SectionLabel>Language</SectionLabel>
-          <HorizontalBars items={stats.languages} maxItems={5} />
+          <HorizontalBars
+            items={stats.languages.map((l) => ({ ...l, language: { hi: "Hindi", en: "English" }[l.language] || l.language }))}
+            maxItems={5}
+          />
         </div>
 
         <div>

@@ -67,7 +67,7 @@ export default function AdminLinkCheck() {
         </button>
       </div>
 
-      <p className="story-meta mb-4">
+      <p className="story-meta mb-4" style={{ textTransform: "none", fontFamily: "inherit", fontSize: "13px" }}>
         Finds curated videos that were deleted, made private, or are blocked in India, so readers
         don&apos;t land on an error. Nothing changes until you hide or remove a video yourself.
       </p>

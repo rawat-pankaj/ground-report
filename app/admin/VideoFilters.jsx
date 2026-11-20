@@ -53,7 +53,11 @@ export function applyFilters(videos, filters, sort) {
     : shown.sort(compare);
 }
 
-export default function VideoFilters({ filters, setFilters, sort, setSort, categories, shownCount, totalCount }) {
+const SHORTCUTS = ["note", "place", "topic", "featured"];
+
+// One line of controls (search, three filters, sort), then shortcut chips that
+// show how many videos each would leave. Chips combine; an active chip shows ×.
+export default function VideoFilters({ filters, setFilters, sort, setSort, categories, videos, shownCount }) {
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
   const toggleMissing = (key) =>
     setFilters((f) => ({
@@ -64,63 +68,67 @@ export default function VideoFilters({ filters, setFilters, sort, setSort, categ
     filters.q || filters.status || filters.category || filters.language || filters.missing.length;
 
   return (
-    <div className="mb-3">
-      <div className="flex gap-2 flex-wrap mb-2">
+    <div className="filter-bar mb-3">
+      <div className="filter-row">
         <input
           type="search"
-          className="input text-[13px] flex-1 min-w-[200px]"
-          placeholder="Search title, channel or place…"
+          className="filter-control filter-search"
+          placeholder="Search title, channel or place"
           value={filters.q}
           onChange={(e) => set("q", e.target.value)}
           aria-label="Search videos"
         />
-        <select className="input text-[12px] w-auto" value={filters.status} onChange={(e) => set("status", e.target.value)} aria-label="Status">
-          <option value="">Status: All</option>
+        <select className={"filter-control" + (filters.status ? " is-set" : "")} value={filters.status} onChange={(e) => set("status", e.target.value)} aria-label="Status">
+          <option value="">Any status</option>
           <option value="published">Published</option>
           <option value="hidden">Hidden</option>
         </select>
-        <select className="input text-[12px] w-auto" value={filters.category} onChange={(e) => set("category", e.target.value)} aria-label="Topic">
-          <option value="">Topic: All</option>
+        <select className={"filter-control" + (filters.category ? " is-set" : "")} value={filters.category} onChange={(e) => set("category", e.target.value)} aria-label="Topic">
+          <option value="">Any topic</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <select className="input text-[12px] w-auto" value={filters.language} onChange={(e) => set("language", e.target.value)} aria-label="Language">
-          <option value="">Language: All</option>
+        <select className={"filter-control" + (filters.language ? " is-set" : "")} value={filters.language} onChange={(e) => set("language", e.target.value)} aria-label="Language">
+          <option value="">Any language</option>
           <option value="hi">Hindi</option>
           <option value="en">English</option>
-          <option value="none">Not set</option>
+          <option value="none">Language not set</option>
         </select>
-        <select className="input text-[12px] w-auto" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+        <select className="filter-control" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           {Object.entries(SORTS).map(([key, label]) => (
             <option key={key} value={key}>
-              Sort: {label}
+              {label}
             </option>
           ))}
         </select>
       </div>
-      <div className="flex gap-2 flex-wrap items-center">
-        <span className="story-meta">Missing:</span>
-        {Object.entries(MISSING).map(([key, { label }]) => (
-          <button
-            key={key}
-            type="button"
-            className={"tag " + (filters.missing.includes(key) ? "tag-active" : "")}
-            aria-pressed={filters.missing.includes(key)}
-            onClick={() => toggleMissing(key)}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="filter-row filter-chips">
+        {SHORTCUTS.map((key) => {
+          const on = filters.missing.includes(key);
+          const count = videos.filter(MISSING[key].test).length;
+          return (
+            <button
+              key={key}
+              type="button"
+              className={"filter-chip" + (on ? " is-on" : "")}
+              aria-pressed={on}
+              onClick={() => toggleMissing(key)}
+            >
+              {MISSING[key].label} · {count}
+              {on && <span aria-hidden="true"> ×</span>}
+            </button>
+          );
+        })}
         {active ? (
           <button type="button" className="link-btn" onClick={() => setFilters(EMPTY_FILTERS)}>
             Clear filters
           </button>
         ) : null}
-        <span className="story-meta" style={{ marginLeft: "auto" }}>
-          Showing {shownCount} of {totalCount}
+        <span className="filter-count">
+          {active ? `${shownCount} of ${videos.length}` : `${videos.length} videos`}
         </span>
       </div>
     </div>
