@@ -8,6 +8,12 @@ import HeroImage from "./HeroImage";
 import { displayTitle } from "../lib/title";
 import { PAGE_SIZE, getCategories, getHero, getFeedPage } from "../lib/feed";
 
+// Title and description come from the layout. The canonical tells search
+// engines that variants such as /?language=hi are this page.
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 // Data comes from lib/feed.js: unstable_cache-wrapped queries tagged "videos".
 // Admin routes call revalidateTag("videos") after any write that changes what
 // is shown here (publish/hide/feature/categorize/add/delete a video, or

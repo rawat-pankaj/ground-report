@@ -1225,3 +1225,15 @@ Owner approved. Tells Bing (and other IndexNow engines such as Yandex) about cha
 ## 📘 CLAUDE.md Review — 2026-11-20
 
 Owner asked for an accuracy review after the last few weeks' changes. `CLAUDE.md` was checked line by line against the code and rewritten: stale items fixed (Supabase project name, the parked list still listing finished work, cache-key rules, the `ISSUES.md` size), and the recent rules added (static homepage, channel/category slugs, place normalisation, IndexNow, `prisma/sql/` for one-off SQL, refreshing cached pages after a schema change, local testing against the live database, dependency upgrade rules, a short site map). The unscheduled ideas list moved here, under "Still open" → "Ideas, not scheduled".
+
+## 🧪 Home Page Test — 2026-11-20
+
+Owner asked for a thorough test of the live homepage for defects.
+
+**Passed (live, www.peoplelens.in):** page, title, description and share tags; browser-filled date; admin note hidden for visitors; header search on desktop (the "/" shortcut focuses it, "delhi" → 24 results) and the phone search drop-down ("corruption" → 24); all 23 category chips (including "More (14)") return 200; the featured card with its curator note; "Load more" to the end: **292 stories = 292 published in the database**, no duplicates, no errors, the button disappears at the end; all 292 story links return 200 and all 292 thumbnails load; layouts at 375 / 768 / 1024 / 1440 px with no sideways scrolling (2 columns on phones and tablets, 4 on desktop, header items don't overlap); `/?category=…` → 308, a malformed category → 308 to `/`, `/?language=hi` → the homepage, bare domain and http → 308 to https www; skip link to `<main>`, images all have alt text, the phone search icon has a label.
+
+**Defects found and fixed (not yet deployed):**
+1. **Header search box missing from the rebuilt homepage → React hydration error #418.** When Vercel rebuilds the static homepage after an admin change, `usePathname()` on the server returns `/index` (the live page's RSC payload had `"c":["","index"]`), so `MastheadBar` didn't recognise the homepage and left out the search pill and icon; the browser then added them, React logged error #418 and re-rendered the page. Locally built pages (built at `/`) didn't show it. Fix: `app/MastheadBar.jsx` treats `/index` as the homepage too.
+2. **No canonical tag on the homepage** (category, channel and video pages had one). Fix: `app/page.jsx` exports `metadata.alternates.canonical = "/"` (title and description still come from the layout; the page stays static).
+
+**Checked locally** (`npm run build`, `next start`): route table still `○ /`; the built homepage HTML now has the search box and `<link rel="canonical" href="https://www.peoplelens.in">`; no React errors in the browser console. **To check live after deploy:** make one admin change, then load the homepage and confirm the console has no error #418 and the page source has the search box.

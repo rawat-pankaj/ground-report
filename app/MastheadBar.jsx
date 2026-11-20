@@ -33,7 +33,11 @@ export default function MastheadBar() {
   // Search lives in the bar on the home page and the category pages (which used
   // to be the home page's ?category= views). Other pages, e.g. /search, have
   // their own box or don't need one.
-  const showSearch = !isAdmin && (pathname === "/" || pathname.startsWith("/category/"));
+  // When Vercel rebuilds the static homepage after an admin change, the pathname
+  // seen on the server is "/index", not "/". Treat both as the homepage, or the
+  // server HTML lacks the search box and React reports a hydration mismatch.
+  const isHome = pathname === "/" || pathname === "/index";
+  const showSearch = !isAdmin && (isHome || pathname.startsWith("/category/"));
 
   // "/" focuses the search box, the same shortcut the hint chip shows. Ignored
   // while typing in a field, with a modifier held, or when the box is hidden
