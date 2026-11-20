@@ -1238,3 +1238,34 @@ Owner asked for a thorough test of the live homepage for defects.
 
 **Checked locally** (`npm run build`, `next start`): route table still `○ /`; the built homepage HTML now has the search box and `<link rel="canonical" href="https://www.peoplelens.in">`; no React errors in the browser console. **To check live after deploy:** make one admin change, then load the homepage and confirm the console has no error #418 and the page source has the search box.
 - **Live check, 2026-11-20 (after deploy `dffdd46` and an owner admin change):** the homepage HTML now has the search box and `<link rel="canonical" href="https://www.peoplelens.in">`; a fresh browser tab shows **no console errors** (no React #418). This time the page's RSC payload showed the path as `""` rather than `"index"`, so it isn't certain the `/index` rebuild case was exercised; if error #418 ever returns on the homepage, check that payload again.
+
+## 🧪 Other Public Pages Test — 2026-11-20
+
+Owner asked for the same thorough test on the other public pages (live site).
+
+**Passed:**
+- All **385 sitemap URLs** return 200 (home, About, Suggest, 22 categories, 68 channels, 292 videos), all on `www`.
+- **All 292 video pages:** title, canonical, description, share image (284 use the full-size thumbnail), valid `VideoObject` JSON-LD (name, thumbnail, upload date, embed URL), one H1, the youtube-nocookie player, "Channel →" to `/channel/…`, a "Watch on YouTube" link and related stories (never the video itself). 33 show a "Why this matters" note. No console errors on a sample page.
+- **All 22 category pages:** story count shown, the grid plus "Load more" totals and the database all agree (e.g. Protest & Rights 137, loaded to the end on a phone with no duplicates); canonical correct; the active chip highlighted.
+- **All 68 channel pages:** counts match the database; canonical; "Watch on YouTube" link; 141 channel topic-filter links checked, each returns a sensible subset.
+- **Search:** English, Hindi, mixed, channel names, places, topics, a 200-character query, emoji, `%`, `<script>` and `' OR 1=1 --` all return 200; nothing is echoed unescaped; results pages are `noindex`.
+- **Suggest:** the channel/video toggle changes the field label; an empty submit is blocked by the browser.
+- **About:** links work. Phone width (375 px): no sideways scrolling on channel, category, search or About.
+
+**Defects / gaps found (not fixed yet; owner to decide):**
+1. **Suggest form gets stuck on a network failure.** If the request fails (offline, flaky mobile data), `handleSubmit` in `app/suggest/page.jsx` has no `try/catch`: the button stays disabled on "Sending…" with no message until the page is reloaded (tested with a stubbed network failure; nothing was sent).
+2. **Suggest form hides the server's reason.** Every failure shows "Something went wrong — try again", including the rate limit ("Too many suggestions from this connection. Please try again later."), where trying again won't help.
+3. **Suggest fields have no length limits in the browser** while the server silently cuts the link at 500, the reason at 1,000 and the contact at 200 characters.
+4. **"Copy link" on video pages gives no feedback when copying is blocked** (some in-app browsers): the button just does nothing.
+5. **No canonical tag** on About, Suggest and Search (minor; Search is `noindex` anyway).
+6. Content, not code: 4 published videos have no category (e.g. QKtjnDpYPAQ, heIjMRebuxo, ADHXQn6WoHE), so their pages have no topic links.
+7. By design: search needs every word to match, so long natural queries ("delhi pollution aqi monitors stop recording") can return nothing even when a closely matching story exists. A "search v2" idea, not a defect.
+
+### Suggest form fixes (defects 1–3 above) — 2026-11-20
+
+Owner approved fixing 1–3. All in `app/suggest/page.jsx`:
+- **Network failure:** the request is wrapped in `try/catch`; on no response the form shows "Couldn't reach PeopleLens. Check your connection and try again." and the button is usable again (it used to stay on "Sending…").
+- **Server's reason shown:** on an error response the form shows the server's `error` text (e.g. the rate-limit message) and falls back to "Something went wrong — try again." when there is none (or the reply isn't JSON). The message has `role="alert"`, so screen readers announce it.
+- **Length limits in the browser:** `maxLength` 500 (link), 1,000 (reason) and 200 (contact), the same as `app/api/nominations/route.js`, so nothing is cut off unseen.
+- **Checked locally** (`npm run build`, `next start`, fake server answers only; nothing reached the database): network failure → the new message and an enabled button; 429 → the rate-limit text; a non-JSON 502 → the generic message; 200 → "Suggestion received."; the three fields report maxLength 500 / 1000 / 200.
+- Defects 4 (Copy link feedback) and 5 (canonical on About/Suggest/Search) are still open; 6 is content; 7 is a search idea.
