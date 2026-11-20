@@ -5,7 +5,7 @@ import { useState } from "react";
 // The dark bar that appears when videos are ticked on Published Videos. Each
 // action is one request to /api/admin/videos/bulk for all ticked videos.
 // Deleting is deliberately not offered here.
-export default function BulkBar({ count, categories, onApply, onClear, busy }) {
+export default function BulkBar({ count, categories, onApply, onClear, busy, message }) {
   const [place, setPlace] = useState("");
 
   const pick = (action) => (e) => {
@@ -69,6 +69,14 @@ export default function BulkBar({ count, categories, onApply, onClear, busy }) {
       <button type="button" className="link-btn bulk-clear" onClick={onClear} disabled={busy}>
         Clear selection
       </button>
+      {/* The result sits inside the sticky bar so it is seen however far down the list you are. */}
+      <span
+        className={"bulk-message" + (message?.startsWith("Could not") ? " bulk-message-error" : "")}
+        role="status"
+        aria-live="polite"
+      >
+        {busy ? "" : message}
+      </span>
     </div>
   );
 }

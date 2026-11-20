@@ -833,3 +833,15 @@ body {
   margin-left: auto;
   color: var(--paper);
 }
+.bulk-message {
+  flex-basis: 100%;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #7ee2a0;
+}
+.bulk-message:empty {
+  display: none;
+}
+.bulk-message-error {
+  color: #ff9a8a;
+}

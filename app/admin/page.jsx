@@ -216,14 +216,13 @@ export default function AdminDashboard() {
           count={selected.size}
           categories={categories}
           onApply={applyBulk}
-          onClear={() => setSelected(new Set())}
+          onClear={() => {
+            setSelected(new Set());
+            setBulkMessage("");
+          }}
           busy={bulkBusy}
+          message={bulkMessage}
         />
-      )}
-      {bulkMessage && (
-        <p className="story-meta mb-2" role="status" style={{ textTransform: "none", color: bulkMessage.startsWith("Could not") ? "var(--signal)" : "#2f8f4e" }}>
-          {bulkMessage}
-        </p>
       )}
 
       {shown.length > 0 && (
